@@ -1,0 +1,866 @@
+/**
+ * Auto Heading — Styles
+ *
+ * Decoration numbering inherits the heading's own font-size and weight
+ * so the number always matches the heading it belongs to.
+ */
+
+/* ─── Base number decoration ─────────────────────────────────── */
+
+.ah-number {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: -0.01em;
+  color: var(--text-normal);
+  user-select: none;
+  pointer-events: none;
+  vertical-align: baseline;
+}
+
+/* Per-level color tinting (subtle, theme-aware) */
+.ah-number-level-1 { color: var(--text-accent); }
+.ah-number-level-2 { color: var(--text-normal); }
+.ah-number-level-3 { color: var(--text-muted);  }
+.ah-number-level-4 { color: var(--text-muted);  }
+.ah-number-level-5 { color: var(--text-faint);  }
+.ah-number-level-6 { color: var(--text-faint);  }
+
+/* ─── Reading View (PostProcessor) ───────────────────────────── */
+
+.ah-reading-number {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  color: var(--text-normal);
+  user-select: none;
+  margin-right: 0.25em;
+}
+
+.ah-reading-number-level-1 { color: var(--text-accent); }
+.ah-reading-number-level-2 { color: var(--text-normal); }
+.ah-reading-number-level-3 { color: var(--text-muted);  }
+.ah-reading-number-level-4 { color: var(--text-muted);  }
+.ah-reading-number-level-5 { color: var(--text-faint);  }
+.ah-reading-number-level-6 { color: var(--text-faint);  }
+
+/* ─── Status Bar ─────────────────────────────────────────────── */
+
+.ah-status-bar {
+  cursor: pointer;
+  font-size: var(--font-ui-smaller);
+  padding: 0 6px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.ah-status-bar:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.ah-status-bar-hidden {
+  display: none;
+}
+
+/* ─── Scope Card ─────────────────────────────────────────────── */
+
+.ah-scope-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 4px 0 16px;
+  background: var(--background-secondary);
+}
+
+.ah-scope-card-label {
+  font-size: var(--font-ui-smaller);
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ah-scope-card-empty {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  padding: 8px 0;
+  font-style: italic;
+}
+
+.ah-scope-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.ah-scope-card-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  font-size: var(--font-ui-smaller);
+}
+
+.ah-scope-card-path {
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ah-scope-card-remove {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-left: 8px;
+  transition: all 0.15s ease;
+}
+
+.ah-scope-card-remove:hover {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+}
+
+.ah-scope-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.ah-scope-btn-add {
+  font-size: var(--font-ui-smaller);
+  padding: 5px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.ah-scope-btn-add:hover {
+  opacity: 0.85;
+}
+
+.ah-scope-btn-clear {
+  font-size: var(--font-ui-smaller);
+  padding: 5px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-error);
+  border: 1px solid var(--text-error);
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.ah-scope-btn-clear:hover {
+  background: var(--text-error);
+  color: var(--text-on-accent);
+}
+
+/* ─── Settings Tab ───────────────────────────────────────────── */
+
+.ah-settings-section-header {
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.ah-settings-description {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: 1em;
+  line-height: 1.5;
+}
+
+.ah-settings-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ah-settings-info-box {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 0.5em 0 1em 0;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.ah-settings-info-box code {
+  background: var(--background-modifier-cover);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* ─── Command Box ────────────────────────────────────────────── */
+
+.ah-settings-cmd-box {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  padding: 4px 0;
+  margin: 0.5em 0;
+}
+
+.ah-cmd-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ah-cmd-row:last-child {
+  border-bottom: none;
+}
+
+.ah-cmd-name {
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 2px;
+}
+
+.ah-cmd-desc {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ─── Per-Note Configuration Box ─────────────────────────────── */
+
+.ah-settings-pernote-box {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  padding: 8px 0;
+  margin: 0.5em 0 1em 0;
+}
+
+.ah-pernote-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  line-height: 1.5;
+  flex-wrap: wrap;
+}
+
+.ah-pernote-code {
+  background: var(--background-modifier-cover);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: var(--font-monospace);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ah-pernote-label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.ah-pernote-divider {
+  border-top: 1px solid var(--background-modifier-border);
+  margin: 4px 16px;
+}
+
+/* ─── Quick Config Modal ─────────────────────────────────────── */
+
+.ah-modal-description {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: 1em;
+}
+
+.ah-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1em;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* ─── Section Header SVG ─────────────────────────────────────── */
+
+.ah-settings-section-header svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-accent);
+  stroke-width: 1.75;
+  fill: none;
+  flex-shrink: 0;
+}
+
+/* ─── Visual Heading Indentation ─────────────────────────────── */
+
+/*
+ * Indent classes applied to heading lines (both editor and reading view).
+ * The indent amount is controlled via the --ah-indent-size custom property
+ * set on the container or body. Each level multiplies by its depth offset.
+ *
+ * Level 1 is never indented (it is the root). Levels 2-6 are indented
+ * relative to a configurable base level.
+ */
+
+:root {
+  --ah-indent-size: 20px;
+}
+
+/* ── Live Preview (CodeMirror 6 line classes) ───────────────── */
+/*
+ * Uses .cm-editor .cm-line prefix for sufficient specificity to override
+ * theme styles without resorting to !important.
+ */
+
+.cm-editor .cm-line.ah-indent-1 { padding-left: 0; }
+.cm-editor .cm-line.ah-indent-2 { padding-left: calc(var(--ah-indent-size) * 1); }
+.cm-editor .cm-line.ah-indent-3 { padding-left: calc(var(--ah-indent-size) * 2); }
+.cm-editor .cm-line.ah-indent-4 { padding-left: calc(var(--ah-indent-size) * 3); }
+.cm-editor .cm-line.ah-indent-5 { padding-left: calc(var(--ah-indent-size) * 4); }
+.cm-editor .cm-line.ah-indent-6 { padding-left: calc(var(--ah-indent-size) * 5); }
+
+/* ── Reading View (heading elements) ────────────────────────── */
+
+.markdown-rendered .ah-indent-1 { padding-left: 0; }
+.markdown-rendered .ah-indent-2 { padding-left: calc(var(--ah-indent-size) * 1); }
+.markdown-rendered .ah-indent-3 { padding-left: calc(var(--ah-indent-size) * 2); }
+.markdown-rendered .ah-indent-4 { padding-left: calc(var(--ah-indent-size) * 3); }
+.markdown-rendered .ah-indent-5 { padding-left: calc(var(--ah-indent-size) * 4); }
+.markdown-rendered .ah-indent-6 { padding-left: calc(var(--ah-indent-size) * 5); }
+
+/* ── Indent Guide Lines ─────────────────────────────────────── */
+
+/*
+ * Subtle vertical guide drawn via ::before pseudo-element.
+ * Uses the theme's border color at low opacity for a clean look.
+ * Only shown on levels 2+ (level 1 has no indent to guide from).
+ */
+
+.ah-indent-guide.ah-indent-2::before,
+.ah-indent-guide.ah-indent-3::before,
+.ah-indent-guide.ah-indent-4::before,
+.ah-indent-guide.ah-indent-5::before,
+.ah-indent-guide.ah-indent-6::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--background-modifier-border);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Positions for each guide level (aligns with the start of its parent level) */
+.ah-indent-guide.ah-indent-2::before {
+  left: calc(var(--ah-indent-size) * 0.5);
+}
+.ah-indent-guide.ah-indent-3::before {
+  left: calc(var(--ah-indent-size) * 1.5);
+}
+.ah-indent-guide.ah-indent-4::before {
+  left: calc(var(--ah-indent-size) * 2.5);
+}
+.ah-indent-guide.ah-indent-5::before {
+  left: calc(var(--ah-indent-size) * 3.5);
+}
+.ah-indent-guide.ah-indent-6::before {
+  left: calc(var(--ah-indent-size) * 4.5);
+}
+
+/* Ensure heading lines have relative position for ::before guides */
+.ah-indent-guide {
+  position: relative;
+}
+
+/* ── Settings preview stripe ─────────────────────────────────── */
+
+.ah-indent-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  margin: 6px 0 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.ah-indent-preview-line {
+  transition: padding-left 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Cluster A: Interactive Heading Gutter ───────────────── */
+
+.ah-heading-gutter {
+  width: 28px;
+  min-width: 28px;
+}
+
+.ah-gutter-marker {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  cursor: default;
+  height: 100%;
+  padding: 0 2px;
+}
+
+.ah-gutter-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: var(--text-faint);
+  transition: color 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.ah-gutter-chevron:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+
+.ah-gutter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  user-select: none;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.ah-gutter-badge:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.ah-gutter-badge-1 { color: var(--text-accent); background: rgba(var(--color-accent-rgb, 124,77,255), 0.12); }
+.ah-gutter-badge-2 { color: var(--color-blue, #2196f3); background: rgba(33,150,243,0.10); }
+.ah-gutter-badge-3 { color: var(--color-green, #4caf50); background: rgba(76,175,80,0.10); }
+.ah-gutter-badge-4 { color: var(--color-orange, #ff9800); background: rgba(255,152,0,0.10); }
+.ah-gutter-badge-5 { color: var(--text-muted); background: var(--background-modifier-hover); }
+.ah-gutter-badge-6 { color: var(--text-faint); background: var(--background-modifier-hover); }
+
+/* ─── Cluster B: Section Navigation Strip ─────────────────── */
+
+.ah-section-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  user-select: none;
+  min-height: 26px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.ah-section-strip.ah-strip-hidden {
+  display: none;
+}
+
+.ah-strip-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ah-strip-crumb {
+  cursor: pointer;
+  color: var(--text-muted);
+  border-radius: 3px;
+  padding: 1px 4px;
+  transition: color 0.12s, background 0.12s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.ah-strip-crumb:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.ah-strip-crumb-active {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.ah-strip-separator {
+  color: var(--text-faint);
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+  opacity: 0.6;
+}
+
+
+.ah-strip-nav {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ah-strip-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  transition: color 0.12s, background 0.12s;
+  line-height: 1;
+}
+
+.ah-strip-btn:hover:not(:disabled) {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.ah-strip-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.ah-strip-toc-btn {
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--background-modifier-border);
+  font-size: 12px;
+}
+
+
+/* ─── Cluster C: Heading Inline Toolbar ───────────────────── */
+
+.ah-heading-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 8px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  vertical-align: middle;
+  pointer-events: auto;
+}
+
+/* Show toolbar when its parent line has focus or is hovered */
+.cm-active .ah-heading-toolbar,
+.cm-activeLine .ah-heading-toolbar,
+.cm-line:hover .ah-heading-toolbar,
+.ah-heading-toolbar:hover {
+  opacity: 1;
+}
+
+/* Fallback: always show with reduced opacity (for browsers without :has) */
+.ah-heading-toolbar {
+  opacity: 0.5;
+}
+
+@supports selector(:has(*)) {
+  .ah-heading-toolbar {
+    opacity: 0;
+  }
+}
+
+.ah-toolbar-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 1;
+  transition: color 0.12s, background 0.12s;
+  font-family: var(--font-ui-small);
+  user-select: none;
+}
+
+.ah-toolbar-btn:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.ah-toolbar-btn-active {
+  color: var(--text-accent);
+}
+
+.ah-toolbar-btn-success {
+  color: var(--color-green, #4caf50);
+}
+
+.ah-toolbar-skip-active {
+  color: var(--text-error);
+  text-decoration: line-through;
+}
+
+/* ─── Cluster D: Auto-TOC ─────────────────────────────────── */
+
+.ah-toc {
+  padding: 14px 18px;
+  margin: 12px 0;
+  border: 1px solid var(--background-modifier-border);
+  border-left: 3px solid var(--interactive-accent);
+  border-radius: 6px;
+  background: var(--background-secondary);
+}
+
+.ah-toc-details {
+  margin: 0;
+}
+
+.ah-toc-title {
+  font-weight: 700;
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.ah-toc-title::-webkit-details-marker { display: none; }
+
+.ah-toc-title::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+  font-size: 0.85em;
+}
+
+.ah-toc-details[open] > .ah-toc-title::before {
+  transform: rotate(90deg);
+}
+
+.ah-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ah-toc-list .ah-toc-list {
+  margin-left: 16px;
+  padding-left: 10px;
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.ah-toc-item {
+  padding: 1px 0;
+}
+
+.ah-toc-item.ah-toc-level-1 > .ah-toc-link {
+  font-weight: 600;
+  font-size: var(--font-ui-small);
+}
+
+.ah-toc-item.ah-toc-level-2 > .ah-toc-link {
+  font-weight: 500;
+}
+
+.ah-toc-item.ah-toc-skipped > .ah-toc-link {
+  opacity: 0.45;
+  font-style: italic;
+}
+
+.ah-toc-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 3px 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+  display: inline-block;
+  line-height: 1.5;
+}
+
+.ah-toc-link:hover {
+  color: var(--text-accent);
+  background: var(--background-modifier-hover);
+}
+
+.ah-toc-number {
+  color: var(--text-faint);
+  margin-right: 4px;
+  font-size: 0.88em;
+  font-weight: 500;
+}
+
+.ah-toc-empty {
+  color: var(--text-faint);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ─── Cluster E: Rich Status Bar Popover ──────────────────── */
+
+.ah-status-popover {
+  position: fixed;
+  z-index: var(--layer-popover, 100);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 300px;
+  max-width: 420px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: var(--font-ui-smaller);
+}
+
+.ah-status-popover-header {
+  padding: 6px 14px 8px;
+  font-weight: 600;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ah-status-popover-summary {
+  padding: 6px 14px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.ah-status-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+  color: var(--text-muted);
+}
+
+.ah-status-popover-row:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.ah-status-popover-num {
+  color: var(--text-faint);
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.9em;
+  flex-shrink: 0;
+}
+
+.ah-status-popover-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ah-status-popover-words {
+  color: var(--text-faint);
+  font-size: 0.85em;
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 50px;
+}
+
+/* ─── Cluster F: Fold Controls ────────────────────────────── */
+/* Uses Obsidian's built-in view-action button styling */
+
+/* ─── Per-Level Style Picker (in QuickConfigModal) ────────── */
+
+.ah-style-grid {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.ah-style-grid-header {
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ah-style-grid-level {
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.ah-style-grid-preview {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  font-family: var(--font-monospace);
+}

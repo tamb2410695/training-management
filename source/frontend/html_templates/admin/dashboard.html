@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bản Test Sidebar Responsive - Sẵn sàng cho React</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="d-flex vh-100 overflow-hidden bg-light">
+
+  <div class="d-none d-md-flex flex-column flex-shrink-0 bg-white border-end p-3 overflow-auto" 
+       id="mainSidebar" 
+       style="width: 70px; transition: width 0.2s ease;">
+       
+    <a href="#" class="d-flex align-items-center mb-3 text-decoration-none text-dark justify-content-center" id="sidebarBrand">
+      <i class="bi bi-cpu fs-1 text-primary"></i>
+      <span class="fs-5 fw-bold ms-2 d-none d-lg-block text-target">AdminPanel</span>
+    </a>
+    <hr>
+    
+    <div class="nav nav-pills flex-column mb-auto">
+      
+      <div class="nav-item mb-1">
+        <a href="#" class="nav-link text-dark px-0 py-2.5 d-flex align-items-center justify-content-center" id="linkOverview">
+          <i class="bi bi-speedometer2 fs-5"></i>
+          <span class="ms-2 d-none d-lg-block text-target">Tổng quan</span>
+        </a>
+      </div>
+      
+      <div class="nav-item mb-1">
+        <a class="nav-link text-dark px-0 py-2.5 d-flex align-items-center justify-content-center" 
+           href="#subPro"
+           role="button"
+           id="btnProduct">
+          <i class="bi bi-box-seam fs-5 text-primary"></i>
+          <span class="ms-2 d-none d-lg-block text-target flex-grow-1 text-start">Sản phẩm</span>
+          <i class="bi bi-chevron-down small d-none d-lg-block text-target"></i>
+        </a>
+        
+        <div class="collapse" id="subPro">
+          <div class="ps-3 small bg-light rounded py-1 mt-1 text-start">
+            <a href="#" class="nav-link text-secondary py-1 ps-2">Danh sách sản phẩm</a>
+            <a href="#" class="nav-link text-secondary py-1 ps-2">Thêm mới sản phẩm</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="offcanvas offcanvas-start bg-white d-md-none" id="mobileSidebar" style="width: 260px;">
+    <div class="offcanvas-header border-bottom">
+      <h5 class="offcanvas-title fw-bold d-flex align-items-center">
+        <i class="bi bi-cpu fs-1 text-primary me-2"></i>AdminPanel
+      </h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3">
+      <div class="nav nav-pills flex-column">
+         <div class="nav-item mb-1">
+           <a href="#" class="nav-link text-dark py-2.5 d-flex align-items-center">
+             <i class="bi bi-speedometer2 fs-5 me-2"></i>Tổng quan
+           </a>
+         </div>
+         <div class="nav-item mb-1">
+           <a class="nav-link text-dark py-2.5 d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#mobileSubPro">
+             <span>
+               <i class="bi bi-box-seam fs-5 me-2 text-primary"></i>Sản phẩm
+             </span>
+             <i class="bi bi-chevron-down small"></i>
+           </a>
+           <div class="collapse" id="mobileSubPro">
+             <div class="ps-4 small bg-light rounded py-1">
+               <a href="#" class="nav-link text-secondary py-1">Danh sách sản phẩm</a>
+               <a href="#" class="nav-link text-secondary py-1">Thêm mới sản phẩm</a>
+             </div>
+           </div>
+         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-grow-1 d-flex flex-column overflow-hidden" id="mainContent">
+    
+    <header class="navbar navbar-white bg-white border-bottom p-3 d-md-none">
+      <button class="btn btn-outline-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+        <i class="bi bi-list"></i> Menu
+      </button>
+      <span class="fw-bold">Hệ thống Quản lý</span>
+    </header>
+
+    <main class="flex-grow-1 overflow-auto p-4">
+      <div class="card p-4 shadow-sm bg-white mb-4">
+        <h3 class="text-primary fw-bold">Kịch bản Test Hệ Thống Quy Trình</h3>
+        <p class="text-muted">Nhấn <kbd>F12</kbd> (hoặc chuột phải chọn Inspect) và chuyển đổi các kích thước màn hình để kiểm tra:</p>
+        <hr>
+        
+        <ol class="lh-lg">
+          <li><strong>Màn hình PC lớn (> 992px):</strong> Sidebar luôn giữ độ rộng đầy đủ <span class="badge bg-success">260px</span>. Menu Sản phẩm hoạt động co trượt dọc mượt mà.</li>
+          <li><strong>Màn hình Tablet (768px - 991px):</strong> Sidebar tự động thu gọn về dạng Mini <span class="badge bg-primary">70px</span>, ẩn sạch chữ và căn giữa icon. 
+            <br>👉 <em>Thử nghiệm hành vi:</em> Hãy bấm vào icon <strong>Sản phẩm</strong>. Toàn bộ thanh Sidebar sẽ phình to ra và tự động mở menu con trượt dọc xuống.
+          </li>
+          <li><strong>Màn hình Mobile (< 768px):</strong> Sidebar biến mất hoàn toàn. Thanh Header trên cùng xuất hiện. Bấm nút <strong>Menu</strong> để mở Offcanvas dạng trượt đè.</li>
+          <li><strong>Hành vi đóng thông minh:</strong> Khi Sidebar đang ở trạng thái phóng to trên Tablet, nếu bạn bấm chuột vào khu vực văn bản này (Main Content), Sidebar sẽ tự động thu hẹp lại gọn gàng.</li>
+        </ol>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const sidebar = document.getElementById('mainSidebar');
+      const btnProduct = document.getElementById('btnProduct');
+      const linkOverview = document.getElementById('linkOverview');
+      const mainContent = document.getElementById('mainContent');
+      const sidebarBrand = document.getElementById('sidebarBrand');
+
+      // Danh sách các chữ và icon mũi tên cần quản lý ẩn/hiện dựa trên kích thước
+      const textTargets = sidebar.querySelectorAll('.text-target');
+      const navLinks = sidebar.querySelectorAll('.nav-link');
+
+      // Tự động thiết lập ban đầu dựa trên kích thước màn hình
+      if (window.innerWidth >= 992) {
+        expandSidebarLogic(true);
+      }
+
+      // HÀM ĐIỀU KHIỂN TRẠNG THÁI CLASS (Tương tự hàm set trạng thái của React)
+      function expandSidebarLogic(shouldExpand) {
+        // Nếu ở màn hình PC lớn, luôn giữ chế độ mở rộng cố định
+        if (window.innerWidth >= 992) {
+          sidebar.style.width = '260px';
+          textTargets.forEach(el => el.classList.remove('d-none'));
+          navLinks.forEach(link => {
+            link.classList.remove('justify-content-center', 'px-0');
+            link.classList.add('justify-content-start', 'px-2');
+          });
+          sidebarBrand.classList.remove('justify-content-center');
+          sidebarBrand.classList.add('justify-content-start');
+          return;
+        }
+
+        // Xử lý logic động cho màn hình Tablet (768px - 991px)
+        if (shouldExpand) {
+          sidebar.style.width = '260px'; // Thay đổi chiều rộng bằng CSS Transition
+          
+          // Gỡ class 'd-none' để hiển thị lại toàn bộ chữ
+          textTargets.forEach(el => el.classList.remove('d-none'));
+          
+          // Thay đổi class căn chỉnh của Bootstrap để dãn đều chữ ra hai bên
+          navLinks.forEach(link => {
+            link.classList.remove('justify-content-center', 'px-0');
+            link.classList.add('justify-content-start', 'px-2');
+          });
+          sidebarBrand.classList.remove('justify-content-center');
+          sidebarBrand.classList.add('justify-content-start');
+        } else {
+          sidebar.style.width = '70px'; // Thu nhỏ về kích thước mini
+          
+          // Thêm class 'd-none' của Bootstrap để giấu chữ đi ngay lập tức
+          textTargets.forEach(el => el.classList.add('d-none'));
+          
+          // Trả lại class căn giữa tuyệt đối cho các Icon
+          navLinks.forEach(link => {
+            link.classList.remove('justify-content-start', 'px-2');
+            link.classList.add('justify-content-center', 'px-0');
+          });
+          sidebarBrand.classList.remove('justify-content-start');
+          sidebarBrand.classList.add('justify-content-center');
+
+          // Tự động ra lệnh đóng menu con nếu nó đang mở nhằm giữ cho thanh mini luôn sạch sẽ
+          const subMenu = document.getElementById('subPro');
+          if (subMenu.classList.contains('show')) {
+            new bootstrap.Collapse(subMenu).hide();
+          }
+        }
+      }
+
+      // XỬ LÝ SỰ KIỆN CLICK VÀO ICON SẢN PHẨM TRÊN TABLET
+      btnProduct.addEventListener('click', function (e) {
+        // Nếu đang ở màn hình Tablet và Sidebar đang ở trạng thái thu gọn 70px
+        if (window.innerWidth >= 768 && window.innerWidth <= 991.98 && sidebar.style.width === '70px') {
+          e.preventDefault(); // Chặn hành vi trượt dọc tạm thời của Collapse
+          
+          expandSidebarLogic(true); // Kích hoạt trạng thái mở rộng Sidebar trước
+          
+          // Đợi hành trình dãn rộng 0.2s hoàn tất rồi mới kích hoạt menu con trượt xuống (Tránh vỡ chữ)
+          setTimeout(() => {
+            const bsCollapse = new bootstrap.Collapse(document.getElementById('subPro'), { toggle: false });
+            bsCollapse.show();
+          }, 150);
+        }
+      });
+
+      // TỰ ĐỘNG THU NHỎ KHI BẤM RA VÙNG NỘI DUNG CHÍNH HOẶC MỤC TỔNG QUAN
+      mainContent.addEventListener('click', () => {
+        if (window.innerWidth >= 768 && window.innerWidth <= 991.98) {
+          expandSidebarLogic(false);
+        }
+      });
+      linkOverview.addEventListener('click', () => {
+        if (window.innerWidth >= 768 && window.innerWidth <= 991.98) {
+          expandSidebarLogic(false);
+        }
+      });
+
+      // LẮNG NGHE SỰ KIỆN CO GIÃN CỦA TRÌNH DUYỆT ĐỂ RESET TRẠNG THÁI AN TOÀN
+      window.addEventListener('resize', () => {
+        if (window.innerWidth >= 992) {
+          expandSidebarLogic(true);
+        } else if (window.innerWidth >= 768) {
+          expandSidebarLogic(false);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
