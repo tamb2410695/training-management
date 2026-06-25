@@ -1,26 +1,11 @@
-import {
-  BrowserRouter
-}
-from "react-router-dom";
-
-import NavBar from "./components/Navbar"
-
-import AppRoutes
-from "./routes/AppRoutes";
+import AppRoutes from "./app/router/AppRoutes";
 
 function App() {
-
   return (
-
-    <BrowserRouter>
-
-      <NavBar />
+    <div className="container-fluid g-0">
       <AppRoutes />
-
-    </BrowserRouter>
-
+    </div>
   );
-
 }
 
 export default App;

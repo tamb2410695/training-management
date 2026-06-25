@@ -1,14 +1,17 @@
 const express = require("express");
 const cors = require("cors");
 
-const authRoute =
-    require("./modules/auth/auth.route");
+const rootRoutes = require("./routes");
+
+const errorHandler = require("./middlewares/error.middleware");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/auth", authRoute);
+app.use("/api", rootRoutes);
+
+app.use(errorHandler);
 
 module.exports = app;

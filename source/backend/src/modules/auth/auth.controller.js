@@ -1,76 +1,52 @@
+const { asyncHandler, successResponse } = require("../../utils/helpers");
 const authService = require("./auth.service");
-// const bcrypt = require("bcrypt");
 
-const login = async (req, res) => {
-  try {
-    const { username, password } = req.body;
+const register = asyncHandler(async (req, res, next) => {
+  const result = await authService.register(req.body);
+  return successResponse(res, result, "Account registered successfully", 201);
+});
 
-    const user = await authService.login(username);
+const login = asyncHandler(async (req, res, next) => {
+  const { usernameOrEmail, password } = req.body;
+  const result = await authService.login(usernameOrEmail, password);
+  return successResponse(res, result, "Login successful");
+});
 
-    if (!user) {
-      return res.status(401).json({
-        message: "Invalid username",
-      });
-    }
+const refreshToken = asyncHandler(async (req, res, next) => {
+  const { refreshToken } = req.body;
+  const result = await authService.refresh(refreshToken);
+  return successResponse(res, result, "Token refreshed successfully");
+});
 
-    // const isMatched = await bcrypt.compare(password, user.password_hash);
+const logout = asyncHandler(async (req, res, next) => {
+  // Client chịu trách nhiệm xóa token phía Front-end
+  return successResponse(res, null, "Logout successful");
+});
 
-    if (password !== user.password_hash) {
-      return res.status(401).json({
-        message: "Invalid password",
-      });
-    }
+const getMe = asyncHandler(async (req, res, next) => {
+  const result = await authService.getMe(req.user.accountId);
+  return successResponse(res, result, "Get current user profile successful");
+});
 
-    return res.json({
-      success: true,
-      username: user.username,
-      role: user.role_name,
-    });
-  } catch (error) {
-    console.error(error);
+const changePassword = asyncHandler(async (req, res, next) => {
+  const accountId = req.user.accountId;
+  const { currentPassword, newPassword } = req.body;
+  await authService.changePassword(accountId, currentPassword, newPassword);
+  return successResponse(res, null, "Password updated successfully");
+});
 
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-};
-
-const register = async (req, res) => {
-  try {
-    const { username, password, email } = req.body;
-
-    const existedUser = await authService.findByUsername(username);
-
-    if (existedUser) {
-      return res.status(400).json({
-        message: "Username already exists",
-      });
-    }
-
-    // const saltRounds = 10;
-    // const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    const accountId = await authService.createAccount(
-      3,
-      username,
-      password,
-      email,
-    );
-
-    return res.status(201).json({
-      success: true,
-      accountId,
-    });
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-};
+const resetPassword = asyncHandler(async (req, res, next) => {
+  const { email, newPassword } = req.body;
+  await authService.resetPassword(email, newPassword);
+  return successResponse(res, null, "Password has been reset successfully");
+});
 
 module.exports = {
-  login,
   register,
+  login,
+  refreshToken,
+  logout,
+  getMe,
+  changePassword,
+  resetPassword,
 };

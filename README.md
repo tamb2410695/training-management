@@ -1,1 +1,1 @@
-This is CS Junior Project
+# training-management

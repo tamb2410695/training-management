@@ -1,0 +1,193 @@
+BACKEND
+.
+├── app.js
+├── config
+│   └── database.js
+├── constants
+│   ├── auth
+│   │   ├── jwt.constants.js
+│   │   └── roles.js
+│   ├── index.js
+│   ├── lookups
+│   │   ├── courseLevels.js
+│   │   ├── genders.js
+│   │   ├── index.js
+│   │   └── password.js
+│   ├── messages
+│   │   ├── errorMessages.js
+│   │   └── successMessages.js
+│   ├── statuses
+│   │   ├── accountStatus.js
+│   │   ├── index.js
+│   │   └── studentStatus.js
+│   └── system
+│       ├── httpStatus.js
+│       └── pagination.js
+├── middlewares
+│   ├── accounts.middleware.js
+│   ├── auth.middleware.js
+│   ├── error.middleware.js
+│   ├── index.js
+│   └── role.middleware.js
+├── modules
+│   ├── accounts
+│   │   ├── accounts.constants.js
+│   │   ├── accounts.controller.js
+│   │   ├── accounts.repository.js
+│   │   ├── accounts.routes.js
+│   │   ├── accounts.service.js
+│   │   ├── accounts.validator.js
+│   │   └── validators
+│   ├── auth
+│   │   ├── auth.constants.js
+│   │   ├── auth.controller.js
+│   │   ├── auth.repository.js
+│   │   ├── auth.routes.js
+│   │   ├── auth.service.js
+│   │   └── auth.validator.js
+│   ├── certificate
+│   │   ├── certificate.controller.js
+│   │   ├── certificate.route.js
+│   │   └── certificate.service.js
+│   ├── class
+│   │   ├── class.controller.js
+│   │   ├── class.route.js
+│   │   └── class.service.js
+│   ├── course
+│   │   ├── course.controller.js
+│   │   ├── course.route.js
+│   │   └── course.service.js
+│   ├── roles
+│   │   └── roles.repository.js
+│   └── students
+│       ├── students.constants.js
+│       ├── students.controller.js
+│       ├── students.repository.js
+│       ├── students.routes.js
+│       ├── students.service.js
+│       └── students.validator.js
+├── routes
+│   └── index.js
+├── seeders
+│   └── seedAdmin.js
+├── server.js
+├── test.txt
+└── utils
+    ├── database
+    │   ├── index.js
+    │   └── transaction.js
+    ├── errors
+    │   ├── AppError.js
+    │   └── index.js
+    ├── formatters
+    │   ├── index.js
+    │   ├── input
+    │   └── response
+    ├── helpers
+    │   ├── common
+    │   ├── fields
+    │   ├── handlers
+    │   ├── index.js
+    │   └── validators
+    ├── query
+    │   └── queryBuilders.js
+    ├── security
+    │   ├── jwtUtil.js
+    │   └── passwordUtil.js
+    └── validators
+        ├── account
+        ├── common
+        ├── index.js
+        └── student
+
+37 directories, 63 files
+
+
+FRONTEND
+.
+├── App.jsx
+├── assets
+│   ├── hero.png
+│   ├── react.svg
+│   └── vite.svg
+├── components
+│   ├── card
+│   │   └── Card.jsx
+│   ├── layouts
+│   │   ├── Header.jsx
+│   │   ├── Navbar.jsx
+│   │   └── Sidebar.jsx
+│   └── table
+│       └── Table.jsx
+├── constants
+│   ├── accountStatus.js
+│   ├── endpoint.js
+│   ├── pageLimit.js
+│   ├── roles.js
+│   ├── routes.js
+│   └── sidebarMenu.js
+├── context
+│   └── AuthContext.jsx
+├── features
+│   ├── account
+│   │   ├── AccountFilter.jsx
+│   │   ├── AccountModal.jsx
+│   │   ├── AccountSearch.jsx
+│   │   └── AccountTable.jsx
+│   ├── course
+│   ├── instructor
+│   └── student
+├── hooks
+│   ├── useAuth.js
+│   ├── useDebounce.js
+│   ├── useDocumentTitle.js
+│   ├── useFilter.js
+│   ├── useLogin.js
+│   ├── useLogout.js
+│   ├── useNavigateByRole.js
+│   ├── usePagination.js
+│   └── useSearch.js
+├── layouts
+│   ├── AdminLayout.jsx
+│   ├── InstructorLayout.jsx
+│   ├── MainLayout.jsx
+│   ├── PublicLayout.jsx
+│   └── StudentLayout.jsx
+├── main.jsx
+├── pages
+│   ├── admin
+│   │   ├── AccountManagementPage.jsx
+│   │   ├── AdminDashboardPage.jsx
+│   │   ├── CourseManagementPage.jsx
+│   │   ├── InstructorManagementPage.jsx
+│   │   └── StudentManagementPage.jsx
+│   ├── auth
+│   │   ├── LoginPage.jsx
+│   │   └── RegisterPage.jsx
+│   ├── HomePage.jsx
+│   ├── instructor
+│   │   ├── InstructorProfilePage.jsx
+│   │   └── TeachingPage.jsx
+│   ├── student
+│   │   ├── MyCoursePage.jsx
+│   │   └── StudentProfilePage.jsx
+│   └── UnauthorizedPage.jsx
+├── routes
+│   ├── AnonymousRoute.jsx
+│   ├── AppRoutes.jsx
+│   ├── AuthProvider.jsx
+│   ├── ProtectedRoute.jsx
+│   └── RoleRoutes.jsx
+├── services
+│   ├── accountService.js
+│   ├── api.js
+│   ├── authService.js
+│   ├── storage.js
+│   └── studentService.js
+├── styles
+│   ├── App.css
+│   └── index.css
+├── test.txt
+└── utils
+
+24 directories, 61 files
