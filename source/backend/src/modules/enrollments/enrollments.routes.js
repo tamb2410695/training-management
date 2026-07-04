@@ -2,70 +2,24 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES } = require("../../constants");
+const { ROLES, ENROLLMENT_ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-const enrollmentsController = require("./enrollments.controller");
-const {
-  createValidationMiddleware,
-  createMultiValidator,
-} = require("../../utils/helpers");
-const {
-  validateGetList,
-  validateGetById,
-  validateCreate,
-  validateUpdate,
-  validatePartialUpdate,
-  validateRemove,
-} = require("./enrollments.validator");
+// router.get(ENROLLMENT_ROUTES.ROOT, enrollmentsController.getList);
 
-router.get(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateGetList, "query"),
-  enrollmentsController.getList,
-);
+// router.post(ENROLLMENT_ROUTES.ROOT, enrollmentsController.create);
 
-router.get(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateGetById, "params"),
-  enrollmentsController.getById,
-);
+// router.get(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.getById);
 
-router.post(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateCreate),
-  enrollmentsController.create,
-);
+// router.patch(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.update);
 
-router.put(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createMultiValidator(validateUpdate),
-  enrollmentsController.update,
-);
+// router.delete(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.remove);
 
-router.patch(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validatePartialUpdate),
-  enrollmentsController.update,
-);
+// router.patch(ENROLLMENT_ROUTES.CONFIRM, enrollmentsController.confirm);
 
-router.delete(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateRemove, "params"),
-  enrollmentsController.remove,
-);
+// router.patch(ENROLLMENT_ROUTES.CANCEL, enrollmentsController.cancel);
+
+// router.patch(ENROLLMENT_ROUTES.REFUND, enrollmentsController.refund);
 
 module.exports = router;

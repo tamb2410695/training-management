@@ -1,4 +1,4 @@
-import { ENDPOINTS } from "../../../constants/endpoint";
+import { API_ROUTES } from "../../../constants";
 import api from "../../../services/api";
 import { createCrudService } from "../../../services/crudService";
 import { unwrapResponse } from "../../../utils";
@@ -8,11 +8,11 @@ const studentsService = {
 
   updateStatus: (id, status) =>
     api
-      .patch(`${ENDPOINTS.STUDENTS}/${id}/status`, { status })
+      .patch(`${API_ROUTES.STUDENT}/${id}/status`, { status })
       .then(unwrapResponse),
 
   search: (params) =>
-    api.get(`${ENDPOINTS.STUDENTS}/search`, { params }).then(unwrapResponse),
+    api.get(`${API_ROUTES.STUDENT}/search`, { params }).then(unwrapResponse),
 };
 
 export default studentsService;

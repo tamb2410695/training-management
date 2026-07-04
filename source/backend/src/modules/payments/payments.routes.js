@@ -6,56 +6,18 @@ const { ROLES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-const coursesMiddleware = require("../../middlewares/courses.middleware");
+// router.get(PAYMENT_ROUTES.ROOT, controller.getList);
 
-const coursesController = require("./courses.controller");
+// router.post(PAYMENT_ROUTES.ROOT, controller.create);
 
-router.get(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateGetListMiddleware,
-  coursesController.getList,
-);
+// router.get(PAYMENT_ROUTES.DETAIL, controller.getById);
 
-router.get(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateGetByIdMiddleware,
-  coursesController.getById,
-);
+// router.patch(PAYMENT_ROUTES.DETAIL, controller.update);
 
-router.post(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateCreateMiddleware,
-  coursesController.create,
-);
+// router.delete(PAYMENT_ROUTES.DETAIL, controller.remove);
 
-router.put(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  // validateUpdateMiddleware,
-  coursesController.update,
-);
+// router.patch(PAYMENT_ROUTES.CONFIRM, controller.confirm);
 
-router.patch(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validatePartialUpdateMiddleware,
-  coursesController.update,
-);
-
-router.delete(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  // validateRemoveMiddleware,
-  coursesController.remove,
-);
+// router.patch(PAYMENT_ROUTES.REFUND, controller.refund);
 
 module.exports = router;

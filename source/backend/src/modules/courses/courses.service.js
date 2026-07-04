@@ -1,117 +1,276 @@
+const db = require("../../config/database");
 const AppError = require("../../utils/errors");
 const {
+  COURSE_LEVEL,
   COURSE_STATUS,
   ERROR_MESSAGES,
 } = require("../../constants");
 
-const { throwIf, hasField, generateCode } = require("../../utils/helpers");
-
+const { throwIf, hasField } = require("../../utils/helpers");
 const coursesRepository = require("./courses.repository");
-const db = require("../../config/database");
-const { COURSE_CODE } = require("./courses.constants");
-const { withTransaction } = require("../../utils/database");
 
+// =========================================================================
+// 1. GET LIST COURSES
+// =========================================================================
 const getList = async (query, connection = db) => {
   const { data: courses, pagination } = await coursesRepository.find(
     query,
     connection,
   );
-  return { courses, pagination };
+
+  return {
+    courses,
+    pagination,
+  };
 };
 
+// =========================================================================
+// 2. GET COURSE BY ID
+// =========================================================================
 const getById = async (courseId, connection = db) => {
   const course = await coursesRepository.findById(courseId, connection);
-  throwIf(!course, AppError.NotFoundError, ERROR_MESSAGES.RESOURCE_NOT_FOUND);
+
+  throwIf(!course, AppError.NotFoundError, "Course not found");
   return course;
 };
 
+// =========================================================================
+// 3. CREATE COURSE
+// =========================================================================
 const create = async (courseData, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    if (!hasField(courseData, "courseStatus")) {
-      courseData.courseStatus = COURSE_STATUS.PENDING;
-    }
-    if (!hasField(courseData, "courseDescription")) {
-      courseData.courseDescription = "";
-    }
-    if (!hasField(courseData, "certificateAvailable")) {
-      courseData.certificateAvailable = true;
-    }
+  const { courseCode, courseName, durationHours, totalSessions, tuitionFee } =
+    courseData;
 
-    const createdCourse = await coursesRepository.create(
-      courseData,
-      txConnection,
+  // --- NGHIỆP VỤ ĐẦU VÀO ---
+  // Kiểm tra trùng mã khóa học (course_code là UNIQUE)
+  if (courseCode) {
+    const existedCourse = await coursesRepository.findByCode(
+      courseCode,
+      connection,
     );
-    throwIf(!createdCourse, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
-
-    const courseCode = generateCode(
-      COURSE_CODE.PREFIX,
-      createdCourse.courseId,
-      COURSE_CODE.LENGTH,
-    );
-
-    const finalCourse = await coursesRepository.update(
-      createdCourse.courseId,
-      { courseCode },
-      txConnection,
-    );
-
-    return finalCourse;
-  }, connection);
-};
-
-const update = async (courseId, courseData, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    const course = await coursesRepository.findById(courseId, txConnection);
-    throwIf(!course, AppError.NotFoundError, ERROR_MESSAGES.RESOURCE_NOT_FOUND);
-
-    const updateCoursePayload = {};
-    const allowedFields = [
-      "courseName",
-      "courseDescription",
-      "durationHours",
-      "totalSessions",
-      "tuitionFee",
-      "certificateAvailable",
-      "courseStatus",
-      "level"
-    ];
-
-    allowedFields.forEach((field) => {
-      if (hasField(courseData, field)) {
-        updateCoursePayload[field] = courseData[field];
-      }
-    });
-
-    let updatedCourse = null;
-    if (Object.keys(updateCoursePayload).length > 0) {
-      updatedCourse = await coursesRepository.update(
-        courseId,
-        updateCoursePayload,
-        txConnection,
-      );
-    }
-
-    throwIf(!updatedCourse, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
-    return updatedCourse;
-  }, connection);
-};
-
-const remove = async (courseId, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    const course = await coursesRepository.findById(courseId, txConnection);
-    throwIf(!course, AppError.NotFoundError, ERROR_MESSAGES.RESOURCE_NOT_FOUND);
-
     throwIf(
-      course.courseStatus === COURSE_STATUS.DELETED,
+      existedCourse,
       AppError.ConflictError,
-      "Course has already been deleted"
+      "Course code already exists",
     );
+  }
 
-    const result = await coursesRepository.remove(courseId, txConnection);
-    throwIf(!result, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
+  // Ràng buộc số lượng / logic nghiệp vụ (Thay thế cho tầng validator cũ)
+  throwIf(
+    durationHours <= 0,
+    AppError.BadRequestError,
+    "Duration hours must be greater than 0",
+  );
+  throwIf(
+    totalSessions < 0,
+    AppError.BadRequestError,
+    "Total sessions cannot be negative",
+  );
 
-    return result;
-  }, connection);
+  if (tuitionFee !== undefined && tuitionFee !== null) {
+    throwIf(
+      tuitionFee < 0,
+      AppError.BadRequestError,
+      "Tuition fee cannot be negative",
+    );
+  }
+
+  const createdCourse = await coursesRepository.create(courseData, connection);
+  throwIf(!createdCourse, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
+
+  return createdCourse;
+};
+
+// =========================================================================
+// HELPERS FOR UPDATE LOGIC
+// =========================================================================
+const getCourseOrThrow = async (courseId, connection = db) => {
+  const course = await coursesRepository.findById(courseId, connection);
+  throwIf(!course, AppError.NotFoundError, "Course not found");
+  return course;
+};
+
+const resolveCourseCodeUpdate = async (
+  course,
+  courseData,
+  updateCourseData,
+  connection = db,
+) => {
+  if (!hasField(courseData, "courseCode")) return;
+
+  const existed = await coursesRepository.findByCode(
+    courseData.courseCode,
+    connection,
+  );
+  throwIf(
+    existed && existed.courseId !== course.courseId,
+    AppError.ConflictError,
+    "Course code already exists",
+  );
+
+  updateCourseData.courseCode = courseData.courseCode;
+};
+
+const resolveNumericFieldsUpdate = (courseData, updateCourseData) => {
+  // Kiểm tra nghiệp vụ số giờ học
+  if (hasField(courseData, "durationHours")) {
+    throwIf(
+      courseData.durationHours <= 0,
+      AppError.BadRequestError,
+      "Duration hours must be greater than 0",
+    );
+    updateCourseData.durationHours = courseData.durationHours;
+  }
+
+  // Kiểm tra nghiệp vụ tổng số buổi (CHECK total_sessions >= 0)
+  if (hasField(courseData, "totalSessions")) {
+    throwIf(
+      courseData.totalSessions < 0,
+      AppError.BadRequestError,
+      "Total sessions cannot be negative",
+    );
+    updateCourseData.totalSessions = courseData.totalSessions;
+  }
+
+  // Kiểm tra nghiệp vụ học phí
+  if (hasField(courseData, "tuitionFee") && courseData.tuitionFee !== null) {
+    throwIf(
+      courseData.tuitionFee < 0,
+      AppError.BadRequestError,
+      "Tuition fee cannot be negative",
+    );
+    updateCourseData.tuitionFee = courseData.tuitionFee;
+  }
+};
+
+const resolveStatusUpdate = (course, courseData, updateCourseData) => {
+  if (!hasField(courseData, "courseStatus")) return;
+
+  // Ngăn chặn việc đẩy trạng thái DELETED thủ công thông qua API update thông thường
+  throwIf(
+    courseData.courseStatus === COURSE_STATUS.DELETED,
+    AppError.BadRequestError,
+    ERROR_MESSAGES.MANUAL_STATUS_CHANGE_FORBIDDEN,
+  );
+
+  updateCourseData.courseStatus = courseData.courseStatus;
+};
+
+const buildUpdateCourseData = async (course, courseData, connection = db) => {
+  const updateCourseData = {};
+
+  await resolveCourseCodeUpdate(
+    course,
+    courseData,
+    updateCourseData,
+    connection,
+  );
+  resolveNumericFieldsUpdate(courseData, updateCourseData);
+  resolveStatusUpdate(course, courseData, updateCourseData);
+
+  // Map các trường phổ thông khác nếu có trong request body công khai
+  const generalFields = [
+    "courseName",
+    "courseDescription",
+    "coverImage",
+    "courseLevel",
+    "certificateAvailable",
+  ];
+  generalFields.forEach((field) => {
+    if (hasField(courseData, field)) {
+      updateCourseData[field] = courseData[field];
+    }
+  });
+
+  throwIf(
+    Object.keys(updateCourseData).length === 0,
+    AppError.BadRequestError,
+    ERROR_MESSAGES.NO_VALID_FIELDS,
+  );
+
+  return updateCourseData;
+};
+
+// =========================================================================
+// 4. UPDATE COURSE (FULL & PARTIAL PUT/PATCH)
+// =========================================================================
+const update = async (courseId, courseData, connection = db) => {
+  const course = await getCourseOrThrow(courseId, connection);
+
+  const updateCourseData = await buildUpdateCourseData(
+    course,
+    courseData,
+    connection,
+  );
+
+  const updatedCourse = await coursesRepository.update(
+    courseId,
+    updateCourseData,
+    connection,
+  );
+  throwIf(!updatedCourse, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
+
+  return updatedCourse;
+};
+
+const partialUpdate = async (courseId, courseData, connection = db) => {
+  // Kế thừa hoàn toàn từ build logic của hàm update vì bản chất xử lý động
+  return update(courseId, courseData, connection);
+};
+
+/**
+ * Hàm tập trung xử lý thay đổi trạng thái khóa học (Publish / Lock)
+ */
+const updateStatus = async (courseId, newStatus, connection = db) => {
+  const course = await coursesRepository.findById(courseId, connection);
+  throwIf(!course, AppError.NotFoundError, "Course not found");
+
+  throwIf(
+    course.courseStatus === "DELETED",
+    AppError.BadRequestError,
+    "Cannot change status of a deleted course",
+  );
+
+  if (course.courseStatus === newStatus) {
+    return course;
+  }
+
+  const updatedCourse = await coursesRepository.update(
+    courseId,
+    { courseStatus: newStatus },
+    connection,
+  );
+
+  throwIf(!updatedCourse, AppError.ConflictError, ERROR_MESSAGES.NO_CHANGES);
+  return updatedCourse;
+};
+
+// =========================================================================
+// 5. REMOVE COURSE (SOFT DELETE)
+// =========================================================================
+const remove = async (courseId, connection = db) => {
+  const course = await coursesRepository.findById(courseId, connection);
+  throwIf(!course, AppError.NotFoundError, "Course not found");
+
+  throwIf(
+    course.courseStatus === COURSE_STATUS.DELETED,
+    AppError.NotFoundError,
+    "Course has already been deleted",
+  );
+
+  const deletedCourse = await coursesRepository.remove(courseId, connection);
+  return deletedCourse;
+};
+
+// =========================================================================
+// 6. SUB-RESOURCE RELATED LOGIC
+// =========================================================================
+const getDocumentsByCourseId = async (courseId, connection = db) => {
+  // Xác thực khóa học có tồn tại trước khi truy vấn tài liệu
+  await getCourseOrThrow(courseId, connection);
+
+  // Gọi sang repository của tài liệu hoặc truy vấn liên kết
+  return await coursesRepository.findDocumentsByCourseId(courseId, connection);
 };
 
 module.exports = {
@@ -119,5 +278,8 @@ module.exports = {
   getById,
   create,
   update,
+  partialUpdate,
   remove,
+  updateStatus,
+  getDocumentsByCourseId,
 };

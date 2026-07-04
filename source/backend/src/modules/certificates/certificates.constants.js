@@ -4,15 +4,18 @@ const CERTIFICATE_FIELDS = {
   PARAMS: {
     ID: ["id"],
   },
+
   QUERY: {
     SEARCHABLE: ["certificateCode"],
-    SORTABLE: ["certificateId", "certificateCode", "issueDate", "certificateStatus"],
-    FILTERS: ["certificateStatus", "enrollmentId"],
-    
+
+    SORTABLE: ["certificateId", "issueDate"],
+
+    FILTERS: ["certificateStatus"],
+
     get ALLOWED_KEYS() {
       return [
         ...new Set([
-          ...QUERY_COMMON_FIELDS.PAGINATION,
+          ...QUERY_COMMON_FIELDS.ALL_KEYS,
           ...this.SEARCHABLE,
           ...this.SORTABLE,
           ...this.FILTERS,
@@ -20,22 +23,35 @@ const CERTIFICATE_FIELDS = {
       ];
     },
   },
+
   BODY: {
     CREATE: ["enrollmentId"],
-    UPDATE_STATUS: ["certificateStatus"],
+
+    UPDATE: ["certificateStatus"],
   },
+
   REQUIRED: {
     CREATE: ["enrollmentId"],
-    UPDATE_STATUS: ["certificateStatus"],
   },
 };
 
-const CERTIFICATE_CODE = {
-  PREFIX: "CERT",
-  LENGTH: 6,
+const CERTIFICATE_MAPS = {
+  SEARCH: {
+    certificateCode: "c.certificate_code",
+  },
+
+  SORT: {
+    certificateId: "c.certificate_id",
+    issueDate: "c.issue_date",
+  },
+
+  FILTER: {
+    certificateStatus: "c.certificate_status",
+    enrollmentId: "c.enrollment_id",
+  },
 };
 
 module.exports = {
   CERTIFICATE_FIELDS,
-  CERTIFICATE_CODE,
+  CERTIFICATE_MAPS,
 };

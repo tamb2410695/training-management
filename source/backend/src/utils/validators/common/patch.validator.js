@@ -1,17 +1,19 @@
-const { ERROR_MESSAGES } = require("../../../constants/index");
-const { ensure, pickFields, sanitizeFields } = require("../../helpers/index");
+const { BadRequestError } = require("../../errors");
+const { ERROR_CODES, ERROR_MESSAGES } = require("../../../constants");
+const { pickFields, sanitizeFields, throwIf } = require("../../helpers");
 
 const validateBodyNotEmpty = (body) => {
-  ensure(
-    body && Object.keys(body).length > 0,
-    ERROR_MESSAGES.EMPTY_REQUEST_BODY,
+  throwIf(
+    !body || Object.keys(body).length === 0,
+    BadRequestError,
+    ERROR_CODES.NO_VALID_FIELDS,
+    ERROR_MESSAGES.NO_VALID_FIELDS
   );
 };
 
 const sanitizePatchBody = (body, allowedFields) => {
   const patchData = sanitizeFields(pickFields(body, allowedFields));
   validateBodyNotEmpty(patchData);
-
   return patchData;
 };
 

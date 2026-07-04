@@ -9,6 +9,7 @@ module.exports = {
   ...require("./common/caseConverter"),
   ...require("./common/updateDataHelper"),
   ...require("./common/codeGenerator"),
+  ...require("./common/parseQueryArray"),
 
   ...require("./fields/hasField"),
   ...require("./fields/pickFields"),

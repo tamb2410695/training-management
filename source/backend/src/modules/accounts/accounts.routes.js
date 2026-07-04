@@ -2,67 +2,79 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES } = require("../../constants");
+const { ROLES, ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
-
-const {
-  validateGetListMiddleware,
-  validateGetByIdMiddleware,
-  validateCreateMiddleware,
-  validateUpdateMiddleware,
-  validatePartialUpdateMiddleware,
-  validateRemoveMiddleware,
-} = require("../../middlewares/accounts.middleware");
-
 const accountsController = require("./accounts.controller");
+const {
+  createValidationMiddleware,
+  createMultiValidator,
+} = require("../../utils/helpers");
+const {
+  validateCreate,
+  validateGetList,
+  validateGetById,
+  validateUpdate,
+  validateRemove,
+  validatePartialUpdate,
+  validateStatusTransition,
+} = require("./accounts.validator");
 
 router.get(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  validateGetListMiddleware,
+  ROUTES.ACCOUNT.ROOT,
+  createValidationMiddleware(validateGetList, "query"),
   accountsController.getList,
 );
 
-router.get(
-  "/:id",
-  authenticate,
-  // authorize(ROLES.ADMIN),
-  // validateGetByIdMiddleware,
-  accountsController.getById,
-);
-
 router.post(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  validateCreateMiddleware,
+  ROUTES.ACCOUNT.ROOT,
+  createValidationMiddleware(validateCreate),
   accountsController.create,
 );
 
-router.put(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  validateUpdateMiddleware,
-  accountsController.update,
+router.get(
+  ROUTES.ACCOUNT.DETAIL,
+  createValidationMiddleware(validateGetById, "params"),
+  accountsController.getById,
 );
 
 router.patch(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  validatePartialUpdateMiddleware,
+  ROUTES.ACCOUNT.DETAIL,
+  createMultiValidator(validatePartialUpdate),
   accountsController.update,
 );
 
+// router.patch(
+//   "/:id/restore",
+//   accountsController.restore,
+// );
+
 router.delete(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  validateRemoveMiddleware,
+  ROUTES.ACCOUNT.DETAIL,
+  createValidationMiddleware(validateRemove, "params"),
   accountsController.remove,
+);
+
+router.patch(
+  ROUTES.ACCOUNT.ACTIVATE,
+  createValidationMiddleware(validateStatusTransition, "params"),
+  accountsController.activate,
+);
+
+router.patch(
+  ROUTES.ACCOUNT.LOCK,
+  createValidationMiddleware(validateStatusTransition, "params"),
+  accountsController.lock,
+);
+router.patch(
+  ROUTES.ACCOUNT.DISABLE,
+  createValidationMiddleware(validateStatusTransition, "params"),
+  accountsController.disable,
+);
+router.patch(
+  ROUTES.ACCOUNT.PENDING,
+  createValidationMiddleware(validateStatusTransition, "params"),
+  accountsController.pending,
 );
 
 module.exports = router;

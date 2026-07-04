@@ -30,27 +30,27 @@ const find = async (query, connection = db) => {
   const { pagination, searchResult, filterResult, sortClause } = queryOptions;
   const selectDataClause = `
     SELECT
-      c.class_id,
-      c.class_code,
-      co.course_id,
-      co.course_name,
+      cls.class_id,
+      cls.class_code,
+      crs.course_id,
+      crs.course_name,
       i.instructor_id,
       i.full_name AS instructor_name,
-      c.start_date,
-      c.end_date,
-      c.max_students,
-      c.class_status,
-      c.created_at,
-      c.updated_at
+      cls.start_date,
+      cls.end_date,
+      cls.max_students,
+      cls.class_status,
+      cls.created_at,
+      cls.updated_at
   `;
 
   const fromJoinClause = `
     FROM CLASS c
-    JOIN COURSE co ON c.course_id = co.course_id
-    JOIN INSTRUCTOR i ON c.instructor_id = i.instructor_id
+    JOIN COURSE co ON cls.course_id = crs.course_id
+    JOIN INSTRUCTOR i ON cls.instructor_id = i.instructor_id
   `;
 
-  let whereClause = ` WHERE c.deleted_at IS NULL`;
+  let whereClause = ` WHERE cls.deleted_at IS NULL`;
   const params = [];
 
   if (filterResult.clause) {
@@ -92,22 +92,22 @@ const findById = async (classId, connection = db) => {
   const [rows] = await connection.query(
     `
     SELECT
-      c.class_id,
-      c.class_code,
-      co.course_id,
-      co.course_name,
+      cls.class_id,
+      cls.class_code,
+      crs.course_id,
+      crs.course_name,
       i.instructor_id,
       i.full_name AS instructor_name,
-      c.start_date,
-      c.end_date,
-      c.max_students,
-      c.class_status,
-      c.created_at,
-      c.updated_at
+      cls.start_date,
+      cls.end_date,
+      cls.max_students,
+      cls.class_status,
+      cls.created_at,
+      cls.updated_at
     FROM CLASS c
-    JOIN COURSE co ON c.course_id = co.course_id
-    JOIN INSTRUCTOR i ON c.instructor_id = i.instructor_id
-    WHERE c.class_id = ? AND c.deleted_at IS NULL;
+    JOIN COURSE co ON cls.course_id = crs.course_id
+    JOIN INSTRUCTOR i ON cls.instructor_id = i.instructor_id
+    WHERE cls.class_id = ? AND cls.deleted_at IS NULL;
     `,
     [classId],
   );

@@ -10,11 +10,12 @@ function Header() {
   const { user } = useAuth();
   const handleLogout = useLogout();
 
-  // const navigateByRole = useNavigateByRole();
-  // const handleNavigateByRole = () => {
-  //   if (user?.roleName) navigateByRole(user.roleName);
-  // };
+  const userRoleCode = user?.roleCodes?.[0]; 
 
+  const dashboardPath = userRoleCode && ROUTES[userRoleCode] 
+    ? ROUTES[userRoleCode].DASHBOARD 
+    : ROUTES.HOME;
+    
   return (
     <header>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -28,7 +29,7 @@ function Header() {
               <div className="d-flex align-items-center gap-3 text-white">
                 <Link
                   className="btn btn-primary btn-sm"
-                  to={ROUTES[user.roleName]?.DASHBOARD || ROUTES.HOME}
+                  to={dashboardPath}
                 >
                   Dashboard
                 </Link>

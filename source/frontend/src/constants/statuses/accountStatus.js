@@ -1,0 +1,11 @@
+const ACCOUNT_STATUS = {
+  PENDING: "PENDING",
+  ACTIVE: "ACTIVE",
+  LOCKED: "LOCKED",
+  DISABLED: "DISABLED",
+  DELETED: "DELETED",
+};
+
+module.exports = {
+  ACCOUNT_STATUS,
+};

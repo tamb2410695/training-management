@@ -1,65 +1,50 @@
 const express = require("express");
-
 const router = express.Router();
 
-const { ROLES } = require("../../constants");
-
-const { authenticate, authorize } = require("../../middlewares");
-
-const studentsMiddleware = require("../../middlewares/students.middleware");
-
+const { ROUTES } = require("../../constants");
 const studentsController = require("./students.controller");
-const { validateGetList, validateGetById, validateCreate, validateUpdate, validatePartialUpdate, validateRemove } = require("./students.validator");
+const { createValidationMiddleware, createMultiValidator } = require("../../utils/helpers");
 const {
-  createValidationMiddleware,
-  createMultiValidator,
-} = require("../../utils/helpers/validators/middlewareHelper");
+  validateCreate,
+  validateGetList,
+  validateGetById,
+  validateUpdate,
+  validatePartialUpdate,
+} = require("./students.validator");
 
 router.get(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
+  ROUTES.STUDENT?.ROOT || "/",
   createValidationMiddleware(validateGetList, "query"),
   studentsController.getList,
 );
 
-router.get(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateGetById, "params"),
-  studentsController.getById,
-);
-
 router.post(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
+  ROUTES.STUDENT?.ROOT || "/",
   createValidationMiddleware(validateCreate),
   studentsController.create,
 );
 
-router.put(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createMultiValidator(validateUpdate),
-  studentsController.update,
+router.get(
+  ROUTES.STUDENT?.DETAIL || "/:id",
+  createValidationMiddleware(validateGetById, "params"),
+  studentsController.getById,
 );
 
 router.patch(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
+  ROUTES.STUDENT?.DETAIL || "/:id",
   createMultiValidator(validatePartialUpdate),
   studentsController.update,
 );
 
+router.put(
+  ROUTES.STUDENT?.DETAIL || "/:id",
+  createMultiValidator(validateUpdate),
+  studentsController.update,
+);
+
 router.delete(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateRemove, "params"),
+  ROUTES.STUDENT?.DETAIL || "/:id",
+  createValidationMiddleware(validateGetById, "params"),
   studentsController.remove,
 );
 

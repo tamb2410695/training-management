@@ -1,8 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ROUTES } from "../constants/";
 
 function UnauthorizedPage() {
-  const navigate = useNavigate();
 
   return (
     <div className="container text-center mt-5">
@@ -14,12 +13,12 @@ function UnauthorizedPage() {
             <p className="text-muted mb-4">
             </p>
             <div className="d-flex justify-content-center gap-3">
-              <button 
+              <Link 
                 className="btn btn-danger" 
-                onClick={navigate(ROUTES.HOME)}
+                to={ROUTES.HOME}
               >
                 Về Trang Chủ
-              </button>
+              </Link>
             </div>
           </div>
         </div>

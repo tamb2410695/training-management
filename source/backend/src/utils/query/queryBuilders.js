@@ -107,15 +107,17 @@ function buildWhere(...clauses) {
 
 function buildSelectQuery({
   selectClause,
-  fromClause,
+  fromJoinClause,
   whereClause,
+  groupClause,
   sortClause,
 }) {
   return `
     ${selectClause}
-    ${fromClause}
+    ${fromJoinClause}
     ${whereClause}
-    ${sortClause}
+    ${groupClause || ""}
+    ${sortClause || ""}
   `;
 }
 

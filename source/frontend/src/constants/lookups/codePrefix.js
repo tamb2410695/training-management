@@ -1,0 +1,12 @@
+const CODE_PREFIX = {
+  STUDENT: "STU",
+  INSTRUCTOR: "INS",
+  COURSE: "CRS",
+  CLASS: "CLS",
+  PAYMENT: "PAY",
+  CERTIFICATE: "CERT",
+};
+
+module.exports = {
+  CODE_PREFIX
+}

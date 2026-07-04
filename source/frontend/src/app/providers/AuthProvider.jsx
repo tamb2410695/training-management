@@ -8,10 +8,10 @@ export default function AuthProvider({ children }) {
   const [user, setUser] = useState(storage.getUser());
   const [accessToken, setAccessToken] = useState(storage.getAccessToken());
 
-  const login = (userData, accessToken) => {
-    storage.setUser(userData);
+  const login = (user, accessToken) => {
+    storage.setUser(user);
     storage.setAccessToken(accessToken);
-    setUser(userData);
+    setUser(user);
     setAccessToken(accessToken);
   };
 

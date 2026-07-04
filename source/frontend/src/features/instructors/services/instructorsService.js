@@ -1,5 +1,5 @@
 // src/features/instructors/services/instructorsService.js
-import { ENDPOINTS } from "../../../constants/endpoint";
+import { API_ROUTES } from "../../../constants";
 import api from "../../../services/api";
 import { createCrudService } from "../../../services/crudService";
 import { unwrapResponse } from "../../../utils";
@@ -9,19 +9,19 @@ const instructorsService = {
 
   updateStatus: (id, status) =>
     api
-      .patch(`${ENDPOINTS.INSTRUCTORS}/${id}/status`, { status })
+      .patch(`${API_ROUTES.STAFF}/${id}/status`, { status })
       .then(unwrapResponse),
 
   resetPassword: (id) =>
     api
-      .post(`${ENDPOINTS.INSTRUCTORS}/${id}/reset-password`)
+      .post(`${API_ROUTES.STAFF}/${id}/reset-password`)
       .then(unwrapResponse),
 
   search: (params) =>
-    api.get(`${ENDPOINTS.INSTRUCTORS}/search`, { params }).then(unwrapResponse),
+    api.get(`${API_ROUTES.STAFF}/search`, { params }).then(unwrapResponse),
 
   getStatistics: () =>
-    api.get(`${ENDPOINTS.INSTRUCTORS}/statistics`).then(unwrapResponse),
+    api.get(`${API_ROUTES.STAFF}/statistics`).then(unwrapResponse),
 };
 
 export default instructorsService;

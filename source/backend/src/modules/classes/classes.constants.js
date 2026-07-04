@@ -1,26 +1,27 @@
 const { QUERY_COMMON_FIELDS } = require("../../constants");
-
 const CLASS_FIELDS = {
+  PARAMS: {
+    ID: ["id"],
+  },
+
   QUERY: {
-    SEARCHABLE: ["classCode"],
+    SEARCHABLE: ["classCode", "courseName"],
+
     SORTABLE: [
       "classId",
       "classCode",
-      "courseId",
-      "instructorId",
       "startDate",
       "endDate",
       "maxStudents",
-      "currentStudents",
-      "classStatus",
       "createdAt",
-      "updatedAt",
     ],
-    FILTERS: ["courseId", "instructorId", "classStatus"],
+
+    FILTERS: ["courseId", "classStatus"],
+
     get ALLOWED_KEYS() {
       return [
         ...new Set([
-          ...QUERY_COMMON_FIELDS.PAGINATION,
+          ...QUERY_COMMON_FIELDS.ALL_KEYS,
           ...this.SEARCHABLE,
           ...this.SORTABLE,
           ...this.FILTERS,
@@ -28,48 +29,39 @@ const CLASS_FIELDS = {
       ];
     },
   },
+
   BODY: {
-    CREATE: [
-      "courseId",
-      "instructorId",
-      "startDate",
-      "endDate",
-      "maxStudents",
-      "classStatus",
-    ],
-    UPDATE: [
-      "courseId",
-      "instructorId",
-      "startDate",
-      "endDate",
-      "maxStudents",
-      "currentStudents",
-      "classStatus",
-    ],
+    CREATE: ["classCode", "courseId", "startDate", "endDate", "maxStudents"],
+
+    UPDATE: ["startDate", "endDate", "maxStudents", "classStatus"],
   },
+
   REQUIRED: {
-    CREATE: [
-      "courseId", 
-      "instructorId", 
-      "maxStudents"
-    ],
-    UPDATE: [
-      "courseId",
-      "instructorId",
-      "startDate",
-      "endDate",
-      "maxStudents",
-      "classStatus",
-    ],
+    CREATE: ["courseId", "startDate", "endDate", "maxStudents"],
   },
 };
+const CLASS_MAPS = {
+  SEARCH: {
+    classCode: "cl.class_code",
+    courseName: "c.course_name",
+  },
 
-const CLASS_CODE = {
-  PREFIX: "CLS",
-  LENGTH: 6,
+  SORT: {
+    classId: "cl.class_id",
+    classCode: "cl.class_code",
+    startDate: "cl.start_date",
+    endDate: "cl.end_date",
+  },
+
+  FILTER: {
+    courseId: "cl.course_id",
+    classStatus: "cl.class_status",
+    startDate: "cl.start_date",
+    endDate: "cl.end_date",
+  },
 };
 
 module.exports = {
   CLASS_FIELDS,
-  CLASS_CODE,
+  CLASS_MAPS,
 };

@@ -1,17 +1,21 @@
+const { ROUTES } = require("../constants");
+
 const router = require("express").Router();
 
-router.use("/auth", require("../modules/auth/auth.routes"));
+router.use(ROUTES.AUTH.BASE, require("../modules/auth/auth.routes"));
 
-router.use("/accounts", require("../modules/accounts/accounts.routes"));
+router.use(ROUTES.ACCOUNT.BASE, require("../modules/accounts/accounts.routes"));
 
-router.use("/students", require("../modules/students/students.routes"));
+router.use(ROUTES.DOCUMENT.BASE, require("../modules/documents/documents.routes"));
 
-router.use("/instructors", require("../modules/instructors/instructors.routes"));
+router.use(ROUTES.STAFF.BASE, require("../modules/staffs/staffs.routes"));
 
-router.use("/courses", require("../modules/courses/courses.routes"));
+router.use(
+  ROUTES.REGISTRATION.BASE,
+  require("../modules/registrations/registrations.routes"),
+);
 
-router.use("/classes", require("../modules/classes/classes.routes"));
+router.use(ROUTES.STUDENT.BASE, require("../modules/students/students.routes"));
 
-router.use("/enrollments", require("../modules/enrollments/enrollments.routes"));
 
 module.exports = router;

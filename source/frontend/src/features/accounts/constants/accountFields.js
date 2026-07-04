@@ -1,3 +1,5 @@
+// constants/accountFields.js
+
 export const ACCOUNT_FIELDS = {
   accountId: {
     key: "accountId",
@@ -30,13 +32,19 @@ export const ACCOUNT_FIELDS = {
     default: "",
   },
 
-  roleName: {
-    key: "roleName",
+  roleCodes: {
+    key: "roleCodes",
     label: "Vai trò",
-    required: { create: true, update: true },
+    default: [],
+    sortable: false,
+    searchable: false,
+  },
+
+  roleNames: {
+    key: "roleNames",
+    label: "Vai trò",
     searchable: true,
-    filterable: true,
-    default: "",
+    default: [],
   },
 
   accountStatus: {
@@ -44,7 +52,7 @@ export const ACCOUNT_FIELDS = {
     label: "Trạng thái",
     required: { create: false, update: true },
     filterable: true,
-    default: "",
+    default: "ACTIVE",
   },
 
   avatarUrl: {
@@ -70,6 +78,9 @@ export const ACCOUNT_COLUMNS = [
   ACCOUNT_FIELDS.accountId,
   ACCOUNT_FIELDS.username,
   ACCOUNT_FIELDS.email,
-  ACCOUNT_FIELDS.roleName,
+  {
+    ...ACCOUNT_FIELDS.roleNames,
+    render: (roleNames) => roleNames?.join(", ") || "N/A",
+  },
   ACCOUNT_FIELDS.accountStatus,
-].map(({ key, label }) => ({ key, label }));
+];

@@ -3,8 +3,6 @@ const { CLASS_STATUS, ERROR_MESSAGES } = require("../../constants");
 const { throwIf, hasField, generateCode } = require("../../utils/helpers");
 
 const classesRepository = require("./classes.repository");
-const coursesRepository = require("../courses/courses.repository");
-const instructorsRepository = require("../instructors/instructors.repository");
 
 const db = require("../../config/database");
 const { CLASS_CODE } = require("./classes.constants");

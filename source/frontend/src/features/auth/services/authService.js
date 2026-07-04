@@ -1,20 +1,12 @@
-// src/features/auth/services/authService.js
-import { ENDPOINTS } from "../../../constants";
+import { API_ROUTES } from "../../../constants";
 import api from "../../../services/api";
-import { storage } from "../../../services/storage";
-import { unwrapResponse } from "../../../utils";
 
 const authService = {
   login: (credentials) => 
-    api.post(`${ENDPOINTS.AUTH}/login`, credentials).then(unwrapResponse),
+    api.post(API_ROUTES.AUTH.LOGIN, credentials),
 
   register: (credentials) => 
-    api.post(`${ENDPOINTS.AUTH}/register`, credentials).then(unwrapResponse),
-
-  logout: () => {
-    storage.removeToken();
-    return Promise.resolve({ success: true, message: "Đăng xuất thành công" });
-  }
+    api.post(API_ROUTES.AUTH.REGISTER, credentials),
 };
 
 export default authService;

@@ -1,23 +1,14 @@
 const AppError = require("../../utils/errors");
-const {
-  ERROR_MESSAGES,
-  COURSE_STATUS,
-  COURSE_LEVELS,
-} = require("../../constants");
+const { COURSE_LEVEL, COURSE_STATUS, ERROR_MESSAGES } = require("../../constants");
 const { COURSE_FIELDS } = require("./courses.constants");
+
 const {
   formatCourseData,
   formatCourseQuery,
-  formatId,
   formatNumericId,
 } = require("../../utils/formatters");
 
-const {
-  pickFields,
-  sanitizeFields,
-  hasField,
-  throwIf,
-} = require("../../utils/helpers");
+const { pickFields, sanitizeFields, hasField, throwIf } = require("../../utils/helpers");
 
 const {
   validateEnum,
@@ -28,35 +19,22 @@ const {
 } = require("../../utils/validators");
 
 const validateCourseFormats = (courseData) => {
+  if (!courseData) return;
 
-  if (hasField(courseData, "level")) {
-    validateEnum(courseData.level, Object.values(COURSE_LEVELS), "level");
+  if (hasField(courseData, "courseLevel")) {
+    validateEnum(courseData.courseLevel, Object.values(COURSE_LEVEL), "courseLevel");
   }
 
   if (hasField(courseData, "courseStatus")) {
-    validateEnum(
-      courseData.courseStatus,
-      Object.values(COURSE_STATUS),
-      "courseStatus",
-    );
-  }
-
-  if (hasField(courseData, "certificateAvailable")) {
-    const certAvail = String(courseData.certificateAvailable).toUpperCase();
-    throwIf(
-      certAvail !== "TRUE" &&
-        certAvail !== "FALSE" &&
-        typeof courseData.certificateAvailable !== "boolean",
-      AppError.BadRequestError,
-      "certificateAvailable must be a boolean (true/false)",
-    );
+    validateEnum(courseData.courseStatus, Object.values(COURSE_STATUS), "courseStatus");
   }
 };
 
 const validateGetList = (query) => {
   validateAllowedFields(query, COURSE_FIELDS.QUERY.ALLOWED_KEYS);
+
   const rawQueryData = sanitizeFields(
-    pickFields(query, COURSE_FIELDS.QUERY.ALLOWED_KEYS),
+    pickFields(query, COURSE_FIELDS.QUERY.ALLOWED_KEYS)
   );
   const queryData = formatCourseQuery(rawQueryData);
 
@@ -64,16 +42,12 @@ const validateGetList = (query) => {
     validatePagination(queryData.page, queryData.limit);
   }
 
-  if (hasField(queryData, "courseStatus")) {
-    validateEnum(
-      queryData.courseStatus,
-      Object.values(COURSE_STATUS),
-      "courseStatus",
-    );
+  if (hasField(queryData, "courseLevel")) {
+    validateEnum(queryData.courseLevel, Object.values(COURSE_LEVEL), "courseLevel");
   }
 
-  if (hasField(queryData, "level")) {
-    validateEnum(queryData.level, Object.values(COURSE_LEVELS), "level");
+  if (hasField(queryData, "courseStatus")) {
+    validateEnum(queryData.courseStatus, Object.values(COURSE_STATUS), "courseStatus");
   }
 
   return queryData;
@@ -87,12 +61,17 @@ const validateGetById = (params) => {
 
 const validateCreate = (body) => {
   validateAllowedFields(body, COURSE_FIELDS.BODY.CREATE);
-  const raw = sanitizeFields(pickFields(body, COURSE_FIELDS.BODY.CREATE));
-  validateRequiredFields(raw, COURSE_FIELDS.REQUIRED.CREATE);
+  
+  const sanitizedData = sanitizeFields(
+    pickFields(body, COURSE_FIELDS.BODY.CREATE)
+  );
+  
+  validateRequiredFields(sanitizedData, COURSE_FIELDS.REQUIRED.CREATE);
 
-  const courseData = formatCourseData(raw);
+  const courseData = formatCourseData(sanitizedData);
   validateCourseFormats(courseData);
-  return { courseData };
+
+  return courseData;
 };
 
 const validateUpdate = (params, body) => {
@@ -100,18 +79,17 @@ const validateUpdate = (params, body) => {
   validateId(courseId);
 
   validateAllowedFields(body, COURSE_FIELDS.BODY.UPDATE);
-
-  const rawCourseData = sanitizeFields(
-    pickFields(body, COURSE_FIELDS.BODY.UPDATE),
+  
+  const sanitizedData = sanitizeFields(
+    pickFields(body, COURSE_FIELDS.BODY.UPDATE)
   );
-  validateRequiredFields(rawCourseData, COURSE_FIELDS.REQUIRED.UPDATE);
 
-  const courseData = formatCourseData(rawCourseData);
+  const courseData = formatCourseData(sanitizedData);
 
   throwIf(
     !courseData || Object.keys(courseData).length === 0,
     AppError.BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS,
+    ERROR_MESSAGES.NO_VALID_FIELDS
   );
 
   validateCourseFormats(courseData);
@@ -127,16 +105,25 @@ const validatePartialUpdate = (params, body) => {
   validateId(courseId);
 
   validateAllowedFields(body, COURSE_FIELDS.BODY.UPDATE);
-  const raw = sanitizeFields(pickFields(body, COURSE_FIELDS.BODY.UPDATE));
-  const courseData = formatCourseData(raw);
+
+  const sanitizedData = sanitizeFields(
+    pickFields(body, COURSE_FIELDS.BODY.UPDATE)
+  );
+
+  const courseData = formatCourseData(sanitizedData);
 
   throwIf(
     !courseData || Object.keys(courseData).length === 0,
     AppError.BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS,
+    ERROR_MESSAGES.NO_VALID_FIELDS
   );
+
   validateCourseFormats(courseData);
-  return { courseId, courseData };
+
+  return {
+    courseId,
+    courseData,
+  };
 };
 
 const validateRemove = (params) => {

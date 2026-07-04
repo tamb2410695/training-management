@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS ROLE (
 -- =========================================================================
 CREATE TABLE IF NOT EXISTS ACCOUNT (
   account_id INT AUTO_INCREMENT PRIMARY KEY,
-  role_id SMALLINT NOT NULL,
   username VARCHAR(50) NOT NULL,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
@@ -32,10 +31,22 @@ CREATE TABLE IF NOT EXISTS ACCOUNT (
 
   CONSTRAINT uq_account_username UNIQUE (username),
   CONSTRAINT uq_account_email UNIQUE (email),
-  CONSTRAINT fk_account_role_id FOREIGN KEY (role_id) REFERENCES ROLE(role_id),
   CONSTRAINT chk_account_status CHECK (account_status IN ('PENDING', 'ACTIVE', 'LOCKED', 'DISABLED', 'DELETED'))
 );
 
+CREATE TABLE IF NOT EXISTS USER_ROLE (
+  account_id INT NOT NULL,
+  role_id SMALLINT NOT NULL,
+
+  assigned_by INT DEFAULT NULL,
+  assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP() NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() NOT NULL,
+
+  PRIMARY KEY(account_id, role_id),
+  CONSTRAINT fk_user_role_account FOREIGN KEY(account_id) REFERENCES ACCOUNT(account_id),
+  CONSTRAINT fk_user_role_role FOREIGN KEY(role_id) REFERENCES ROLE(role_id),
+  CONSTRAINT fk_user_role_assigned_by FOREIGN KEY(assigned_by) REFERENCES ACCOUNT(account_id)
+);
 -- =========================================================================
 -- 3. STAFF_PROFILE
 -- =========================================================================
@@ -51,7 +62,7 @@ CREATE TABLE IF NOT EXISTS STAFF_PROFILE (
   personal_email VARCHAR(255) NULL,
   address VARCHAR(255) NULL,
   academic_rank VARCHAR(50) NULL,
-  hire_date DATE DEFAULT (CURRENT_DATE()) NOT NULL, -- Bọc ngoặc đơn để tương thích MySQL 8.0+
+  hire_date DATE DEFAULT (CURRENT_DATE()) NOT NULL,
   contract_type VARCHAR(25) DEFAULT 'PROBATION' NOT NULL,  
   staff_status VARCHAR(25) DEFAULT 'ACTIVE' NOT NULL,
   
@@ -142,8 +153,10 @@ CREATE TABLE IF NOT EXISTS CLASS (
   course_id INT NOT NULL,
   start_date DATE DEFAULT (CURRENT_DATE()) NOT NULL,
   end_date DATE DEFAULT (CURRENT_DATE()) NOT NULL,
+
   max_students INT NOT NULL,
   class_status VARCHAR(25) DEFAULT 'CLOSED' NOT NULL,
+  
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP() NOT NULL,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() NOT NULL,
   deleted_at DATETIME DEFAULT NULL,
@@ -169,6 +182,7 @@ CREATE TABLE IF NOT EXISTS STUDENT (
   address VARCHAR(255) DEFAULT '' NOT NULL,
   personal_email VARCHAR(255) NOT NULL,
   student_status VARCHAR(25) DEFAULT 'ACTIVE' NOT NULL,
+
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP() NOT NULL,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() NOT NULL,
 
@@ -195,6 +209,7 @@ CREATE TABLE IF NOT EXISTS REGISTRATION (
   address VARCHAR(255) DEFAULT '' NOT NULL,
   registration_status VARCHAR(25) DEFAULT 'PENDING' NOT NULL,
   student_id INT DEFAULT NULL,
+  
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP() NOT NULL,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() NOT NULL,
 
@@ -323,11 +338,17 @@ CREATE TABLE IF NOT EXISTS GRADE (
 -- =========================================================================
 CREATE TABLE IF NOT EXISTS DOCUMENT (
   document_id INT AUTO_INCREMENT PRIMARY KEY,
-  document_code VARCHAR(25) DEFAULT 'DOC-TEMP' NOT NULL,
+  document_code VARCHAR(25) NOT NULL,
   course_id INT NOT NULL,
   title VARCHAR(255) DEFAULT 'UNTITLED' NOT NULL,
   file_path VARCHAR(255) DEFAULT '' NOT NULL,
+  original_name VARCHAR(255) DEFAULT NULL,
+  stored_name VARCHAR(255) DEFAULT NULL,
+  mime_type VARCHAR(100) DEFAULT NULL,
+  extension VARCHAR(10) DEFAULT NULL,
+  file_size INT DEFAULT 0 NOT NULL,
   document_description VARCHAR(255) DEFAULT '' NOT NULL,
+  category VARCHAR(50) DEFAULT 'GENERAL' NOT NULL,
   is_visible BOOLEAN DEFAULT FALSE NOT NULL,
   document_status VARCHAR(25) DEFAULT 'AVAILABLE' NOT NULL,
   uploaded_by_staff_id INT NOT NULL,
@@ -340,6 +361,7 @@ CREATE TABLE IF NOT EXISTS DOCUMENT (
   CONSTRAINT fk_document_staff_id FOREIGN KEY (uploaded_by_staff_id) REFERENCES STAFF_PROFILE(staff_id),
   CONSTRAINT chk_document_status CHECK (document_status IN ('AVAILABLE', 'ARCHIVED', 'DELETED'))
 );
+
 
 -- =========================================================================
 -- 17. PAYMENT
@@ -379,3 +401,28 @@ CREATE TABLE IF NOT EXISTS CERTIFICATE (
   CONSTRAINT fk_certificate_enrollment_id FOREIGN KEY (enrollment_id) REFERENCES ENROLLMENT(enrollment_id),
   CONSTRAINT chk_certificate_status CHECK (certificate_status IN ('ISSUED', 'REVOKED'))
 );
+
+
+
+
+INSERT INTO ROLE (role_code, role_name, role_description) 
+VALUES 
+(
+    'ADMIN', 
+    'Administrator', 
+    'Quản trị viên toàn quyền hệ thống, có quyền quản lý tài khoản, cấu hình và bảo mật.'
+),
+(
+    'INSTRUCTOR', 
+    'Instructor', 
+    'Giảng viên, có quyền quản lý lớp học, tài liệu giảng dạy, chấm điểm và quản lý học viên.'
+),
+(
+    'STUDENT', 
+    'Student', 
+    'Học viên, có quyền tham gia khóa học, làm bài tập, xem điểm và cập nhật hồ sơ cá nhân.'
+);
+
+
+
+

@@ -6,12 +6,13 @@ import { useLogout } from "../../hooks/useLogout";
 function Sidebar() {
   const { user } = useAuth();
 
-  const menus = SIDEBAR_MENU[user.roleName] || [];
+  const userRoleCode = user?.roleCodes?.[0]; 
+  const menus = SIDEBAR_MENU[userRoleCode] || [];
   const handleLogout = useLogout();
 
   return (
     <div>
-      <h3>{user.roleName}</h3>
+      <h3>{userRoleCode}</h3>
 
       {menus.map((menu) => (
         <div key={menu.path}>

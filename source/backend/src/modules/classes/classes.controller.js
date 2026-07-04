@@ -1,5 +1,4 @@
 const { asyncHandler, successResponse } = require("../../utils/helpers");
-
 const classesService = require("./classes.service");
 
 const getList = asyncHandler(async (req, res, next) => {
@@ -33,10 +32,45 @@ const remove = asyncHandler(async (req, res, next) => {
   return successResponse(res, result, "Remove class successful");
 });
 
+const getSchedules = asyncHandler(async (req, res, next) => {
+  const classId = req.params.id; // Thường route SCHEDULES dạng /:id/schedules
+  const result = await classesService.getSchedules(classId);
+  return successResponse(res, result, "Get class schedules successful");
+});
+
+const openRegistration = asyncHandler(async (req, res, next) => {
+  const classId = req.params.id;
+  const result = await classesService.openRegistration(classId);
+  return successResponse(res, result, "Open class registration successful");
+});
+
+const closeRegistration = asyncHandler(async (req, res, next) => {
+  const classId = req.params.id;
+  const result = await classesService.closeRegistration(classId);
+  return successResponse(res, result, "Close class registration successful");
+});
+
+const start = asyncHandler(async (req, res, next) => {
+  const classId = req.params.id;
+  const result = await classesService.start(classId);
+  return successResponse(res, result, "Start class successful");
+});
+
+const complete = asyncHandler(async (req, res, next) => {
+  const classId = req.params.id;
+  const result = await classesService.complete(classId);
+  return successResponse(res, result, "Complete class successful");
+});
+
 module.exports = {
   getList,
   getById,
   create,
   update,
   remove,
+  getSchedules,
+  openRegistration,
+  closeRegistration,
+  start,
+  complete,
 };

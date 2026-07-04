@@ -2,60 +2,22 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES } = require("../../constants");
+const { ROLES, ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-const coursesMiddleware = require("../../middlewares/courses.middleware");
+router.get(ROUTES.CERTIFICATE.ROOT, controller.getList);
 
-const coursesController = require("./courses.controller");
+router.post(ROUTES.CERTIFICATE.ROOT, controller.create);
 
-router.get(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateGetListMiddleware,
-  coursesController.getList,
-);
+router.get(ROUTES.CERTIFICATE.DETAIL, controller.getById);
 
-router.get(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateGetByIdMiddleware,
-  coursesController.getById,
-);
+router.patch(ROUTES.CERTIFICATE.DETAIL, controller.update);
 
-router.post(
-  "/",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validateCreateMiddleware,
-  coursesController.create,
-);
+router.delete(ROUTES.CERTIFICATE.DETAIL, controller.remove);
 
-router.put(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  // validateUpdateMiddleware,
-  coursesController.update,
-);
+router.get(ROUTES.CERTIFICATE.DOWNLOAD, controller.download);
 
-router.patch(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  coursesMiddleware.validatePartialUpdateMiddleware,
-  coursesController.update,
-);
-
-router.delete(
-  "/:id",
-  // authenticate,
-  // authorize(ROLES.ADMIN),
-  // validateRemoveMiddleware,
-  coursesController.remove,
-);
+router.patch(ROUTES.CERTIFICATE.REVOKE, controller.revoke);
 
 module.exports = router;

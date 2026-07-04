@@ -1,22 +1,19 @@
 import api from "./api";
-import { unwrapResponse } from "../utils";
 
-export const createCrudService = (resource) => ({
-  getList: (params = {}) => 
-    api.get(`/${resource}`, { params }).then(unwrapResponse),
+export const createCrudService = (resourcePath) => {
+  const service = {
+    getList: (params = {}) => 
+      api.get(`${resourcePath}`, { params }),
 
-  getById: (id) => 
-    api.get(`/${resource}/${id}`).then(unwrapResponse),
+    create: (data) => 
+      api.post(`${resourcePath}`, data),
 
-  create: (data) => 
-    api.post(`/${resource}`, data).then(unwrapResponse),
+    update: (id, data) => 
+      api.patch(`${resourcePath}/${id}`, data),
 
-  update: (id, data) => 
-    api.put(`/${resource}/${id}`, data).then(unwrapResponse),
+    remove: (id) => 
+      api.delete(`${resourcePath}/${id}`),
+  };
 
-  partialUpdate: (id, data) => 
-    api.patch(`/${resource}/${id}`, data).then(unwrapResponse),
-
-  remove: (id) => 
-    api.delete(`/${resource}/${id}`).then(unwrapResponse),
-});
+  return service;
+};

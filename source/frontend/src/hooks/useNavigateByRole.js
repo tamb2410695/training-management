@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
-import { ROLES } from "../constants/roles";
+import { ROLES, ROUTES } from "../constants";
 
-import { ROUTES } from "../constants/routes";
 
 export const useNavigateByRole = () => {
   const navigate = useNavigate();

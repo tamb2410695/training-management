@@ -1,31 +1,52 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("./auth.controller");
-const { validateLogin, validateRegister } = require("./auth.validator");
+const authValidator = require("./auth.validator");
 const { authenticate } = require("../../middlewares/auth.middleware");
 const { createValidationMiddleware } = require("../../utils/helpers");
+const { ROUTES } = require("../../constants");
 
 router.post(
-  "/register",
-  createValidationMiddleware(validateRegister),
+  ROUTES.AUTH.REGISTER,
+  createValidationMiddleware(authValidator.validateRegister),
   authController.register,
 );
+
 router.post(
-  "/login",
-  createValidationMiddleware(validateLogin),
+  ROUTES.AUTH.LOGIN,
+  createValidationMiddleware(authValidator.validateLogin),
   authController.login,
 );
-// router.post("/refresh-token", createValidationMiddleware(REFRESH_TOKEN_EXPIRES));
-router.post("/logout", authController.logout);
 
-// Các API bên dưới bắt buộc phải đi qua Middleware xác thực `authenticate`
-// router.get("/me", authenticate, authController.getMe);
-// router.patch(
-//   "/change-password",
-//   authenticate,
-//   authValidator.validateChangePassword,
-//   authController.changePassword,
-// );
-// router.patch("/reset-password", authController.resetPassword);
+router.post(
+  ROUTES.AUTH.REFRESH,
+  createValidationMiddleware(
+    authValidator.validateRefresh || authValidator.validateRefreshToken,
+  ),
+  authController.refresh,
+);
+
+router.post(
+  ROUTES.AUTH.FORGOT_PASSWORD,
+  createValidationMiddleware(authValidator.validateForgotPassword),
+  authController.forgotPassword,
+);
+
+router.post(
+  ROUTES.AUTH.RESET_PASSWORD,
+  createValidationMiddleware(authValidator.validateResetPassword),
+  authController.resetPassword,
+);
+
+router.post(ROUTES.AUTH.LOGOUT, authenticate, authController.logout);
+
+router.get(ROUTES.AUTH.PROFILE, authenticate, authController.getMe);
+
+router.patch(
+  ROUTES.AUTH.CHANGE_PASSWORD,
+  authenticate,
+  createValidationMiddleware(authValidator.validateChangePassword),
+  authController.changePassword,
+);
 
 module.exports = router;

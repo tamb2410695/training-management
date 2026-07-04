@@ -1,9 +1,9 @@
-
 const { hasField } = require("../../helpers");
 const { formatId, formatNumericId } = require("./paramsFormatter");
 const { formatEmail } = require("./primitives/emailFormatter");
 const { normalizeEnum } = require("./primitives/enumFormatter");
 const { formatUsername } = require("./primitives/usernameFormatter");
+const { formatEnumArray } = require("./primitives/formatEnumArray");
 const { formatPage } = require("./queryFormatter");
 
 function formatAccountData(accountData) {
@@ -19,12 +19,9 @@ function formatAccountData(accountData) {
     data.email = formatEmail(data.email);
   }
 
-  if (hasField(data, "roleName")) {
-    data.roleName = normalizeEnum(data.roleName);
-  }
-
-  if (hasField(data, "accountStatus")) {
-    data.accountStatus = normalizeEnum(data.accountStatus);
+  if (hasField(data, "roleCode") || hasField(data, "roleCodes")) {
+    data.roleCodes = formatEnumArray(data.roleCode, data.roleCodes);
+    delete data.roleCode;
   }
 
   if (hasField(data, "accountStatus")) {
@@ -39,10 +36,6 @@ function formatAccountQuery(query) {
     ...query,
   };
 
-  // if (hasField(data, "search")) {
-  //   data.search = formatKeyword(data.search);
-  // }
-
   if (hasField(data, "page")) {
     data.page = Number(data.page);
   }
@@ -51,12 +44,25 @@ function formatAccountQuery(query) {
     data.limit = Number(data.limit);
   }
 
-  if (hasField(data, "accountStatus")) {
-    data.accountStatus = normalizeEnum(data.accountStatus);
+  if (hasField(data, "username")) {
+    data.username = formatUsername(data.username);
   }
 
-  if (hasField(data, "roleName")) {
-    data.roleName = normalizeEnum(data.roleName);
+  if (hasField(data, "email")) {
+    data.email = formatEmail(data.email);
+  }
+
+  if (hasField(data, "roleCode") || hasField(data, "roleCodes")) {
+    data.roleCodes = formatEnumArray(data.roleCode, data.roleCodes);
+    delete data.roleCode;
+  }
+
+  if (hasField(data, "accountStatus") || hasField(data, "accountStatuses")) {
+    data.accountStatuses = formatEnumArray(
+      data.accountStatus,
+      data.accountStatuses,
+    );
+    delete data.accountStatus;
   }
 
   return data;

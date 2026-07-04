@@ -1,6 +1,13 @@
 const db = require("../../config/database");
 
 const withTransaction = async (callback, existingConnection = null) => {
+  if (
+    existingConnection &&
+    typeof existingConnection.beginTransaction !== "function"
+  ) {
+    existingConnection = null;
+  }
+
   if (existingConnection) {
     return await callback(existingConnection);
   }

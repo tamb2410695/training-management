@@ -13,16 +13,15 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     try {
       const response = await authService.login({ usernameOrEmail, password });
-
-      console.log(response)
       const {user, accessToken} = response.data;
 
+
+      console.log({ usernameOrEmail, password })
       login(user, accessToken);
 
-      switch (user.roleName) {
+      switch (user?.roleName) {
         case ROLES.ADMIN:
           navigate(ROUTES.ADMIN.DASHBOARD);
 

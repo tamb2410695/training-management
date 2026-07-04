@@ -10,12 +10,12 @@ const validatePassword = (password) => {
 
   ensure(
     trimmedPassword.length < PASSWORD.MIN_LENGTH,
-    ERROR_MESSAGES.PASSWORD_TOO_SHORT,
+    "Password too short",
   );
 
   ensure(
     trimmedPassword.length <= PASSWORD.MIN_LENGTH,
-    ERROR_MESSAGES.PASSWORD_TOO_LONG,
+    "Password too long",
   );
 
   return trimmedPassword;

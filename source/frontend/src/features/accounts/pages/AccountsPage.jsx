@@ -1,7 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
-
 import { useAccounts } from "../hooks/useAccounts";
-
 import AccountDeleteModal from "../components/AccountDeleteModal";
 import AccountToolbar from "../components/AccountToolbar";
 import AccountTable from "../components/AccountTable";
@@ -12,34 +11,27 @@ function AccountsPage() {
   const {
     accounts,
     loading,
+    pagination,
     loadAccounts,
     createAccount,
     updateAccount,
     deleteAccount,
+    changeAccountRole, 
   } = useAccounts();
 
   const [query, setQuery] = useState(ACCOUNT_QUERY_DEFAULTS);
-
   const [selectedAccount, setSelectedAccount] = useState(null);
-
   const [showForm, setShowForm] = useState(false);
-
   const [showDelete, setShowDelete] = useState(false);
 
-useEffect(() => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(query)
-      .filter(([_, value]) => value !== "" && value !== null && value !== undefined)
-      .map(([key, value]) => {
-        if (key === 'page' || key === 'limit') {
-          return [key, Number(value)];
-        }
-        return [key, value];
-      })
-  );
-    
-    loadAccounts(cleanParams);
-  }, [query]);
+  useEffect(() => {
+    const formattedParams = {
+      ...query,
+      page: Number(query.page || 1),
+      limit: Number(query.limit || 10),
+    };
+    loadAccounts(formattedParams);
+  }, [query, loadAccounts]);
 
   const handleCreate = () => {
     setSelectedAccount(null);
@@ -57,21 +49,43 @@ useEffect(() => {
   };
 
   const handleSubmit = async (formData) => {
-    if (selectedAccount) {
-      await updateAccount(selectedAccount.accountId, formData);
-    } else {
-      await createAccount(formData);
-    }
+    try {
+      if (selectedAccount) {
+        const accountPayload = {
+          email: formData.email,
+          accountStatus: formData.accountStatus,
+          ...(formData.password && { password: formData.password }),
+        };
 
-    setShowForm(false);
-    setSelectedAccount(null);
+        await updateAccount(selectedAccount.accountId, accountPayload);
+
+        const targetRoleCode = formData.roleCodes?.[0];
+        const originalRoleCode = selectedAccount.roleCodes?.[0];
+
+        if (targetRoleCode && targetRoleCode !== originalRoleCode) {
+          if (typeof changeAccountRole === "function") {
+            await changeAccountRole(selectedAccount.accountId, targetRoleCode);
+          }
+        }
+      } else {
+        await createAccount(formData);
+      }
+
+      setShowForm(false);
+      setSelectedAccount(null);
+    } catch (error) {
+      console.error("Xảy ra lỗi khi lưu tài khoản:", error);
+    }
   };
 
   const handleConfirmDelete = async () => {
-    await deleteAccount(selectedAccount.accountId);
-
-    setShowDelete(false);
-    setSelectedAccount(null);
+    try {
+      await deleteAccount(selectedAccount.accountId);
+      setShowDelete(false);
+      setSelectedAccount(null);
+    } catch (error) {
+      console.error("Xảy ra lỗi khi xóa tài khoản:", error);
+    }
   };
 
   const handleSearch = (newKeyword) => {
@@ -84,32 +98,53 @@ useEffect(() => {
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-4">Account Management</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="text-dark fw-bold mb-0">Quản Lý Tài Khoản</h2>
+        <span className="badge bg-secondary">
+          Tổng số: {pagination?.totalRecords || accounts?.length || 0} mục
+        </span>
+      </div>
 
-      <AccountToolbar
-        keyword={query.search || ""}
-        onKeywordChange={handleSearch}
-        onCreate={handleCreate}
-      />
+      {/* Toolbar chứa thanh ô tìm kiếm và bộ lọc nâng cao */}
+      <div className="card shadow-sm p-3 mb-4 bg-white rounded border-0">
+        <AccountToolbar
+          keyword={query.search || ""}
+          onKeywordChange={handleSearch}
+          onCreate={handleCreate}
+          setQuery={setQuery}
+          query={query}
+        />
+      </div>
 
-      <AccountTable
-        data={accounts}
-        loading={loading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {/* Bảng danh sách tài khoản */}
+      <div className="card shadow-sm border-0 mb-4">
+        <AccountTable
+          data={accounts}
+          loading={loading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </div>
 
+      {/* Modal Thêm mới / Sửa */}
       <AccountFormModal
         open={showForm}
         account={selectedAccount}
-        onClose={() => setShowForm(false)}
+        onClose={() => {
+          setShowForm(false);
+          setSelectedAccount(null);
+        }}
         onSubmit={handleSubmit}
       />
 
+      {/* Modal Xác nhận xóa */}
       <AccountDeleteModal
         open={showDelete}
         account={selectedAccount}
-        onClose={() => setShowDelete(false)}
+        onClose={() => {
+          setShowDelete(false);
+          setSelectedAccount(null);
+        }}
         onConfirm={handleConfirmDelete}
       />
     </div>

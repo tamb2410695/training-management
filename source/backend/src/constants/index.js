@@ -1,8 +1,10 @@
 module.exports = {
+  ...require("./system/routes"),
   ...require("./system/httpStatus"),
   ...require("./system/pagination"),
 
   ...require("./messages/errorMessages"),
+  ...require("./messages/successMessages"),
 
   ...require("./auth/jwt.constants"),
   ...require("./auth/roles"),
