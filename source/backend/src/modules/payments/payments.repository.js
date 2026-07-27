@@ -1,10 +1,23 @@
 const db = require("../../config/database");
 const { PAYMENT_FIELDS } = require("./payments.constants");
-const { arrayToCamelCase, objectToSnakeCase, objectToCamelCase } = require("../../utils/helpers");
+const {
+  arrayToCamelCase,
+  objectToSnakeCase,
+  objectToCamelCase,
+} = require("../../utils/helpers");
 const queryBuilder = require("../../utils/query/queryBuilders");
 
 const find = async (query, connection = db) => {
-  const { page, limit, search, sortBy, sortOrder, paymentStatus, paymentMethod, enrollmentId } = query;
+  const {
+    page,
+    limit,
+    search,
+    sortBy,
+    sortOrder,
+    paymentStatus,
+    paymentMethod,
+    enrollmentId,
+  } = query;
   const searchableFields = PAYMENT_FIELDS.QUERY.SEARCHABLE;
   const sortableFields = PAYMENT_FIELDS.QUERY.SORTABLE;
 
@@ -29,7 +42,7 @@ const find = async (query, connection = db) => {
   const selectClause = `
     SELECT 
       p.payment_id, p.payment_code, p.amount, p.payment_date, 
-      p.payment_method, p.transaction_code, p.payment_status, p.created_at,
+      p.payment_method, p.bank_transaction_code, p.payment_status, p.created_at,
       e.enrollment_code, s.full_name AS student_name, c.class_code
   `;
 
@@ -61,7 +74,11 @@ const find = async (query, connection = db) => {
   if (sortClause) dataSql += ` ${sortClause}`;
   dataSql += ` LIMIT ? OFFSET ?`;
 
-  const [rows] = await connection.query(dataSql, [...params, pagination.limit, pagination.offset]);
+  const [rows] = await connection.query(dataSql, [
+    ...params,
+    pagination.limit,
+    pagination.offset,
+  ]);
 
   return {
     data: arrayToCamelCase(rows),
@@ -77,7 +94,7 @@ const find = async (query, connection = db) => {
 const findById = async (paymentId, connection = db) => {
   const [rows] = await connection.query(
     `SELECT * FROM PAYMENT WHERE payment_id = ?`,
-    [paymentId]
+    [paymentId],
   );
   return rows[0] ? objectToCamelCase(rows[0]) : null;
 };

@@ -1,17 +1,16 @@
 const express = require("express");
 const path = require("path");
 
+const app = express();
 const cors = require("cors");
+const env = require("./config/env");
 
 const rootRoutes = require("./routes");
-
 const errorHandler = require("./middlewares/error.middleware");
-
-const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: env.security.corsAllowedOrigins,
     credentials: true,
   }),
 );
@@ -22,7 +21,7 @@ app.use("/api", rootRoutes);
 
 app.use(
   "/uploads",
-  express.static(path.join(process.cwd(), "uploads")),
+  express.static(env.upload.rootDirectory),
 );
 
 app.use(errorHandler);

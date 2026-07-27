@@ -6,18 +6,20 @@ const { ROLES, ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-router.get(ROUTES.CERTIFICATE.ROOT, controller.getList);
+const certificatesController = require("./certificates.controller");
 
-router.post(ROUTES.CERTIFICATE.ROOT, controller.create);
+router.get(ROUTES.CERTIFICATE.ROOT, certificatesController.getList);
 
-router.get(ROUTES.CERTIFICATE.DETAIL, controller.getById);
+router.post(ROUTES.CERTIFICATE.ROOT, certificatesController.create);
 
-router.patch(ROUTES.CERTIFICATE.DETAIL, controller.update);
+router.get(ROUTES.CERTIFICATE.DETAIL, certificatesController.getById);
 
-router.delete(ROUTES.CERTIFICATE.DETAIL, controller.remove);
+// router.patch(ROUTES.CERTIFICATE.DETAIL, certificatesController.update);
 
-router.get(ROUTES.CERTIFICATE.DOWNLOAD, controller.download);
+// router.delete(ROUTES.CERTIFICATE.DETAIL, certificatesController.remove);
 
-router.patch(ROUTES.CERTIFICATE.REVOKE, controller.revoke);
+// router.get(ROUTES.CERTIFICATE.DOWNLOAD, certificatesController.download);
+
+// router.patch(ROUTES.CERTIFICATE.REVOKE, certificatesController.revoke);
 
 module.exports = router;

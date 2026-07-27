@@ -2,22 +2,24 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES, GRADE_ROUTES } = require("../../constants");
+const { ROLES, ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-// router.get(GRADE_ROUTES.ROOT, controller.getList);
+const gradesController = require("./grades.controller");
 
-// router.post(GRADE_ROUTES.ROOT, controller.create);
+router.get(ROUTES.ROOT, gradesController.getList);
 
-// router.get(GRADE_ROUTES.DETAIL, controller.getById);
+router.post(ROUTES.ROOT, gradesController.create);
 
-// router.patch(GRADE_ROUTES.DETAIL, controller.update);
+router.get(ROUTES.DETAIL, gradesController.getById);
 
-// router.delete(GRADE_ROUTES.DETAIL, controller.remove);
+// router.patch(ROUTES.DETAIL, gradesController.update);
 
-// router.patch(GRADE_ROUTES.PUBLISH, controller.publish);
+// router.delete(ROUTES.DETAIL, gradesController.remove);
 
-// router.patch(GRADE_ROUTES.LOCK, controller.lock);
+// router.patch(ROUTES.PUBLISH, gradesController.publish);
+
+// router.patch(ROUTES.LOCK, gradesController.lock);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const { BadRequestError } = require("../../utils/errors");
 const { ERROR_MESSAGES } = require("../../constants");
-const { DOCUMENT_FIELDS } = require("./documents.constants");
+const { DOCUMENT_FIELDS, DOCUMENT_ENUMS } = require("./documents.constants");
 
 const {
   formatNumericId,
@@ -21,12 +21,6 @@ const {
   validateRequiredFields,
   sanitizePatchBody,
 } = require("../../utils/validators");
-
-const DOCUMENT_ENUMS = {
-  LEVEL: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
-  STATUS: ["AVAILABLE", "ARCHIVED", "DELETED"],
-  CATEGORY: ["GENERAL", "SLIDE", "EXAM", "ASSIGNMENT", "REFERENCE"]
-};
 
 const validateDocumentFormats = (documentData) => {
   if (!documentData) return;
@@ -68,7 +62,7 @@ const validateDocumentFormats = (documentData) => {
   }
 };
 
-const validateGetDocuments = (query) => {
+const validateGetList = (query) => {
   validateAllowedFields(query, DOCUMENT_FIELDS.QUERY.ALLOWED_KEYS);
 
   const queryData = sanitizeFields(
@@ -80,7 +74,7 @@ const validateGetDocuments = (query) => {
   return queryData;
 };
 
-const validateDocumentId = (params) => {
+const validateGetById = (params) => {
   throwIf(
     !params || !params.id,
     BadRequestError,
@@ -116,7 +110,7 @@ const validateUpload = (body, file) => {
 };
 
 const validateUpdate = (params, body) => {
-  const documentId = validateDocumentId(params);
+  const documentId = validateGetById(params);
 
   validateAllowedFields(body, DOCUMENT_FIELDS.BODY.UPDATE);
   
@@ -137,12 +131,12 @@ const validateUpdate = (params, body) => {
 };
 
 const validateDelete = (params) => {
-  return validateDocumentId(params);
+  return validateGetById(params);
 };
 
 module.exports = {
-  validateGetDocuments,
-  validateDocumentId,
+  validateGetList,
+  validateGetById,
   validateUpload,
   validateUpdate,
   validateDelete,

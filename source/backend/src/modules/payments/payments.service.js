@@ -17,9 +17,6 @@ const getById = async (paymentId, connection = db) => {
   return payment;
 };
 
-/**
- * Xử lý cập nhật trạng thái hóa đơn thanh toán từ học viên
- */
 const processPayment = async (paymentId, { paymentStatus, paymentMethod, transactionCode }, connection = db) => {
   return withTransaction(async (txConnection) => {
     // 1. Kiểm tra hóa đơn tồn tại

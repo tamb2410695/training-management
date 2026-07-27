@@ -12,26 +12,13 @@ function buildPagination(page = 1, limit = 10) {
   };
 }
 
-// function buildSearch(keyword, searchableFields = [], searchMap = {}) {
-//   if (!keyword || searchableFields.length === 0) {
-//     return {
-//       clause: "",
-//       values: [],
-//     };
-//   }
-
-//   const conditions = searchableFields
-//     .map((field) => `${field} LIKE ?`)
-//     .join(" OR ");
-
-//   return {
-//     clause: `(${conditions})`,
-//     values: searchableFields.map(() => `%${keyword}%`),
-//   };
-// }
-
-function buildSearch(keyword, searchableFields = [], searchMap = {}) {
-  if (!keyword || !searchableFields || searchableFields.length === 0) {
+function buildSearch(
+  keyword,
+  searchField,
+  searchableFields = [],
+  searchMap = {},
+) {
+  if (!keyword || keyword.trim() === "") {
     return {
       clause: "",
       values: [],
@@ -40,6 +27,22 @@ function buildSearch(keyword, searchableFields = [], searchMap = {}) {
 
   const safeKeyword = keyword.trim();
 
+  if (searchField && searchField.trim() !== "") {
+    const dbColumn = searchMap[searchField] || searchField;
+
+    return {
+      clause: `(${dbColumn} LIKE ?)`,
+      values: [`%${safeKeyword}%`],
+    };
+  }
+
+  if (!searchableFields || searchableFields.length === 0) {
+    return {
+      clause: "",
+      values: [],
+    };
+  }
+
   const conditions = searchableFields
     .map((field) => {
       const dbColumn = searchMap[field] || field;
@@ -47,13 +50,11 @@ function buildSearch(keyword, searchableFields = [], searchMap = {}) {
     })
     .join(" OR ");
 
-    
   return {
     clause: `(${conditions})`,
     values: searchableFields.map(() => `%${safeKeyword}%`),
   };
 }
-
 function buildFilters(filters = {}, filterMap = {}) {
   const conditions = [];
   const values = [];
@@ -65,8 +66,30 @@ function buildFilters(filters = {}, filterMap = {}) {
       return;
     }
 
-    conditions.push(`${column} = ?`);
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return;
+      }
 
+      conditions.push(`${column} IN (${value.map(() => "?").join(", ")})`);
+
+      values.push(...value);
+      return;
+    }
+
+    if (typeof value === "string" && value.includes(",")) {
+      const items = value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      conditions.push(`${column} IN (${items.map(() => "?").join(", ")})`);
+
+      values.push(...items);
+      return;
+    }
+
+    conditions.push(`${column} = ?`);
     values.push(value);
   });
 
@@ -75,7 +98,6 @@ function buildFilters(filters = {}, filterMap = {}) {
     values,
   };
 }
-
 function buildSort(sortBy, sortOrder = "ASC", sortMap = {}) {
   const column = sortMap[sortBy];
 
@@ -124,8 +146,9 @@ function buildSelectQuery({
 const buildQueryOptions = ({
   page,
   limit,
-  
+
   search,
+  searchField,
   searchableFields = [],
   searchMap = {},
 
@@ -137,7 +160,12 @@ const buildQueryOptions = ({
   filterMap = {},
 }) => {
   const pagination = buildPagination(page, limit);
-  const searchResult = buildSearch(search, searchableFields, searchMap);
+  const searchResult = buildSearch(
+    search,
+    searchField,
+    searchableFields,
+    searchMap,
+  );
   const filterResult = buildFilters(filters, filterMap);
   const sortClause = buildSort(sortBy, sortOrder, sortMap);
 
@@ -156,5 +184,5 @@ module.exports = {
   buildSort,
   buildQueryOptions,
   buildWhere,
-  buildSelectQuery
+  buildSelectQuery,
 };

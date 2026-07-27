@@ -44,10 +44,10 @@ router.patch(
   accountsController.update,
 );
 
-// router.patch(
-//   "/:id/restore",
-//   accountsController.restore,
-// );
+router.patch(  
+  ROUTES.ACCOUNT.RESTORE,
+  accountsController.restore,
+);
 
 router.delete(
   ROUTES.ACCOUNT.DETAIL,

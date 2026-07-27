@@ -9,9 +9,6 @@ const {
 
 const queryBuilder = require("../../utils/query/queryBuilders");
 
-// =========================================================================
-// 1. FIND WITH PAGINATION, SEARCH, FILTER, SORT
-// =========================================================================
 const find = async (query, connection = db) => {
   const { page, limit, search, sortBy, sortOrder, courseLevel, courseStatus, certificateAvailable } = query;
   
@@ -21,7 +18,6 @@ const find = async (query, connection = db) => {
   const sortMap = COURSE_MAPS.SORT;
   const filterMap = COURSE_MAPS.FILTER;
   
-  // Thu thập các bộ lọc động đặc thù của Course
   const filters = {};
   if (courseLevel) filters.courseLevel = courseLevel;
   if (courseStatus) filters.courseStatus = courseStatus;
@@ -44,27 +40,26 @@ const find = async (query, connection = db) => {
   
   const selectClause = `
     SELECT
-      c.course_id,
-      c.course_name,
-      c.cover_image,
-      c.course_code,
-      c.course_description,
-      c.duration_hours,
-      c.total_sessions,
-      c.tuition_fee,
-      c.course_level,
-      c.certificate_available,
-      c.course_status,
-      c.created_at,
-      c.updated_at
+      crs.course_id,
+      crs.course_name,
+      crs.cover_image,
+      crs.course_code,
+      crs.course_description,
+      crs.duration_hours,
+      crs.total_sessions,
+      crs.tuition_fee,
+      crs.course_level,
+      crs.certificate_available,
+      crs.course_status,
+      crs.created_at,
+      crs.updated_at
   `;
 
   const fromJoinClause = `
-    FROM COURSE c
+    FROM COURSE crs
   `;
 
-  // Luôn lọc các bản ghi chưa bị xóa mềm
-  const whereParts = ["c.deleted_at IS NULL"];
+  const whereParts = ["crs.deleted_at IS NULL"];
   const params = [];
 
   if (searchResult.clause) {
@@ -79,12 +74,10 @@ const find = async (query, connection = db) => {
 
   const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 
-  // 1. Lấy tổng số bản ghi phục vụ phân trang
   const countSql = `SELECT COUNT(*) as total ${fromJoinClause} ${whereClause}`;
   const [countRows] = await connection.query(countSql, params);
   const totalRecords = countRows[0]?.total || 0;
   
-  // 2. Lấy dữ liệu phân trang thực tế
   let dataSql = queryBuilder.buildSelectQuery({
     selectClause,
     fromJoinClause,
@@ -107,57 +100,48 @@ const find = async (query, connection = db) => {
   };
 };
 
-// =========================================================================
-// 2. FIND BY ID
-// =========================================================================
 const findById = async (courseId, connection = db) => {
   const [rows] = await connection.query(
     `
     SELECT 
-      c.course_id,
-      c.course_name,
-      c.cover_image,
-      c.course_code,
-      c.course_description,
-      c.duration_hours,
-      c.total_sessions,
-      c.tuition_fee,
-      c.course_level,
-      c.certificate_available,
-      c.course_status,
-      c.created_at,
-      c.updated_at
-    FROM COURSE c
-    WHERE c.course_id = ? AND c.deleted_at IS NULL;
+      crs.course_id,
+      crs.course_name,
+      crs.cover_image,
+      crs.course_code,
+      crs.course_description,
+      crs.duration_hours,
+      crs.total_sessions,
+      crs.tuition_fee,
+      crs.course_level,
+      crs.certificate_available,
+      crs.course_status,
+      crs.created_at,
+      crs.updated_at
+    FROM COURSE crs
+    WHERE crs.course_id = ? AND crs.deleted_at IS NULL;
     `,
     [courseId],
   );
   return rows[0] ? objectToCamelCase(rows[0]) : null;
 };
 
-// =========================================================================
-// 3. FIND BY COURSE CODE (UNIQUE CHECK)
-// =========================================================================
 const findByCode = async (courseCode, connection = db) => {
   const [rows] = await connection.query(
     `
     SELECT 
-      c.course_id,
-      c.course_name,
-      c.cover_image,
-      c.course_code,
-      c.course_status
-    FROM COURSE c
-    WHERE c.course_code = ? AND c.deleted_at IS NULL;
+      crs.course_id,
+      crs.course_name,
+      crs.cover_image,
+      crs.course_code,
+      crs.course_status
+    FROM COURSE crs
+    WHERE crs.course_code = ? AND crs.deleted_at IS NULL;
     `,
     [courseCode],
   );
   return rows[0] ? objectToCamelCase(rows[0]) : null;
 };
 
-// =========================================================================
-// 4. CREATE COURSE
-// =========================================================================
 const create = async (courseData, connection = db) => {
   const data = objectToSnakeCase(courseData);
   const fields = Object.keys(data);
@@ -175,9 +159,6 @@ const create = async (courseData, connection = db) => {
   return findById(result.insertId, connection);
 };
 
-// =========================================================================
-// 5. UPDATE COURSE
-// =========================================================================
 const update = async (courseId, courseData, connection = db) => {
   const data = objectToSnakeCase(courseData);
   const fields = Object.keys(data);
@@ -194,9 +175,6 @@ const update = async (courseId, courseData, connection = db) => {
   return findById(courseId, connection);
 };
 
-// =========================================================================
-// 6. REMOVE COURSE (SOFT DELETE)
-// =========================================================================
 const remove = async (courseId, connection = db) => {
   const currentCourse = await findById(courseId, connection);
   if (!currentCourse) return null;

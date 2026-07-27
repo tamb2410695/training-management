@@ -1,10 +1,15 @@
 import AppRoutes from "./app/routers/AppRoutes";
 
+import AuthProvider from "./app/providers/AuthProvider";
+import { FeedbackProvider } from "./app/providers/FeedbackProvider";
+
 function App() {
   return (
-    <div className="container-fluid g-0">
-      <AppRoutes />
-    </div>
+    <AuthProvider>
+      <FeedbackProvider>
+        <AppRoutes />
+      </FeedbackProvider>
+    </AuthProvider>
   );
 }
 

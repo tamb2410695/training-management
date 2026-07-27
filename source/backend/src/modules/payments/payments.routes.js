@@ -2,22 +2,24 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES } = require("../../constants");
+const { ROLES, ROUTES } = require("../../constants");
 
 const { authenticate, authorize } = require("../../middlewares");
 
-// router.get(PAYMENT_ROUTES.ROOT, controller.getList);
+const paymentsController = require("./payments.controller")
 
-// router.post(PAYMENT_ROUTES.ROOT, controller.create);
+router.get(ROUTES.PAYMENT.ROOT, paymentsController.getList);
 
-// router.get(PAYMENT_ROUTES.DETAIL, controller.getById);
+router.post(ROUTES.PAYMENT.ROOT, paymentsController.create);
 
-// router.patch(PAYMENT_ROUTES.DETAIL, controller.update);
+router.get(ROUTES.PAYMENT.DETAIL, paymentsController.getById);
 
-// router.delete(PAYMENT_ROUTES.DETAIL, controller.remove);
+// router.patch(ROUTES.PAYMENT.DETAIL, paymentsController.update);
 
-// router.patch(PAYMENT_ROUTES.CONFIRM, controller.confirm);
+router.delete(ROUTES.PAYMENT.DETAIL, paymentsController.remove);
 
-// router.patch(PAYMENT_ROUTES.REFUND, controller.refund);
+// router.patch(ROUTES.PAYMENT.CONFIRM, paymentsController.confirm);
+
+// router.patch(ROUTES.PAYMENT.REFUND, paymentsController.refund);
 
 module.exports = router;

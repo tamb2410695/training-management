@@ -1,4 +1,4 @@
-const GENDER = { MALE: "MALE", FEMAL: "FEMALE", OTHER: "OTHER" };
+const GENDER = { MALE: "MALE", FEMALE: "FEMALE", OTHER: "OTHER" };
 module.exports = {
   GENDER,
 };

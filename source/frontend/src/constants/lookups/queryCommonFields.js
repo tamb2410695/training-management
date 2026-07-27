@@ -1,4 +1,4 @@
-const QUERY_COMMON_FIELDS = {
+export const QUERY_COMMON_FIELDS = {
   FIELDS: {
     PAGINATION: ["page", "limit", "offset"],
     SEARCH: ["search"],
@@ -13,11 +13,17 @@ const QUERY_COMMON_FIELDS = {
     return [
       ...this.FIELDS.PAGINATION,
       ...this.FIELDS.SEARCH,
-      ...this.FIELDS.SORT
+      ...this.FIELDS.SORT,
     ];
-  }
+  },
 };
 
-module.exports = {
-  QUERY_COMMON_FIELDS,
+export const QUERY_DEFAULTS = {
+  page: 1,
+  limit: 10,
+
+  search: "",
+  searchField: "",
+  sortBy: "",
+  sortOrder: "desc",
 };

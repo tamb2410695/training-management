@@ -6,9 +6,9 @@ const ACCOUNT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "email"],
+    SEARCHABLE: ["username", "email", "roleLabel"],
 
-    SORTABLE: ["accountId", "username", "createdAt"],
+    SORTABLE: ["accountId", "username", "createdAt", "roleCode"],
 
     FILTERS: ["accountStatus", "roleCode"],
 
@@ -31,7 +31,6 @@ const ACCOUNT_FIELDS = {
       "email",
       "password",
       "avatarUrl",
-      "accountStatus",
     ],
     UPDATE: ["roleCode", "avatarUrl", "accountStatus"],
     CHANGE_PASSWORD: ["oldPassword", "newPassword"],
@@ -69,8 +68,6 @@ const STAFF_FIELDS = {
 
   BODY: {
     CREATE: [
-      "accountId",
-      "staffCode",
       "fullName",
       "gender",
       "dateOfBirth",
@@ -98,7 +95,7 @@ const STAFF_FIELDS = {
   },
 
   REQUIRED: {
-    CREATE: ["accountId", "staffCode", "fullName", "phone"],
+    CREATE: ["fullName", "phone", "personalEmail"],
   },
 };
 
@@ -106,6 +103,7 @@ const STAFF_MAPS = {
   SEARCH: {
     username: "acc.username",
     email: "acc.email",
+    roleLabel: "rl.role_label",
     staffCode: "sp.staff_code",
     fullName: "sp.full_name",
     phone: "sp.phone",
@@ -116,6 +114,7 @@ const STAFF_MAPS = {
     accountId: "acc.account_id",
     username: "acc.username",
     createdAt: "acc.created_at",
+    roleLabel: "rl.role_code",
     staffId: "sp.staff_id",
     staffCode: "sp.staff_code",
     fullName: "sp.full_name",

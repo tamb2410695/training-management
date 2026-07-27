@@ -28,26 +28,24 @@ export const API_ROUTES = {
   },
 
   // 3. STAFF & DEPARTMENT
-  STAFF: {
-    LIST: "/staffs",
-    DETAIL: (id) => `/staffs/${id}`,
-    DEPARTMENTS: (id) => `/staffs/${id}/departments`,
-    CAPABILITIES: (id) => `/staffs/${id}/capabilities`,
-  },
   DEPARTMENT: {
     LIST: "/departments",
     DETAIL: (id) => `/departments/${id}`,
     STAFFS: (id) => `/departments/${id}/staffs`,
   },
+  STAFF_PROFILE: {
+    LIST: "/staffs/profiles",
+    DETAIL: (id) => `/staffs/profiles/${id}`,
+  },
   STAFF_DEPARTMENT: {
-    LIST: "/staff-departments",
-    ASSIGN: "/staff-departments/assign",
-    REMOVE: (staffId, departmentId) => `/staff-departments/staff/${staffId}/department/${departmentId}`,
+    LIST: "/staffs/departments",
+    ASSIGN: "/staffs/departments/assign",
+    REMOVE: (staffId, departmentId) => `/staffs/departments/staff/${staffId}/department/${departmentId}`,
   },
   STAFF_CAPABILITY: {
-    LIST: "/staff-capabilities",
-    ASSIGN: "/staff-capabilities/assign",
-    REMOVE: (staffId, courseId) => `/staff-capabilities/staff/${staffId}/course/${courseId}`,
+    LIST: "/staffs/capabilities",
+    ASSIGN: "/staffs/capabilities/assign",
+    REMOVE: (staffId, courseId) => `/staffs/capabilities/staff/${staffId}/course/${courseId}`,
   },
 
   // 4. COURSE & DOCUMENT
@@ -91,6 +89,7 @@ export const API_ROUTES = {
     DETAIL: (id) => `/registrations/${id}`,
     APPROVE: (id) => `/registrations/${id}/approve`,
     REJECT: (id) => `/registrations/${id}/reject`,
+    ACTIVATE: (id) => `/registrations/${id}/activate`,
   },
   STUDENT: {
     LIST: "/students",

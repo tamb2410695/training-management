@@ -1,7 +1,7 @@
 module.exports = {
-  ...require("./accounts.middleware"),
-  ...require("./students.middleware"),
-  ...require("./auth.middleware"),
   ...require("./error.middleware"),
+  ...require("./temp/accounts.middleware"),
+  ...require("./temp/students.middleware"),
+  ...require("./auth.middleware"),
   ...require("./role.middleware")
 }

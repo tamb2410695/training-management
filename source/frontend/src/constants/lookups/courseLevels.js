@@ -1,9 +1,5 @@
-const COURSE_LEVELS = {
+export const COURSE_LEVELS = {
   BEGINNER: "BEGINNER",
   INTERMEDIATE: "INTERMEDIATE",
   ADVANCED: "ADVANCED"
-}
-
-module.exports = {
-  COURSE_LEVELS
 }

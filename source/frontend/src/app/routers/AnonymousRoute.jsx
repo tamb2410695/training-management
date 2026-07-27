@@ -5,7 +5,7 @@ function AnonymousRoute({ children }) {
   const { user, isAuthenticated } = useAuth();
   const navigateByRole = useNavigateByRole();
   useEffect(() => {
-    const userRoleCode = user?.roleCodes?.[0]; 
+    const userRoleCode = user?.roleCode; 
     if (isAuthenticated && userRoleCode) {
       navigateByRole(userRoleCode);
     }

@@ -1,25 +1,23 @@
-import { useState } from "react";
-import instructorService from "./instructorService";
 
-export function useInstructors() {
-  const [instructors, setInstructors] = useState([]);
-  const [loading, setLoading] = useState(false);
+import { useCrud } from "../../../hooks";
+import accountService from "../services/instructorsService";
 
-  const loadInstructors = async () => {
-    try {
-      setLoading(true);
-
-      const result = await instructorService.getAll();
-
-      setInstructors(result.data.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+export function useAccounts() {
+  const crud = useCrud(accountService, { resourceName: "accounts" });
 
   return {
-    instructors,
-    loading,
-    loadInstructors
+    accounts: crud.items,
+    loading: crud.loading,
+    error: crud.error,
+    pagination: crud.pagination,
+    loadAccounts: crud.getList,
+    createAccount: crud.createItem,
+    updateAccount: crud.updateItem,
+    deleteAccount: crud.deleteItem,
+    
+    changeAccountRole: async (id, targetRoleCode) => {
+      await accountService.changeRole(id, targetRoleCode);
+      await crud.getList({ page: crud.pagination.page, limit: crud.pagination.limit });
+    }
   };
 }

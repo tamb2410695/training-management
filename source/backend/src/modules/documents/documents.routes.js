@@ -13,8 +13,8 @@ const {
 
 const {
   validateGetList,
-  validateDocumentId,
-  validateCreate,
+  validateGetById,
+  validateUpload,
   validateUpdate,
 } = require("./documents.validator");
 
@@ -36,7 +36,7 @@ router.get(
 
 router.get(
   ROUTES.DOCUMENT.DETAIL,
-  createValidationMiddleware(validateDocumentId, "params"),
+  createValidationMiddleware(validateGetById, "params"),
   documentsController.getById,
 );
 
@@ -51,20 +51,20 @@ router.patch(
 router.delete(
   ROUTES.DOCUMENT.DETAIL,
   authorize(ROLES.ADMIN, ROLES.INSTRUCTOR),
-  createValidationMiddleware(validateDocumentId, "params"),
+  createValidationMiddleware(validateGetById, "params"),
   documentsController.remove,
 );
 
 router.patch(
   `${ROUTES.DOCUMENT.DETAIL}/restore`,
   authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateDocumentId, "params"),
+  createValidationMiddleware(validateGetById, "params"),
   documentsController.restore,
 );
 
 router.get(
   ROUTES.DOCUMENT.DOWNLOAD,
-  createValidationMiddleware(validateDocumentId, "params"),
+  createValidationMiddleware(validateGetById, "params"),
   documentsController.download,
 );
 

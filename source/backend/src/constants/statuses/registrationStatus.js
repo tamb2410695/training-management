@@ -1,0 +1,9 @@
+const REGISTRATION_STATUS = {
+  PENDING: "PENDING",
+  REJECTED: "REJECTED",
+  COMPLETED: "COMPLETED",
+};
+
+module.exports = {
+  REGISTRATION_STATUS,
+};

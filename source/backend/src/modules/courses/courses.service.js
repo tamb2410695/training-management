@@ -9,9 +9,6 @@ const {
 const { throwIf, hasField } = require("../../utils/helpers");
 const coursesRepository = require("./courses.repository");
 
-// =========================================================================
-// 1. GET LIST COURSES
-// =========================================================================
 const getList = async (query, connection = db) => {
   const { data: courses, pagination } = await coursesRepository.find(
     query,
@@ -24,9 +21,6 @@ const getList = async (query, connection = db) => {
   };
 };
 
-// =========================================================================
-// 2. GET COURSE BY ID
-// =========================================================================
 const getById = async (courseId, connection = db) => {
   const course = await coursesRepository.findById(courseId, connection);
 
@@ -34,15 +28,10 @@ const getById = async (courseId, connection = db) => {
   return course;
 };
 
-// =========================================================================
-// 3. CREATE COURSE
-// =========================================================================
 const create = async (courseData, connection = db) => {
   const { courseCode, courseName, durationHours, totalSessions, tuitionFee } =
     courseData;
-
-  // --- NGHIỆP VỤ ĐẦU VÀO ---
-  // Kiểm tra trùng mã khóa học (course_code là UNIQUE)
+    
   if (courseCode) {
     const existedCourse = await coursesRepository.findByCode(
       courseCode,
@@ -55,7 +44,6 @@ const create = async (courseData, connection = db) => {
     );
   }
 
-  // Ràng buộc số lượng / logic nghiệp vụ (Thay thế cho tầng validator cũ)
   throwIf(
     durationHours <= 0,
     AppError.BadRequestError,
@@ -81,9 +69,6 @@ const create = async (courseData, connection = db) => {
   return createdCourse;
 };
 
-// =========================================================================
-// HELPERS FOR UPDATE LOGIC
-// =========================================================================
 const getCourseOrThrow = async (courseId, connection = db) => {
   const course = await coursesRepository.findById(courseId, connection);
   throwIf(!course, AppError.NotFoundError, "Course not found");
@@ -191,9 +176,6 @@ const buildUpdateCourseData = async (course, courseData, connection = db) => {
   return updateCourseData;
 };
 
-// =========================================================================
-// 4. UPDATE COURSE (FULL & PARTIAL PUT/PATCH)
-// =========================================================================
 const update = async (courseId, courseData, connection = db) => {
   const course = await getCourseOrThrow(courseId, connection);
 
@@ -218,9 +200,6 @@ const partialUpdate = async (courseId, courseData, connection = db) => {
   return update(courseId, courseData, connection);
 };
 
-/**
- * Hàm tập trung xử lý thay đổi trạng thái khóa học (Publish / Lock)
- */
 const updateStatus = async (courseId, newStatus, connection = db) => {
   const course = await coursesRepository.findById(courseId, connection);
   throwIf(!course, AppError.NotFoundError, "Course not found");
@@ -245,9 +224,6 @@ const updateStatus = async (courseId, newStatus, connection = db) => {
   return updatedCourse;
 };
 
-// =========================================================================
-// 5. REMOVE COURSE (SOFT DELETE)
-// =========================================================================
 const remove = async (courseId, connection = db) => {
   const course = await coursesRepository.findById(courseId, connection);
   throwIf(!course, AppError.NotFoundError, "Course not found");
@@ -262,9 +238,6 @@ const remove = async (courseId, connection = db) => {
   return deletedCourse;
 };
 
-// =========================================================================
-// 6. SUB-RESOURCE RELATED LOGIC
-// =========================================================================
 const getDocumentsByCourseId = async (courseId, connection = db) => {
   // Xác thực khóa học có tồn tại trước khi truy vấn tài liệu
   await getCourseOrThrow(courseId, connection);

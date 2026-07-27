@@ -4,16 +4,10 @@ const { throwIf } = require("../../utils/helpers");
 const { ERROR_MESSAGES } = require("../../constants");
 const roomsRepository = require("./rooms.repository");
 
-// =========================================================================
-// 1. GET LIST ROOMS
-// =========================================================================
 const getList = async (query, connection = db) => {
   return await roomsRepository.find(query, connection);
 };
 
-// =========================================================================
-// 2. GET ROOM BY ID
-// =========================================================================
 const getById = async (roomId, connection = db) => {
   const room = await roomsRepository.findById(roomId, connection);
 
@@ -26,9 +20,6 @@ const getById = async (roomId, connection = db) => {
   return room;
 };
 
-// =========================================================================
-// 3. CREATE ROOM
-// =========================================================================
 const create = async (roomData, connection = db) => {
   const { roomCode } = roomData;
 
@@ -50,11 +41,7 @@ const create = async (roomData, connection = db) => {
   return createdRoom;
 };
 
-// =========================================================================
-// 4. UPDATE ROOM
-// =========================================================================
 const update = async (roomId, roomData, connection = db) => {
-  // 1. Đảm bảo phòng học tồn tại trước khi cập nhật
   await getById(roomId, connection);
 
   if (roomData.roomCode) {
@@ -83,9 +70,6 @@ const update = async (roomId, roomData, connection = db) => {
   return updatedRoom;
 };
 
-// =========================================================================
-// 5. REMOVE ROOM (Hard Delete bắt lỗi ràng buộc giống hệt Department)
-// =========================================================================
 const remove = async (roomId, connection = db) => {
   const room = await getById(roomId, connection);
 

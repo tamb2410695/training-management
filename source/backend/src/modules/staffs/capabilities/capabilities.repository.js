@@ -8,9 +8,6 @@ const {
 
 const queryBuilder = require("../../../utils/query/queryBuilders");
 
-/**
- * Tìm kiếm nâng cao có phân trang, lọc và sắp xếp danh sách năng lực giảng dạy của giảng viên
- */
 const find = async (query, connection = db) => {
   const {
     page,

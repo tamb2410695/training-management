@@ -9,9 +9,12 @@ const {
 
 const accountsService = require("../accounts/accounts.service");
 const accountsRepository = require("../accounts/accounts.repository");
-const { ERROR_MESSAGES, ACCOUNT_STATUS } = require("../../constants");
-const { generateTokens, verifyToken } = require("../../utils/security/jwtUtil");
-const { AUTH_MESSAGES, JWT_CONFIG, TOKEN_TYPES } = require("./auth.constants");
+const { ERROR_CODES, ACCOUNT_STATUS, ERROR_MESSAGES } = require("../../constants");
+const {
+  generateAccessTokens,
+  verifyAccessToken,
+} = require("../../utils/security/jwtUtil");
+const { JWT_CONFIG, TOKEN_TYPES } = require("./auth.constants");
 
 const register = async (accountData) => {
   const data = {
@@ -22,30 +25,31 @@ const register = async (accountData) => {
 };
 
 const login = async (usernameOrEmail, password, connection = db) => {
+  console.log(usernameOrEmail);
   const [existedUsername, existedEmail] = await Promise.all([
     accountsRepository.findByUsername(usernameOrEmail, connection),
     accountsRepository.findByEmail(usernameOrEmail, connection),
   ]);
-
   const account = existedUsername || existedEmail;
-  throwIf(!account, AppError.NotFoundError, ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS);
+  throwIf(!account, AppError.NotFoundError, ERROR_CODES.INVALID_CREDENTIALS);
 
-  if (account.accountStatus === "LOCKED") {
-    throw new AppError.ForbiddenError(ERROR_MESSAGES.AUTH.ACCESS_DENIED);
-  }
-  if (
-    account.accountStatus === "DISABLED" ||
-    account.accountStatus === "DELETED"
-  ) {
-    throw new AppError.ForbiddenError(ERROR_MESSAGES.AUTH.ACCESS_DENIED);
-  }
+  throwIf(
+    account.accountStatus === ACCOUNT_STATUS.LOCKED,
+    AppError.ForbiddenError,
+    ERROR_CODES.ACCESS_DENIED,
+    ERROR_MESSAGES.ACCESS_DENIED,
+  );
+
+  throwIf(
+    account.accountStatus === ACCOUNT_STATUS.DISABLED ||
+      account.accountStatus === ACCOUNT_STATUS.DELETED,
+    AppError.ForbiddenError,
+    ERROR_CODES.ACCESS_DENIED,
+    ERROR_MESSAGES.ACCESS_DENIED,
+  );
 
   const isMatch = await comparePassword(password, account.passwordHash);
-  throwIf(
-    !isMatch,
-    AppError.UnauthorizedError,
-    ERROR_MESSAGES.AUTH.UNAUTHORIZED,
-  );
+  throwIf(!isMatch, AppError.UnauthorizedError, ERROR_CODES.UNAUTHORIZED);
 
   const tokenPayload = {
     accountId: account.accountId,
@@ -54,7 +58,7 @@ const login = async (usernameOrEmail, password, connection = db) => {
     roleName: account.roleName,
   };
 
-  const tokens = generateTokens(tokenPayload);
+  const tokens = generateAccessTokens(tokenPayload);
 
   await accountsRepository.update(
     account.accountId,
@@ -63,7 +67,6 @@ const login = async (usernameOrEmail, password, connection = db) => {
   );
 
   const { passwordHash: _, refreshToken: __, ...safeAccountData } = account;
-
   return {
     user: safeAccountData,
     ...tokens,
@@ -73,47 +76,43 @@ const login = async (usernameOrEmail, password, connection = db) => {
 const refresh = async (token, connection = db) => {
   throwIf(!token, AppError.BadRequestError, "Refresh token is required");
 
-  try {
-    const decoded = verifyToken(token, JWT_CONFIG.REFRESH_SECRET);
+  const decoded = verifyAccessToken(token, JWT_CONFIG.REFRESH_SECRET);
 
-    const account = await accountsRepository.findById(
-      decoded.accountId,
-      connection,
-    );
-    throwIf(
-      !account || account.refreshToken !== token,
-      AppError.UnauthorizedError,
-      AUTH_MESSAGES.INVALID_REFRESH_TOKEN,
-    );
-    if (
-      [
-        ACCOUNT_STATUS.LOCKED,
-        ACCOUNT_STATUS.DISABLED,
-        ACCOUNT_STATUS.DELETED,
-      ].includes(account.accountStatus)
-    ) {
-      throw new AppError.ForbiddenError(AUTH_MESSAGES.ACCOUNT_DISABLED);
-    }
-
-    const tokenPayload = {
-      accountId: account.accountId,
-      username: account.username,
-      roleCode: account.roleCode,
-      roleName: account.roleName,
-    };
-
-    const tokens = generateTokens(tokenPayload);
-
-    await accountsRepository.update(
-      account.accountId,
-      { refreshToken: tokens.refreshToken },
-      connection,
-    );
-
-    return tokens;
-  } catch (err) {
-    throw new AppError.UnauthorizedError(AUTH_MESSAGES.INVALID_REFRESH_TOKEN);
+  const account = await accountsRepository.findById(
+    decoded.accountId,
+    connection,
+  );
+  throwIf(
+    !account || account.refreshToken !== token,
+    AppError.UnauthorizedError,
+    AUTH_MESSAGES.INVALID_REFRESH_TOKEN,
+  );
+  if (
+    [
+      ACCOUNT_STATUS.LOCKED,
+      ACCOUNT_STATUS.DISABLED,
+      ACCOUNT_STATUS.DELETED,
+    ].includes(account.accountStatus)
+  ) {
+    throw new AppError.ForbiddenError(AUTH_MESSAGES.ACCOUNT_DISABLED);
   }
+
+  const tokenPayload = {
+    accountId: account.accountId,
+    username: account.username,
+    roleCode: account.roleCode,
+    roleName: account.roleName,
+  };
+
+  const tokens = generateAccessTokens(tokenPayload);
+
+  await accountsRepository.update(
+    account.accountId,
+    { refreshToken: tokens.refreshToken },
+    connection,
+  );
+
+  return tokens;
 };
 
 const logout = async (accountId, connection = db) => {
@@ -136,7 +135,7 @@ const changePassword = async (
   connection = db,
 ) => {
   const account = await accountsRepository.findById(accountId, connection);
-  throwIf(!account, AppError.NotFoundError, ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+  throwIf(!account, AppError.NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND);
 
   const isMatch = await comparePassword(currentPassword, account.passwordHash);
   throwIf(!isMatch, AppError.BadRequestError, "Current password is incorrect");

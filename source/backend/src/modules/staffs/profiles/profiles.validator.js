@@ -1,8 +1,13 @@
 const { BadRequestError } = require("../../../utils/errors");
-const { ERROR_MESSAGES } = require("../../../constants");
-const { STAFF_FIELDS } = require("./profiles.constants");
+const { ERROR_MESSAGES, GENDER, STAFF_STATUS } = require("../../../constants");
+const { STAFF_FIELDS, ACCOUNT_FIELDS } = require("./profiles.constants");
 const { formatNumericId } = require("../../../utils/formatters");
-const { pickFields, sanitizeFields, hasField, throwIf } = require("../../../utils/helpers");
+const {
+  pickFields,
+  sanitizeFields,
+  hasField,
+  throwIf,
+} = require("../../../utils/helpers");
 const {
   validateId,
   validatePagination,
@@ -12,7 +17,13 @@ const {
   validateRequiredFields,
   sanitizePatchBody,
 } = require("../../../utils/validators");
-
+const {
+  formatStaffData,
+} = require("../../../utils/formatters/input/staffFormatter");
+const {
+  formatAccountData,
+} = require("../../../utils/formatters/input/accountFormatter");
+const { validateAccountFormats } = require("../../accounts/accounts.validator");
 const validateStaffFormats = (staffData) => {
   if (!staffData) return;
 
@@ -20,33 +31,49 @@ const validateStaffFormats = (staffData) => {
     validatePagination(staffData.page, staffData.limit);
   }
 
-  if (hasField(staffData, "accountId")) validateId(staffData.accountId, "accountId");
-  
-  if (hasField(staffData, "personalEmail")) validateEmail(staffData.personalEmail);
+  if (hasField(staffData, "accountId"))
+    validateId(staffData.accountId, "accountId");
+
+  if (hasField(staffData, "personalEmail"))
+    validateEmail(staffData.personalEmail);
 
   if (hasField(staffData, "gender")) {
-    validateEnum(staffData.gender, ["MALE", "FEMALE", "OTHER"], "gender");
+    validateEnum(staffData.gender, Object.values(GENDER), "gender");
   }
 
   if (hasField(staffData, "staffStatus")) {
-    validateEnum(staffData.staffStatus, ["ACTIVE", "LEAVE_OF_ABSENCE", "RETIRED", "TERMINATED"], "staffStatus");
+    validateEnum(
+      staffData.staffStatus,
+      Object.values(STAFF_STATUS),
+      "staffStatus",
+    );
   }
 
   if (hasField(staffData, "contractType")) {
-    validateEnum(staffData.contractType, ["PERMANENT", "PROBATION", "PART_TIME", "SEASONAL"], "contractType");
+    validateEnum(
+      staffData.contractType,
+      ["PROBATION", "FULL_TIME", "PART_TIME"],
+      "contractType",
+    );
   }
 
-  // Validate định dạng số điện thoại cơ bản
   if (hasField(staffData, "phone")) {
     const phoneRegex = /^[0-9]{9,11}$/;
-    throwIf(!phoneRegex.test(staffData.phone), BadRequestError, "Invalid phone number format");
+    throwIf(
+      !phoneRegex.test(staffData.phone),
+      BadRequestError,
+      "Invalid phone number format",
+    );
   }
 };
 
 const validateGetList = (query) => {
   validateAllowedFields(query, STAFF_FIELDS.QUERY.ALLOWED_KEYS);
-  const rawQueryData = sanitizeFields(pickFields(query, STAFF_FIELDS.QUERY.ALLOWED_KEYS));
-  if (rawQueryData.departmentId) rawQueryData.departmentId = formatNumericId(rawQueryData.departmentId);
+  const rawQueryData = sanitizeFields(
+    pickFields(query, STAFF_FIELDS.QUERY.ALLOWED_KEYS),
+  );
+  if (rawQueryData.departmentId)
+    rawQueryData.departmentId = formatNumericId(rawQueryData.departmentId);
   validateStaffFormats(rawQueryData);
   return rawQueryData;
 };
@@ -58,11 +85,23 @@ const validateGetById = (params) => {
 };
 
 const validateCreate = (body) => {
-  validateAllowedFields(body, STAFF_FIELDS.BODY.CREATE);
-  const sanitizedData = sanitizeFields(pickFields(body, STAFF_FIELDS.BODY.CREATE));
-  validateRequiredFields(sanitizedData, STAFF_FIELDS.REQUIRED.CREATE);
-  validateStaffFormats(sanitizedData);
-  return sanitizedData;
+  validateAllowedFields(body, [
+    ...STAFF_FIELDS.BODY.CREATE,
+    ...ACCOUNT_FIELDS.BODY.CREATE,
+  ]);
+  const rawAccountData = sanitizeFields(
+    pickFields(body, ACCOUNT_FIELDS.BODY.CREATE),
+  );
+  const rawProfileData = sanitizeFields(
+    pickFields(body, STAFF_FIELDS.BODY.CREATE),
+  );
+  validateRequiredFields(rawAccountData, ACCOUNT_FIELDS.REQUIRED.CREATE);
+  validateRequiredFields(rawProfileData, STAFF_FIELDS.REQUIRED.CREATE);
+  const formatedAcountData = formatAccountData(rawAccountData);
+  const formatedProfileData = formatStaffData(rawProfileData);
+  validateAccountFormats(formatedAcountData);
+  validateStaffFormats(formatedProfileData);
+  return { accountData: formatedAcountData, profileData: formatedProfileData };
 };
 
 const validateUpdate = (params, body) => {
@@ -70,9 +109,15 @@ const validateUpdate = (params, body) => {
   validateId(staffId);
 
   validateAllowedFields(body, STAFF_FIELDS.BODY.UPDATE);
-  const sanitizedData = sanitizeFields(pickFields(body, STAFF_FIELDS.BODY.UPDATE));
+  const sanitizedData = sanitizeFields(
+    pickFields(body, STAFF_FIELDS.BODY.UPDATE),
+  );
 
-  throwIf(!sanitizedData || Object.keys(sanitizedData).length === 0, BadRequestError, ERROR_MESSAGES.NO_VALID_FIELDS);
+  throwIf(
+    !sanitizedData || Object.keys(sanitizedData).length === 0,
+    BadRequestError,
+    ERROR_MESSAGES.NO_VALID_FIELDS,
+  );
   validateStaffFormats(sanitizedData);
 
   return { staffId, staffData: sanitizedData };
@@ -85,7 +130,11 @@ const validatePartialUpdate = (params, body) => {
   validateAllowedFields(body, STAFF_FIELDS.BODY.UPDATE);
   const sanitizedData = sanitizePatchBody(body, STAFF_FIELDS.BODY.UPDATE);
 
-  throwIf(!sanitizedData || Object.keys(sanitizedData).length === 0, BadRequestError, ERROR_MESSAGES.NO_VALID_FIELDS);
+  throwIf(
+    !sanitizedData || Object.keys(sanitizedData).length === 0,
+    BadRequestError,
+    ERROR_MESSAGES.NO_VALID_FIELDS,
+  );
   validateStaffFormats(sanitizedData);
 
   return { staffId, staffData: sanitizedData };

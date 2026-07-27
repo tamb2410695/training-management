@@ -1,83 +1,123 @@
-export const STUDENT_FIELDS = {
-  studentId: {
-    key: "studentId",
-    label: "ID Học viên",
-    sortable: true,
-  },
+import { buildFields, Rules, defineFields } from "@/utils";
+import { STUDENT_GENDER, STUDENT_STATUS } from "./studentEnums";
+import { ACCOUNT_STATUS } from "@/features/accounts";
 
-  studentCode: {
-    key: "studentCode",
-    label: "Mã học viên",
-    searchable: true,
-    sortable: true,
-  },
+const Field = buildFields();
 
-  fullName: {
-    key: "fullName",
-    label: "Họ và tên",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+export const STUDENT_FIELDS = defineFields({
+  username: Field.text("username", "Tên đăng nhập")
+    .placeholder("student01_123")
+    .searchable()
+    .hideOnTable()
+    .col(6)
+    .validation(Rules.minLength(4), Rules.maxLength(50))
+    .requiredOnCreate()
+    .disableOnUpdate()
+    .disableApiUpdate(),
 
-  dateOfBirth: {
-    key: "dateOfBirth",
-    label: "Ngày sinh",
-    required: { create: true, update: true },
-    sortable: true,
-    default: null, // Hoặc "" tùy thuộc vào thư viện DatePicker bạn dùng
-  },
+  accountEmail: Field.email("accountEmail", "Email tài khoản")
+    .placeholder("student@gmail.com")
+    .searchable()
+    .hideOnTable()
+    .col(6)
+    .validation(Rules.email(), Rules.maxLength(255))
+    .requiredOnCreate()
+    .disableOnUpdate()
+    .disableApiUpdate(),
 
-  gender: {
-    key: "gender",
-    label: "Giới tính",
-    required: { create: false, update: true },
-    filterable: true,
-    default: "",
-  },
+  password: Field.password("password", "Mật khẩu")
+    .requiredOnCreate()
+    .defaultValue("")
+    .hideOnTable()
+    .col(6)
+    .validation(Rules.minLength(8), Rules.maxLength(100)),
 
-  phone: {
-    key: "phone",
-    label: "Số điện thoại",
-    required: { create: true, update: true },
-    searchable: true,
-    default: "",
-  },
+  studentCode: Field.text("studentCode", "Mã học viên")
+    .disableOnCreate()
+    .disableOnUpdate()
+    .disableApi()
+    .searchable()
+    .sortable()
+    .tableWidth(180)
+    .col(6)
+    .validation(Rules.maxLength(20)),
 
-  address: {
-    key: "address",
-    label: "Địa chỉ",
-    searchable: true,
-    default: "",
-  },
+  fullName: Field.text("fullName", "Họ và tên")
+    .required()
+    .placeholder("Họ và tên học viên")
+    .searchable()
+    .sortable()
+    .tableWidth(220)
+    .col(6)
+    .validation(Rules.minLength(2), Rules.maxLength(100)),
 
-  studentStatus: {
-    key: "studentStatus",
-    label: "Trạng thái học viên",
-    required: { create: false, update: true },
-    filterable: true,
-    sortable: true,
-    default: "",
-  },
+  personalEmail: Field.email("personalEmail", "Email cá nhân")
+    .placeholder("Bỏ qua nếu là Email tài khoản")
+    .col(6)
+    .validation(Rules.email(), Rules.maxLength(255)),
 
-  createdAt: {
-    key: "createdAt",
-    label: "Ngày tạo",
-    sortable: true,
-  },
+  gender: Field.select("gender", "Giới tính", STUDENT_GENDER)
+    .defaultValue(STUDENT_GENDER.values[2])
+    .filter("text")
+    .col(6),
 
-  updatedAt: {
-    key: "updatedAt",
-    label: "Ngày cập nhật",
-    sortable: true,
-  },
-};
+  dateOfBirth: Field.date("dateOfBirth", "Ngày sinh")
+    .required()
+    .col(6)
+    .validation(Rules.pastDate()),
 
-// Cột hiển thị bảng học viên mặc định (Table Columns)
-export const STUDENT_COLUMNS = [
-  STUDENT_FIELDS.studentCode,
-  STUDENT_FIELDS.fullName,
-  STUDENT_FIELDS.phone,
-  STUDENT_FIELDS.studentStatus,
-].map(({ key, label }) => ({ key, label }));
+  phone: Field.phone("phone", "Số điện thoại")
+    .required()
+    .placeholder("Số điện thoại học viên")
+    .searchable()
+    .tableWidth(140)
+    .col(6)
+    .validation(Rules.phone(), Rules.minLength(10), Rules.maxLength(15)),
+
+  address: Field.textarea("address", "Địa chỉ")
+    .hideOnTable()
+    .placeholder("Địa chỉ liên hệ học viên")
+    .col(12)
+    .validation(Rules.maxLength(500)),
+
+  studentStatus: Field.badge("studentStatus", "Trạng thái học", STUDENT_STATUS)
+    .filter("text")
+    .defaultValue(STUDENT_STATUS.values[0])
+    .disabled({
+      create: true,
+    })
+    .required()
+    .disableApiCreate()
+    .tableWidth(140)
+    .col(6),
+
+  accountStatus: Field.badge(
+    "accountStatus",
+    "Trạng thái tài khoản",
+    ACCOUNT_STATUS,
+  )
+    .filter("text")
+    .defaultValue(ACCOUNT_STATUS.values[0])
+    .disabled({
+      create: true,
+      update: true,
+    })
+    .tableWidth(140)
+    .col(6)
+    .disableApi(),
+
+  createdAt: Field.date("createdAt", "Ngày tạo hồ sơ")
+    .sortable()
+    .hideOnForm()
+    .tableWidth(150)
+    .disableApi()
+    .col(6),
+
+  updatedAt: Field.date("updatedAt", "Cập nhật cuối")
+    .sortable()
+    .hideOnTable()
+    .hideOnForm()
+    .tableWidth(150)
+    .disableApi()
+    .col(6),
+});

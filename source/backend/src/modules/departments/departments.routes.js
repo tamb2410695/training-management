@@ -10,9 +10,9 @@ const {
 } = require("../../utils/helpers");
 
 const {
-  validateCreate,
   validateGetList,
   validateGetById,
+  validateCreate,
   validateUpdate,
   validatePartialUpdate,
   validateRemove,
@@ -32,7 +32,7 @@ router.post(
 
 router.get(
   ROUTES.DEPARTMENT.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
+  createMultiValidator(validateGetById, "params"),
   departmentsController.getById,
 );
 

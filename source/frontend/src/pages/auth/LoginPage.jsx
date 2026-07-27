@@ -3,7 +3,7 @@ import { ROLES } from "../../constants/";
 import { ROUTES } from "../../constants/";
 import authService from "../../features/auth/services/authService";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/auth/useAuth";
 
 function Login() {
   const navigate = useNavigate();

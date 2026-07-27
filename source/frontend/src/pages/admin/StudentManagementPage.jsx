@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+// import { useEffect, useState } from "react";
+// import { useSearchParams } from "react-router-dom";
 
-import { useAuth } from "../../hooks/useAuth";
-import { usePagination } from "../../hooks/usePagination";
+// import { useAuth } from "../../hooks/auth/useAuth";
+// import { usePagination } from "../../hooks/usePagination";
 
-function StudentManagementPage() {
-}
+// function StudentManagementPage() {
+// }
 
-export default StudentManagementPage;
+// export default StudentManagementPage;

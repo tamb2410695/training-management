@@ -19,9 +19,8 @@ function formatAccountData(accountData) {
     data.email = formatEmail(data.email);
   }
 
-  if (hasField(data, "roleCode") || hasField(data, "roleCodes")) {
-    data.roleCodes = formatEnumArray(data.roleCode, data.roleCodes);
-    delete data.roleCode;
+  if (hasField(data, "roleCode")) {
+    data.roleCode = normalizeEnum(data.roleCode);
   }
 
   if (hasField(data, "accountStatus")) {
@@ -52,9 +51,12 @@ function formatAccountQuery(query) {
     data.email = formatEmail(data.email);
   }
 
-  if (hasField(data, "roleCode") || hasField(data, "roleCodes")) {
-    data.roleCodes = formatEnumArray(data.roleCode, data.roleCodes);
-    delete data.roleCode;
+  if (hasField(data, "searchField")) {
+    data.searchField = data.searchField.trim();
+  }
+
+  if (hasField(data, "roleCode")) {
+    data.roleCode = normalizeEnum(data.roleCode);
   }
 
   if (hasField(data, "accountStatus") || hasField(data, "accountStatuses")) {

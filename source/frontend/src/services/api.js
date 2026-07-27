@@ -1,15 +1,15 @@
 import axios from "axios";
 import { storage } from "./storage";
-import { HTTP_STATUS } from "../constants/system/httpStatus";
+import { HTTP_STATUS } from "../constants";
+
 import {
-  translateError,
+  AppError,
   ValidationError,
   UnauthorizedError,
   ForbiddenError,
   NotFoundError,
   ConflictError,
   BadRequestError,
-  AppError,
 } from "../utils/errors";
 
 const api = axios.create({
@@ -28,62 +28,63 @@ api.interceptors.request.use(
     }
     return config;
   },
+
   (error) => Promise.reject(error),
 );
 
 api.interceptors.response.use(
   (response) => {
+    const body = response.data;
     return {
-      data: response.data?.data ?? response.data,
-      pagination: response.data?.pagination || null,
-      success: response.data?.success ?? true,
+      success: body?.success ?? true,
+      code: body?.code ?? null,
+      message: body?.message ?? null,
+      data: body?.data ?? body,
+      pagination: body?.pagination ?? null,
     };
   },
+
   (error) => {
-    if (error.response && error.response.data) {
-      const {
-        message: enMessage,
-        error: errCode,
-        statusCode,
-      } = error.response.data;
+    if (error.response?.data) {
 
-      const viMessage = translateError(errCode, enMessage);
+      const body = error.response.data;
+      const { error: errorCode, message, errors, statusCode } = body;
+      const status = statusCode ?? error.response.status;
 
-      if (
-        statusCode === HTTP_STATUS.UNAUTHORIZED ||
-        error.response.status === 401
-      ) {
+      if (status === HTTP_STATUS.UNAUTHORIZED) {
         storage.clearAll();
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
-        }
-        return Promise.reject(new UnauthorizedError(viMessage, errCode));
+
+        return Promise.reject(new UnauthorizedError(errorCode, message));
       }
 
-      switch (statusCode) {
+      switch (status) {
         case HTTP_STATUS.BAD_REQUEST:
-          if (errCode === "VALIDATION_FAILED") {
-            return Promise.reject(new ValidationError(viMessage, errCode));
+          if (errorCode === "VALIDATION_FAILED") {
+            return Promise.reject(
+              new ValidationError(errorCode, message, errors),
+            );
           }
-          return Promise.reject(new BadRequestError(viMessage, errCode));
+
+          return Promise.reject(new BadRequestError(errorCode, message));
 
         case HTTP_STATUS.FORBIDDEN:
-          return Promise.reject(new ForbiddenError(viMessage, errCode));
+          return Promise.reject(new ForbiddenError(errorCode, message));
 
         case HTTP_STATUS.NOT_FOUND:
-          return Promise.reject(new NotFoundError(viMessage, errCode));
+          return Promise.reject(new NotFoundError(errorCode, message));
 
         case HTTP_STATUS.CONFLICT:
-          return Promise.reject(new ConflictError(viMessage, errCode));
+          return Promise.reject(new ConflictError(errorCode, message));
 
         default:
-          return Promise.reject(new AppError(viMessage, statusCode, errCode));
+          return Promise.reject(new AppError(errorCode, message, status));
       }
     }
-
+    
     return Promise.reject(
       new AppError(
-        "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền mạng.",
+        "INTERNAL_SERVER_ERROR",
+        "Không thể kết nối đến máy chủ",
         500,
       ),
     );

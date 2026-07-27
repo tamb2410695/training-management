@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../constants";
-import { useAuth } from "../../hooks/useAuth";
-import { useLogout } from "../../hooks/useLogout";
+import { useAuth } from "../../hooks/auth/useAuth";
+import { useLogout } from "../../hooks/auth/useLogout";
 // import { useNavigateByRole } from "../../hooks/useNavigateByRole";
 
 function Header() {
@@ -10,7 +10,7 @@ function Header() {
   const { user } = useAuth();
   const handleLogout = useLogout();
 
-  const userRoleCode = user?.roleCodes?.[0]; 
+  const userRoleCode = user?.roleCode;
 
   const dashboardPath = userRoleCode && ROUTES[userRoleCode] 
     ? ROUTES[userRoleCode].DASHBOARD 

@@ -6,7 +6,7 @@ const ACCOUNT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "email"],
+    SEARCHABLE: ["username", "email", "roleLabel"],
 
     SORTABLE: [
       "accountId",
@@ -17,7 +17,7 @@ const ACCOUNT_FIELDS = {
       "updatedAt",
     ],
 
-    FILTERS: ["accountStatus", "roleCodes", "roleCode", "roleNames"],
+    FILTERS: ["accountStatus", "roleCode", "roleCode"],
 
     get ALLOWED_KEYS() {
       return [
@@ -46,6 +46,7 @@ const ACCOUNT_MAPS = {
   SEARCH: {
     username: "acc.username",
     email: "acc.email",
+    roleLabel: "rl.role_label"
   },
 
   SORT: {

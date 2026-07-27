@@ -140,7 +140,8 @@ const findPrimaryDepartmentByStaffId = async (staffId, connection = db) => {
       sd.appointment_type,
       sd.assigned_at
     FROM STAFF_DEPARTMENT sd
-    WHERE sd.staff_id = ? AND sd.appointment_type = 'PRIMARY'
+    WHERE sd.staff_id = ?
+      AND sd.appointment_type = 'PRIMARY'
     `,
     [staffId],
   );

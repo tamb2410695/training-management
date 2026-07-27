@@ -3,6 +3,7 @@ const {
   NotFoundError,
   ConflictError,
   BadRequestError,
+  ValidationError,
 } = require("../../utils/errors");
 
 const {
@@ -47,26 +48,21 @@ const getById = async (accountId, connection = db) => {
 
 const create = async (accountData, connection = db) => {
   return await withTransaction(async (txConnection) => {
-    const { username, email, password, roleCodes } = accountData;
+    const { username, email, password, roleCode } = accountData;
+    throwIf(
+      !username || !email || !password,
+      ValidationError,
+      ERROR_CODES.MISSING_REQUIRED_FIELDS,
+      `${ERROR_CODES.MISSING_REQUIRED_FIELDS}: username, email or password`,
+    );
 
     const [accountByUsername, accountByEmail] = await Promise.all([
       accountsRepository.findByUsername(username, txConnection),
       accountsRepository.findByEmail(email, txConnection),
     ]);
 
-    throwIf(
-      accountByUsername,
-      ConflictError,
-      ERROR_CODES.ACCOUNT_EXISTED,
-      ERROR_MESSAGES.ACCOUNT_EXISTED,
-    );
-    throwIf(
-      accountByEmail,
-      ConflictError,
-      ERROR_CODES.ACCOUNT_EXISTED,
-      ERROR_MESSAGES.ACCOUNT_EXISTED,
-    );
-
+    throwIf(accountByUsername, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
+    throwIf(accountByEmail, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
     const passwordHash = await hashPassword(password);
 
     const createdAccount = await accountsRepository.create(
@@ -81,19 +77,19 @@ const create = async (accountData, connection = db) => {
       ERROR_MESSAGES.NO_CHANGES,
     );
 
-    const targetRoles =
-      roleCodes && roleCodes.length ? roleCodes : [ROLES.STUDENT];
+    const targetRole = roleCode ? roleCode : [ROLES.STUDENT];
     await rolesService.assignRoleToAccount(
-      { accountId: createdAccount.accountId, roleCodes: targetRoles },
+      { accountId: createdAccount.accountId, roleCode: targetRole },
       txConnection,
     );
 
     const {
       passwordHash: _,
-      roleNames: __,
+      roleCode: __,
+      roleLabel: ___,
       ...safeAccountData
     } = createdAccount;
-    return { ...safeAccountData, roleCodes: [targetRoles] };
+    return { ...safeAccountData, roleCode: targetRole };
   }, connection);
 };
 

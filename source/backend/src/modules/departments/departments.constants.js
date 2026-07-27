@@ -48,7 +48,10 @@ const DEPARTMENT_MAPS = {
     departmentName: "dpt.department_name",
   },
 
-  FILTER: {},
+  FILTER: {
+    departmentCode: "dpt.department_code",
+    departmentName: "dpt.department_name",
+  },
 };
 
 module.exports = {

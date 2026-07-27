@@ -6,6 +6,7 @@ const {
 } = require("../constants");
 
 const errorHandler = (err, req, res, next) => {
+  console.error(err);
   let statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
   let errorCode = ERROR_CODES.INTERNAL_SERVER_ERROR;
   let message = ERROR_MESSAGES.INTERNAL_SERVER_ERROR || "Internal server error";

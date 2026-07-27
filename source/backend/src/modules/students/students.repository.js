@@ -1,5 +1,5 @@
 const db = require("../../config/database");
-const { STUDENT_FIELDS, STUDENT_MAPS } = require("./students.constants");
+const { STUDENT_FIELDS, STUDENT_MAPS, ACCOUNT_FIELDS } = require("./students.constants");
 const {
   arrayToCamelCase,
   objectToSnakeCase,
@@ -8,39 +8,36 @@ const {
 
 const queryBuilder = require("../../utils/query/queryBuilders");
 
-/**
- * Tìm kiếm nâng cao danh sách sinh viên (phân trang, lọc, tìm kiếm, sắp xếp)
- * Kết hợp thông tin từ bảng ACCOUNT liên kết
- */
 const find = async (query, connection = db) => {
+  const searchableFields = STUDENT_FIELDS.QUERY.SEARCHABLE
+  const searchMap = STUDENT_MAPS.SEARCH;
+  const sortMap = STUDENT_MAPS.SORT;
+  const filterMap = STUDENT_MAPS.FILTER;
+
   const {
     page,
     limit,
     search,
+    searchField,
     sortBy,
     sortOrder,
     gender,
     studentStatus,
-    accountId,
+    accountStatus,
   } = query;
-
-  const searchableFields = STUDENT_FIELDS.QUERY.SEARCHABLE;
-  const sortableFields = STUDENT_FIELDS.QUERY.SORTABLE;
-  const searchMap = STUDENT_MAPS.SEARCH;
-  const sortMap = STUDENT_MAPS.SORT;
-  const filterMap = STUDENT_MAPS.FILTER;
 
   // Tổng hợp bộ lọc động từ Query Params
   const filters = {};
   if (gender) filters.gender = gender;
   if (studentStatus) filters.studentStatus = studentStatus;
-  if (accountId) filters.accountId = accountId;
+  if (accountStatus) filters.accountStatus = accountStatus;
 
   const queryOptions = queryBuilder.buildQueryOptions({
     page,
     limit,
     search,
     searchableFields,
+    searchField,
     searchMap,
     sortBy,
     sortOrder,
@@ -75,7 +72,7 @@ const find = async (query, connection = db) => {
     LEFT JOIN ACCOUNT acc ON stu.account_id = acc.account_id
   `;
 
-  const whereParts = ["(acc.deleted_at IS NULL OR stu.account_id IS NULL)"];
+  const whereParts = ["acc.deleted_at IS NULL"];
   const params = [];
 
   if (searchResult.clause) {
@@ -90,7 +87,6 @@ const find = async (query, connection = db) => {
 
   const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 
-  // Đếm tổng số bản ghi thỏa mãn điều kiện lọc
   const countSql = `
     SELECT COUNT(*) as total 
     ${fromJoinClause}
@@ -100,12 +96,10 @@ const find = async (query, connection = db) => {
   const [countRows] = await connection.query(countSql, params);
   const totalRecords = countRows[0]?.total || 0;
 
-  // Xây dựng câu truy vấn dữ liệu động
   let dataSql = queryBuilder.buildSelectQuery({
     selectClause,
     fromJoinClause,
     whereClause,
-    groupClause: "",
     sortClause,
   });
 
@@ -115,30 +109,38 @@ const find = async (query, connection = db) => {
   const [rows] = await connection.query(dataSql, dataParams);
 
   return {
-    data: arrayToCamelCase(rows),
+    students: arrayToCamelCase(rows),
     pagination: {
       totalRecords,
       limit: pagination.limit,
-      offset: pagination.offset,
+      page: pagination.page,
       totalPages: Math.ceil(totalRecords / pagination.limit),
     },
   };
 };
 
-/**
- * Tìm kiếm hồ sơ sinh viên bằng ID
- */
 const findById = async (studentId, connection = db) => {
   const [rows] = await connection.query(
     `
     SELECT
-      stu.student_id, stu.account_id, stu.student_code, stu.full_name, stu.gender,
-      stu.date_of_birth, stu.phone, stu.address, stu.personal_email,
-      stu.student_status, stu.created_at, stu.updated_at,
-      acc.username, acc.email AS account_email, acc.account_status
+      stu.student_id,
+      stu.account_id,
+      stu.student_code,
+      stu.full_name,
+      stu.gender,
+      stu.date_of_birth,
+      stu.phone,
+      stu.address,
+      stu.personal_email,
+      stu.student_status,
+      stu.created_at,
+      stu.updated_at,
+      acc.username,
+      acc.email AS account_email,
+      acc.account_status
     FROM STUDENT stu
     LEFT JOIN ACCOUNT acc ON stu.account_id = acc.account_id
-    WHERE stu.student_id = ? AND (acc.deleted_at IS NULL OR stu.account_id IS NULL)
+    WHERE stu.student_id = ? AND acc.deleted_at IS NULL
     `,
     [studentId],
   );
@@ -147,15 +149,28 @@ const findById = async (studentId, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Tìm kiếm hồ sơ sinh viên dựa vào mã sinh viên (Kiểm tra trùng lặp)
- */
 const findByCode = async (studentCode, connection = db) => {
   const [rows] = await connection.query(
-    `
-    SELECT stu.student_id, stu.student_code, stu.full_name
+    `    
+    SELECT
+      stu.student_id,
+      stu.account_id,
+      stu.student_code,
+      stu.full_name,
+      stu.gender,
+      stu.date_of_birth,
+      stu.phone,
+      stu.address,
+      stu.personal_email,
+      stu.student_status,
+      stu.created_at,
+      stu.updated_at,
+      acc.username,
+      acc.email AS account_email,
+      acc.account_status
     FROM STUDENT stu
-    WHERE stu.student_code = ?
+    LEFT JOIN ACCOUNT acc ON stu.account_id = acc.account_id
+    WHERE stu.student_code = ? AND acc.deleted_at IS NULL
     `,
     [studentCode],
   );
@@ -164,15 +179,58 @@ const findByCode = async (studentCode, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Tìm kiếm hồ sơ sinh viên dựa theo Account ID liên kết (Ràng buộc quan hệ 1-1)
- */
+const findByPhone = async (phone, connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      stu.student_id,
+      stu.account_id,
+      stu.student_code,
+      stu.full_name,
+      stu.gender,
+      stu.date_of_birth,
+      stu.phone,
+      stu.address,
+      stu.personal_email,
+      stu.student_status,
+      stu.created_at,
+      stu.updated_at,
+      acc.username,
+      acc.email AS account_email,
+      acc.account_status
+    FROM STUDENT stu
+    LEFT JOIN ACCOUNT acc ON stu.account_id = acc.account_id
+    WHERE stu.phone = ? AND acc.deleted_at IS NULL
+    `,
+    [phone],
+  );
+  
+  if (!rows || rows.length === 0) return null;
+  return objectToCamelCase(rows[0]);
+};
+
 const findByAccountId = async (accountId, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT stu.student_id, stu.student_code, stu.full_name
+    SELECT
+      stu.student_id,
+      stu.account_id,
+      stu.student_code,
+      stu.full_name,
+      stu.gender,
+      stu.date_of_birth,
+      stu.phone,
+      stu.address,
+      stu.personal_email,
+      stu.student_status,
+      stu.created_at,
+      stu.updated_at,
+      acc.username,
+      acc.email AS account_email,
+      acc.account_status
     FROM STUDENT stu
-    WHERE stu.account_id = ?
+    LEFT JOIN ACCOUNT acc ON stu.account_id = acc.account_id
+    WHERE stu.account_id = ? AND acc.deleted_at IS NULL
     `,
     [accountId],
   );
@@ -181,9 +239,6 @@ const findByAccountId = async (accountId, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Tạo mới hồ sơ sinh viên
- */
 const create = async (studentData, connection = db) => {
   const data = objectToSnakeCase(studentData);
   const fields = Object.keys(data);
@@ -201,9 +256,6 @@ const create = async (studentData, connection = db) => {
   return findById(result.insertId, connection);
 };
 
-/**
- * Cập nhật thông tin hồ sơ sinh viên
- */
 const update = async (studentId, studentData, connection = db) => {
   const data = objectToSnakeCase(studentData);
   const fields = Object.keys(data);
@@ -220,9 +272,6 @@ const update = async (studentId, studentData, connection = db) => {
   return findById(studentId, connection);
 };
 
-/**
- * Xóa vật lý hồ sơ sinh viên khỏi cơ sở dữ liệu
- */
 const remove = async (studentId, connection = db) => {
   await connection.query(
     `
@@ -242,6 +291,7 @@ module.exports = {
   find,
   findById,
   findByCode,
+  findByPhone,
   findByAccountId,
   create,
   update,

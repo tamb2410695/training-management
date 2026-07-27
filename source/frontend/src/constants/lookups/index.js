@@ -1,8 +1,9 @@
-module.exports = {
-  ...require("./codePrefix"),
-  ...require("./codeLengths"),
-  ...require("./courseLevels"),
-  ...require("./genders"),
-  ...require("./password"),
-  ...require("./queryCommonFields")
-}
+export * from "./codeLengths";
+export * from "./codePrefix";
+export * from "./courseLevels";
+export * from "./fieldsDefault";
+export * from "./genders";
+export * from "./pagination";
+export * from "./password";
+export * from "./queryCommonFields";
+export * from "./tableDefault";

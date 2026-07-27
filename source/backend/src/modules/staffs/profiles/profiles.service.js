@@ -3,14 +3,16 @@ const {
   NotFoundError,
   ConflictError,
   BadRequestError,
+  ValidationError,
 } = require("../../../utils/errors");
 
 const { withTransaction } = require("../../../utils/database");
-const { ERROR_CODES } = require("../../../constants");
-const { throwIf, hasField } = require("../../../utils/helpers");
+const { ERROR_CODES, CODE_PREFIX, CODE_LENGHT } = require("../../../constants");
+const { throwIf, hasField, generateCode } = require("../../../utils/helpers");
 const staffProfilesRepository = require("./profiles.repository");
 const accountsRepository = require("../../accounts/accounts.repository");
 const accountsService = require("../../accounts/accounts.service");
+const { STAFF_FIELDS } = require("./profiles.constants");
 
 const getList = async (query, connection = db) => {
   const { data: profiles, pagination } = await staffProfilesRepository.find(
@@ -27,17 +29,28 @@ const getList = async (query, connection = db) => {
 const getById = async (profileId, connection = db) => {
   const profile = await staffProfilesRepository.findById(profileId, connection);
 
-  throwIf(
-    !profile,
-    NotFoundError,
-    ERROR_CODES.STAFF_NOT_FOUND || "STAFF_NOT_FOUND",
-  );
+  throwIf(!profile, NotFoundError, ERROR_CODES.STAFF_NOT_FOUND);
 
   return profile;
 };
 
-const create = async (profileData, connection = db) => {
-  const { accountId, profileCode } = profileData;
+// const create = async (accountData, profileData, connection = db) => {
+//     return await userCreationService.createStaff(
+//       {
+//         accountData,
+//         profileData,
+//       },
+//       connection,
+//     );
+// };
+
+const createProfile = async (profileData, connection = db) => {
+  const { accountId, staffPhone } = profileData;
+  throwIf(
+    !accountId,
+    ValidationError,
+    `${ERROR_CODES.MISSING_REQUIRED_FIELDS}: accountId`,
+  );
 
   const accountExists = await accountsRepository.findById(
     accountId,
@@ -49,63 +62,47 @@ const create = async (profileData, connection = db) => {
     accountId,
     connection,
   );
-  throwIf(
-    linkedStaff,
-    ConflictError,
-    ERROR_CODES.VALIDATION_FAILED,
-    "This account is already linked to another profile profile",
-  );
+  throwIf(linkedStaff, ConflictError, ERROR_CODES.PROFILE_ALREADY_LINKED);
 
-  const existedCode = await staffProfilesRepository.findByCode(
-    profileCode,
+  const existedPhone = await staffProfilesRepository.findByPhone(
+    staffPhone,
     connection,
   );
   throwIf(
-    existedCode,
+    existedPhone,
     ConflictError,
     ERROR_CODES.VALIDATION_FAILED,
-    "Staff code already exists in the system",
+    "Staff phone already exists in the system",
   );
-
   const finalPayload = {
     ...profileData,
     hireDate: profileData.hireDate || new Date().toISOString().split("T")[0],
   };
 
-  const createdStaff = await staffProfilesRepository.create(
+  const createdProfile = await staffProfilesRepository.create(
     finalPayload,
     connection,
   );
 
-  throwIf(!createdStaff, ConflictError, ERROR_CODES.NO_CHANGES);
-
-  return createdStaff;
+  throwIf(!createdProfile, ConflictError, ERROR_CODES.NO_CHANGES);
+  const staffCode = generateCode(CODE_PREFIX.STAFF, createdProfile.staffId);
+  const updatedProfile = await update(
+    createdProfile.staffId,
+    { staffCode },
+    connection,
+  );
+  return updatedProfile;
 };
 
 const getStaffOrThrow = async (profileId, connection = db) => {
   const profile = await staffProfilesRepository.findById(profileId, connection);
-  throwIf(
-    !profile,
-    NotFoundError,
-    ERROR_CODES.STAFF_NOT_FOUND || "STAFF_NOT_FOUND",
-  );
+  throwIf(!profile, NotFoundError, ERROR_CODES.STAFF_NOT_FOUND);
   return profile;
 };
 
 const buildUpdateStaffData = async (profile, profileData, connection = db) => {
   const updateStaffData = {};
-  const allowedUpdateFields = [
-    "fullName",
-    "gender",
-    "dateOfBirth",
-    "identityCard",
-    "phone",
-    "personalEmail",
-    "address",
-    "academicRank",
-    "contractType",
-    "profileStatus",
-  ];
+  const allowedUpdateFields = [...STAFF_FIELDS.BODY.UPDATE, "staffCode"];
 
   allowedUpdateFields.forEach((field) => {
     if (hasField(profileData, field)) {
@@ -131,20 +128,23 @@ const update = async (profileId, profileData, connection = db) => {
     connection,
   );
 
-  const updatedStaff = await staffProfilesRepository.update(
+  const updatedProfile = await staffProfilesRepository.update(
     profileId,
     updateStaffData,
     connection,
   );
 
-  throwIf(!updatedStaff, ConflictError, ERROR_CODES.NO_CHANGES);
+  throwIf(!updatedProfile, ConflictError, ERROR_CODES.NO_CHANGES);
 
-  return updatedStaff;
+  return updatedProfile;
 };
 
 const remove = async (profileId, connection = db) => {
   return await withTransaction(async (txConnection) => {
-    const profile = await staffProfilesRepository.findById(profileId, txConnection);
+    const profile = await staffProfilesRepository.findById(
+      profileId,
+      txConnection,
+    );
     throwIf(
       !profile,
       NotFoundError,
@@ -157,12 +157,12 @@ const remove = async (profileId, connection = db) => {
     );
     throwIf(!accountDeleted, ConflictError, "FAILED_TO_SOFT_DELETE_ACCOUNT");
 
-    const updatedStaff = await staffProfilesRepository.update(
+    const updatedProfile = await staffProfilesRepository.update(
       profileId,
       { profileStatus: "TERMINATED" },
       txConnection,
     );
-    throwIf(!updatedStaff, ConflictError, "FAILED_TO_UPDATE_STAFF_STATUS");
+    throwIf(!updatedProfile, ConflictError, "FAILED_TO_UPDATE_STAFF_STATUS");
 
     return {
       profileId,
@@ -176,7 +176,8 @@ const remove = async (profileId, connection = db) => {
 module.exports = {
   getList,
   getById,
-  create,
+  // create,
+  createProfile,
   update,
   remove,
 };

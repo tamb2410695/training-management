@@ -15,6 +15,8 @@ const find = async (query, connection = db) => {
     search,
     sortBy,
     sortOrder,
+    departmentCode,
+    departmentName
   } = query;
 
   const searchableFields = DEPARTMENT_FIELDS.QUERY.SEARCHABLE;
@@ -24,6 +26,8 @@ const find = async (query, connection = db) => {
   const filterMap = DEPARTMENT_MAPS.FILTER;
 
   const filters = {};
+  if (departmentName) filters.departmentName = departmentName;
+  if (departmentCode) filters.departmentCode = departmentCode;
 
   const queryOptions = queryBuilder.buildQueryOptions({
     page,
@@ -75,7 +79,6 @@ const find = async (query, connection = db) => {
   const [countRows] = await connection.query(countSql, params);
   const totalRecords = countRows[0]?.total || 0;
 
-  // Xây dựng câu lệnh lấy dữ liệu hoàn chỉnh
   let dataSql = queryBuilder.buildSelectQuery({
     selectClause,
     fromJoinClause,

@@ -8,13 +8,8 @@ const {
 const findById = async (roleId, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT 
-      role_id,
-      role_code,
-      role_name,
-      role_description
-    FROM ROLE
-    WHERE role_id = ?
+    SELECT role_id, role_code, role_label, role_description
+    FROM ROLE WHERE role_id = ?
     `,
     [roleId]
   );
@@ -24,13 +19,8 @@ const findById = async (roleId, connection = db) => {
 const findByCode = async (roleCode, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT 
-      role_id,
-      role_code,
-      role_name,
-      role_description
-    FROM ROLE
-    WHERE role_code = ?
+    SELECT role_id, role_code, role_label, role_description
+    FROM ROLE WHERE role_code = ?
     `,
     [roleCode]
   );
@@ -43,13 +33,8 @@ const findByCodes = async (roleCodes, connection = db) => {
   }
   const [rows] = await connection.query(
     `
-    SELECT
-      role_id,
-      role_code,
-      role_name,
-      role_description
-    FROM ROLE
-    WHERE role_code IN (?)
+    SELECT role_id, role_code, role_label, role_description
+    FROM ROLE WHERE role_code IN (?)
     `,
     [roleCodes]
   );
@@ -58,14 +43,7 @@ const findByCodes = async (roleCodes, connection = db) => {
 
 const findAll = async (connection = db) => {
   const [rows] = await connection.query(
-    `
-    SELECT 
-      role_id,
-      role_code,
-      role_name,
-      role_description
-    FROM ROLE
-    `
+    `SELECT role_id, role_code, role_label, role_description FROM ROLE`
   );
   return arrayToCamelCase(rows);
 };
@@ -78,10 +56,7 @@ const create = async (roleData, connection = db) => {
   const fieldClause = fields.join(", ");
   const placeholderClause = fields.map(() => "?").join(", ");
 
-  const sql = `
-    INSERT INTO ROLE (${fieldClause})
-    VALUES (${placeholderClause});
-  `;
+  const sql = `INSERT INTO ROLE (${fieldClause}) VALUES (${placeholderClause});`;
   
   const [result] = await connection.query(sql, values);
   return findById(result.insertId, connection);
@@ -93,24 +68,14 @@ const update = async (roleId, roleData, connection = db) => {
   const values = Object.values(data);
   
   const setClause = fields.map((field) => `${field} = ?`).join(", ");
-  const sql = `
-    UPDATE ROLE
-    SET ${setClause}
-    WHERE role_id = ?
-  `;
+  const sql = `UPDATE ROLE SET ${setClause} WHERE role_id = ?`;
   
   await connection.query(sql, [...values, roleId]);
   return findById(roleId, connection);
 };
 
 const remove = async (roleId, connection = db) => {
-  const [result] = await connection.query(
-    `
-    DELETE FROM ROLE
-    WHERE role_id = ?
-    `,
-    [roleId]
-  );
+  const [result] = await connection.query(`DELETE FROM ROLE WHERE role_id = ?`, [roleId]);
   return result.affectedRows > 0;
 };
 
@@ -119,10 +84,12 @@ const findUsersByRoleId = async (roleId, connection = db) => {
     `
     SELECT 
       ur.account_id, 
-      a.username, 
-      a.email 
+      acc.username, 
+      acc.email,
+      ur.assigned_by,
+      ur.assigned_at
     FROM USER_ROLE ur
-    JOIN ACCOUNT a ON ur.account_id = a.account_id
+    JOIN ACCOUNT acc ON ur.account_id = acc.account_id
     WHERE ur.role_id = ?
     `,
     [roleId]
@@ -130,73 +97,53 @@ const findUsersByRoleId = async (roleId, connection = db) => {
   return arrayToCamelCase(rows);
 };
 
-const findRolesByAccountId = async (accountId, connection = db) => {
+const findRoleByAccountId = async (accountId, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT r.role_id, r.role_code, r.role_name
+    SELECT
+      rl.role_id,
+      rl.role_code,
+      rl.role_label,
+      rl.role_description,
+      ur.assigned_by,
+      ur.assigned_at
     FROM USER_ROLE ur
-    JOIN ROLE r ON ur.role_id = r.role_id
+    JOIN ROLE rl ON ur.role_id = rl.role_id
     WHERE ur.account_id = ?
     `,
     [accountId]
   );
-  return arrayToCamelCase(rows);
+  return rows[0] ? objectToCamelCase(rows[0]) : null;
 };
 
-function buildBulkPayload(dataArray) {
-  if (!dataArray || dataArray.length === 0) {
-    return { fieldsStr: "", bulkValues: [] };
-  }
-
-  const firstItemSnake = objectToSnakeCase(dataArray[0]);
-  const fields = Object.keys(firstItemSnake);
-  const fieldsStr = fields.join(", ");
-
-  const bulkValues = dataArray.map(item => {
-    const snakeItem = objectToSnakeCase(item);
-    return fields.map(field => snakeItem[field]);
-  });
-
-  return { fieldsStr, bulkValues };
-}
 const assignRole = async (payload, connection = db) => {
-  const { accountId, roleIds, assignedBy = null } = payload;
+  const data = objectToSnakeCase(payload);
+  const fields = Object.keys(data);
+  const values = Object.values(data);
 
-  const dataArray = roleIds.map((roleId) => ({
-    accountId,
-    roleId,
-    assignedBy,
-  }));
-
-  const { fieldsStr, bulkValues } = buildBulkPayload(dataArray);
+  const fieldClause = fields.join(", ");
+  const placeholderClause = fields.map(() => "?").join(", ");
 
   const sql = `
-    INSERT INTO USER_ROLE (${fieldsStr})
-    VALUES ?
-    ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP();
+    INSERT INTO USER_ROLE (${fieldClause})
+    VALUES (${placeholderClause})
+    ON DUPLICATE KEY UPDATE 
+      role_id = VALUES(role_id),
+      assigned_by = VALUES(assigned_by);
   `;
 
-  const [result] = await connection.query(sql, [bulkValues]);
-  
+  const [result] = await connection.query(sql, [...values]);  
   return result.affectedRows > 0;
 };
 
-const deleteUserRole = async (payload, connection = db) => {
-  const { accountId, roleIds } = payload;
-
-  if (!roleIds || !Array.isArray(roleIds) || roleIds.length === 0) {
-    return false;
-  }
-  
+const deleteUserRole = async (accountId, connection = db) => {
   const [result] = await connection.query(
-    `
-    DELETE FROM USER_ROLE 
-    WHERE account_id = ? AND role_id IN (?)
-    `,
-    [accountId, roleIds] 
+    `DELETE FROM USER_ROLE WHERE account_id = ?`,
+    [accountId]
   );
   return result.affectedRows > 0;
 };
+
 module.exports = {
   findById,
   findByCode,
@@ -206,7 +153,7 @@ module.exports = {
   update,
   remove,
   findUsersByRoleId,
-  findRolesByAccountId,
+  findRoleByAccountId,
   assignRole,
   deleteUserRole
 };

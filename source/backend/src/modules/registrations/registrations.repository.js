@@ -8,9 +8,6 @@ const {
 
 const queryBuilder = require("../../utils/query/queryBuilders");
 
-/**
- * Tìm kiếm danh sách đơn đăng ký nâng cao (phân trang, lọc, tìm kiếm, sắp xếp)
- */
 const find = async (query, connection = db) => {
   const {
     page,
@@ -28,7 +25,7 @@ const find = async (query, connection = db) => {
   const sortMap = REGISTRATION_MAPS.SORT;
   const filterMap = REGISTRATION_MAPS.FILTER;
 
-  // Tổng hợp bộ lọc động từ query params
+  
   const filters = {};
   if (registrationStatus) filters.registrationStatus = registrationStatus;
   if (studentId) filters.studentId = studentId;
@@ -83,7 +80,6 @@ const find = async (query, connection = db) => {
 
   const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
 
-  // Câu lệnh đếm tổng số đơn đăng ký thỏa mãn điều kiện
   const countSql = `
     SELECT COUNT(*) as total 
     ${fromJoinClause}
@@ -93,12 +89,11 @@ const find = async (query, connection = db) => {
   const [countRows] = await connection.query(countSql, params);
   const totalRecords = countRows[0]?.total || 0;
 
-  // Xây dựng câu lệnh SELECT động hoàn chỉnh
+  
   let dataSql = queryBuilder.buildSelectQuery({
     selectClause,
     fromJoinClause,
     whereClause,
-    groupClause: "",
     sortClause,
   });
 
@@ -118,16 +113,22 @@ const find = async (query, connection = db) => {
   };
 };
 
-/**
- * Tìm chi tiết một đơn đăng ký theo ID kì hồ sơ
- */
 const findById = async (registrationId, connection = db) => {
   const [rows] = await connection.query(
     `
     SELECT
-      reg.registration_id, reg.registration_code, reg.full_name, reg.gender,
-      reg.date_of_birth, reg.phone, reg.personal_email, reg.address,
-      reg.registration_status, reg.student_id, reg.created_at, reg.updated_at
+      reg.registration_id,
+      reg.registration_code,
+      reg.full_name,
+      reg.gender,
+      reg.date_of_birth,
+      reg.phone,
+      reg.personal_email,
+      reg.address,
+      reg.registration_status,
+      reg.student_id,
+      reg.created_at,
+      reg.updated_at
     FROM REGISTRATION reg
     WHERE reg.registration_id = ?
     `,
@@ -138,30 +139,12 @@ const findById = async (registrationId, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Tìm đơn đăng ký bằng mã code (để tra cứu nhanh trạng thái hồ sơ công khai)
- */
-const findByCode = async (registrationCode, connection = db) => {
-  const [rows] = await connection.query(
-    `
-    SELECT reg.registration_id, reg.registration_code, reg.registration_status
-    FROM REGISTRATION reg
-    WHERE reg.registration_code = ?
-    `,
-    [registrationCode],
-  );
-
-  if (!rows || rows.length === 0) return null;
-  return objectToCamelCase(rows[0]);
-};
-
-/**
- * Tìm đơn đăng ký dựa trên email hoặc số điện thoại (Tránh nộp trùng đơn trong cùng một đợt)
- */
 const findByContact = async (email, phone, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT reg.registration_id, reg.registration_code, reg.registration_status
+    SELECT reg.registration_id,
+    reg.registration_code,
+    reg.registration_status
     FROM REGISTRATION reg
     WHERE reg.personal_email = ? OR reg.phone = ?
     ORDER BY reg.created_at DESC LIMIT 1
@@ -173,9 +156,6 @@ const findByContact = async (email, phone, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Lưu đơn đăng ký trực tuyến mới
- */
 const create = async (registrationData, connection = db) => {
   const data = objectToSnakeCase(registrationData);
   const fields = Object.keys(data);
@@ -193,9 +173,6 @@ const create = async (registrationData, connection = db) => {
   return findById(result.insertId, connection);
 };
 
-/**
- * Cập nhật thông tin đơn hoặc thay đổi trạng thái xét duyệt hồ sơ
- */
 const update = async (registrationId, registrationData, connection = db) => {
   const data = objectToSnakeCase(registrationData);
   const fields = Object.keys(data);
@@ -212,9 +189,6 @@ const update = async (registrationId, registrationData, connection = db) => {
   return findById(registrationId, connection);
 };
 
-/**
- * Xóa đơn đăng ký khỏi hệ thống
- */
 const remove = async (registrationId, connection = db) => {
   await connection.query(
     `
@@ -233,7 +207,6 @@ const remove = async (registrationId, connection = db) => {
 module.exports = {
   find,
   findById,
-  findByCode,
   findByContact,
   create,
   update,

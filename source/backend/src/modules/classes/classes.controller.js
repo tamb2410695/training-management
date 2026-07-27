@@ -4,7 +4,7 @@ const classesService = require("./classes.service");
 const getList = asyncHandler(async (req, res, next) => {
   const queryOptions = req.query;
   const result = await classesService.getList(queryOptions);
-  return successResponse(res, result, "Get list successful");
+  return successResponse(res, result, "Get list classes successful");
 });
 
 const getById = asyncHandler(async (req, res, next) => {

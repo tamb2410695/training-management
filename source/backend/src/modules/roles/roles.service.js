@@ -1,7 +1,7 @@
 const db = require("../../config/database");
 const AppError = require("../../utils/errors");
 const { throwIf } = require("../../utils/helpers");
-const { ERROR_MESSAGES } = require("../../constants");
+const { ERROR_MESSAGES, ERROR_CODES, ROLES } = require("../../constants");
 const rolesRepository = require("./roles.repository");
 
 const getById = async (roleId, connection = db) => {
@@ -9,7 +9,7 @@ const getById = async (roleId, connection = db) => {
   throwIf(
     !role,
     AppError.NotFoundError,
-    ERROR_MESSAGES.ROLE_NOT_FOUND || "Role not found",
+    ERROR_MESSAGES.ROLE_NOT_FOUND,
   );
   return role;
 };
@@ -21,7 +21,7 @@ const getByCode = async (roleCode, connection = db) => {
   throwIf(
     !role,
     AppError.NotFoundError,
-    ERROR_MESSAGES.ROLE_NOT_FOUND || "Role not found",
+    ERROR_MESSAGES.ROLE_NOT_FOUND,
   );
   return role;
 };
@@ -37,7 +37,7 @@ const create = async (roleData, connection = db) => {
   throwIf(
     existedRole,
     AppError.ConflictError,
-    "Role code already exists in the system",
+    ERROR_CODES.ROLE_NOT_FOUND
   );
 
   const createdRole = await rolesRepository.create(roleData, connection);
@@ -57,7 +57,7 @@ const update = async (roleId, roleData, connection = db) => {
     throwIf(
       existedRole && existedRole.roleId !== roleId,
       AppError.ConflictError,
-      "New role code is already assigned to another role",
+      ERROR_CODES.ROLE_CODE_DUPLICATED
     );
   }
 
@@ -84,7 +84,7 @@ const removeRole = async (roleId, connection = db) => {
   throwIf(
     assignedUsers.length > 0,
     AppError.ConflictError,
-    `Cannot delete role '${role.roleName}' because it is currently assigned to ${assignedUsers.length} account(s).`,
+    `${ERROR_CODES.ROLE_HAS_ASSIGNED_USERS}: ${assignedUsers}`
   );
 
   const success = await rolesRepository.remove(roleId, connection);
@@ -92,81 +92,66 @@ const removeRole = async (roleId, connection = db) => {
 
   return true;
 };
-const getRoleCodesByAccountId = async (accountId, connection = db) => {
+
+const getRoleCodeByAccountId = async (accountId, connection = db) => {
   throwIf(!accountId, AppError.BadRequestError, "Account ID is required");
 
-  const userRoles = await rolesRepository.findRolesByAccountId(
+  const userRole = await rolesRepository.findRoleByAccountId(
     accountId,
     connection,
   );
-  return userRoles.map((ur) => ur.roleCode);
+  return userRole ? userRole.roleCode : null;
 };
 
 const assignRoleToAccount = async (assignmentData, connection = db) => {
-  const { accountId, roleCodes, assignedBy = null } = assignmentData;
+  const { accountId, roleCode, assignedBy } = assignmentData;
 
   throwIf(
-    !accountId || !roleCodes || !roleCodes.length,
+    !accountId || !roleCode,
     AppError.BadRequestError,
-    "Account ID and Role Code are required",
+    ERROR_CODES.ROLE_ASSIGNMENT_FAILED
   );
-  const roleCodeArray = Array.isArray(roleCodes) ? roleCodes : [roleCodes];
-  const roles = await rolesRepository.findByCodes(roleCodeArray, connection);
+  
+  const targetRole = await rolesRepository.findByCode(roleCode, connection);
   throwIf(
-    roles.length !== roleCodeArray.length,
+    !targetRole,
     AppError.NotFoundError,
-    "One or more roles not found in the system",
+    "Role not found in the system",
   );
 
-  const currentRoles = await rolesRepository.findRolesByAccountId(
+  const currentRole = await rolesRepository.findRoleByAccountId(
     accountId,
     connection,
   );
-  const currentRoleCodes = currentRoles.map((r) => r.roleCode);
-  const rolesToAssign = roles.filter(
-    (role) => !currentRoleCodes.includes(role.roleCode),
+
+  throwIf(
+    currentRole?.roleCode === roleCode, 
+    AppError.ConflictError, 
+    ERROR_CODES.PROFILE_ALREADY_LINKED
   );
-
-  if (rolesToAssign.length === 0) {
-    return true;
-  }
-
-  const roleIds = rolesToAssign.map((role) => role.roleId);
-  const payload = { accountId, roleIds, assignedBy };
+  
+  const payload = { accountId, roleId: targetRole.roleId, assignedBy };
   const success = await rolesRepository.assignRole(payload, connection);
-  throwIf(!success, AppError.ConflictError, "Failed to assign role to account");
+  throwIf(!success, AppError.ConflictError, ERROR_CODES.ROLE_ASSIGNMENT_FAILED);
 
   return true;
 };
 
-const unassignRoleFromAccount = async (unassignmentData, connection = db) => {
-  const { accountId, roleCodes } = unassignmentData;
+const unassignRoleFromAccount = async (accountId, connection = db) => {
+  throwIf(!accountId, AppError.BadRequestError, "Account ID is required");
 
-  throwIf(
-    !accountId || !roleCodes || !roleCodes.length,
-    AppError.BadRequestError,
-    "Account ID and Role Codes are required",
-  );
-
-  const roleCodeArray = Array.isArray(roleCodes) ? roleCodes : [roleCodes];
-  const roles = await rolesRepository.findByCodes(roleCodeArray, connection);
-
-  if (roles.length === 0) return true;
-
-  const roleIds = roles.map((role) => role.roleId);
-  const payload = { accountId, roleIds };
-
-  await rolesRepository.deleteUserRole(payload, connection);
+  const deleted = await rolesRepository.deleteUserRole(accountId, connection);
+  throwIf(!deleted, AppError.ConflictError, ERROR_CODES.ROLE_UNASSIGNMENT_FAILED)
   return true;
 };
 
 const changeAccountRole = async (changeData, connection = db) => {
-  const { accountId, targetRoleCode, assignedBy = null } = changeData;
+  const { accountId, targetRoleCode, assignedBy } = changeData;
 
   throwIf(
-    !accountId || !targetRoleCode,
+    !accountId || !targetRoleCode || !assignedBy,
     AppError.BadRequestError,
-    "Account ID and Target Role Code are required",
+     ERROR_CODES.ROLE_ASSIGNMENT_FAILED
   );
 
   const targetRole = await rolesRepository.findByCode(
@@ -176,44 +161,24 @@ const changeAccountRole = async (changeData, connection = db) => {
   throwIf(
     !targetRole,
     AppError.NotFoundError,
-    `Target role '${targetRoleCode}' configuration not found`,
+    ERROR_CODES.ROLE_NOT_FOUND
   );
 
-  const currentRoles = await getRoleCodesByAccountId(accountId, connection);
-
-  if (targetRoleCode === "ADMIN") {
-    if (!currentRoles.includes("ADMIN")) {
-      await rolesRepository.assignRole(
-        {
-          accountId,
-          roleIds: [targetRole.roleId],
-          assignedBy,
-        },
-        connection,
-      );
-    }
-  } else if (targetRoleCode === "INSTRUCTOR") {
-    if (currentRoles.includes("ADMIN")) {
-      const adminRole = await rolesRepository.findByCode("ADMIN", connection);
-      if (adminRole) {
-        await rolesRepository.deleteUserRole(
-          { accountId, roleIds: [adminRole.roleId] },
-          connection,
-        );
-      }
-    }
-    if (!currentRoles.includes("INSTRUCTOR")) {
-      await rolesRepository.assignRole(
-        {
-          accountId,
-          roleIds: [targetRole.roleId],
-          assignedBy,
-        },
-        connection,
-      );
-    }
+  const currentRole = await rolesRepository.findRoleByAccountId(accountId, connection);
+  
+  if (currentRole?.roleCode === targetRoleCode) {
+    return true; // Không có sự thay đổi về RoleCode
   }
+  const success = await rolesRepository.assignRole(
+    {
+      accountId,
+      roleId: targetRole.roleId,
+      assignedBy,
+    },
+    connection,
+  );
 
+  throwIf(!success, AppError.ConflictError, ERROR_CODES.ROLE_ASSIGNMENT_FAILED);
   return true;
 };
 
@@ -224,7 +189,7 @@ module.exports = {
   create,
   update,
   removeRole,
-  getRoleCodesByAccountId,
+  getRoleCodeByAccountId,
   assignRoleToAccount,
   unassignRoleFromAccount,
   changeAccountRole,

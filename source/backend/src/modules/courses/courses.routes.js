@@ -4,81 +4,61 @@ const router = express.Router();
 const { ROLES, ROUTES } = require("../../constants");
 const { authenticate, authorize } = require("../../middlewares");
 
-// Giả định tầng middleware bọc validator tương tự như accounts
-const {
-  validateGetListMiddleware,
-  validateGetByIdMiddleware,
-  validateCreateMiddleware,
-  validateUpdateMiddleware,
-  validatePartialUpdateMiddleware,
-  validateRemoveMiddleware,
-} = require("../../middlewares/courses.middleware");
-
 const coursesController = require("./courses.controller");
+const { createValidationMiddleware, createMultiValidator } = require("../../utils/helpers");
+const { validateGetById, validateGetList, validateCreate, validateUpdate, validatePartialUpdate, validateRemove } = require("./courses.validator");
 
-// =========================================================================
-// 1. CÁC ROUTE CƠ BẢN (CRUD)
-// =========================================================================
-
-// Lấy danh sách khóa học & Tạo khóa học mới
 router.get(
   ROUTES.COURSE.ROOT, 
-  validateGetListMiddleware, 
+  createValidationMiddleware(validateGetList, "query"), 
   coursesController.getList
+);
+
+router.get(
+  ROUTES.COURSE.DETAIL, 
+  createValidationMiddleware(validateGetById, "params"), 
+  coursesController.getById
 );
 
 router.post(
   ROUTES.COURSE.ROOT, 
-  validateCreateMiddleware, 
+  createValidationMiddleware(validateCreate),
   coursesController.create
-);
-
-// Chi tiết khóa học, Cập nhật & Xóa mềm/Cứng khóa học
-router.get(
-  ROUTES.COURSE.DETAIL, 
-  validateGetByIdMiddleware, 
-  coursesController.getById
 );
 
 router.put(
   ROUTES.COURSE.DETAIL, 
-  validateUpdateMiddleware, 
+  createMultiValidator(validateUpdate), 
   coursesController.update
 );
 
 router.patch(
   ROUTES.COURSE.DETAIL, 
-  validatePartialUpdateMiddleware, 
+  createMultiValidator(validatePartialUpdate), 
   coursesController.partialUpdate
 );
 
 router.delete(
   ROUTES.COURSE.DETAIL, 
-  validateRemoveMiddleware, 
+  createValidationMiddleware(validateRemove, "params"), 
   coursesController.remove
 );
 
-// =========================================================================
-// 2. CÁC ROUTE NGHIỆP VỤ / TÍNH NĂNG ĐẶC THÙ (STATE TRANSITION & SUB-RESOURCES)
-// =========================================================================
-
-// Chuyển trạng thái khóa học (Publish / Lock)
 router.patch(
   ROUTES.COURSE.PUBLISH,
-  validateGetByIdMiddleware, // Tái sử dụng để validate ID từ params hợp lệ
+  createValidationMiddleware(validateUpdate, "params"), 
   coursesController.publish
 );
 
 router.patch(
   ROUTES.COURSE.LOCK,
-  validateGetByIdMiddleware, 
+  createValidationMiddleware(validateUpdate, "params"), 
   coursesController.lock
 );
 
-// Quản lý tài liệu đính kèm của khóa học (Sub-resource Documents)
 router.get(
   ROUTES.COURSE.DOCUMENTS,
-  validateGetByIdMiddleware,
+  createValidationMiddleware(validateUpdate, "params"), 
   coursesController.getDocuments
 );
 

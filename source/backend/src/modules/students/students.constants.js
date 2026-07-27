@@ -6,11 +6,9 @@ const ACCOUNT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "email"],
-
+    SEARCHABLE: ["username", "accountEmail"],
     SORTABLE: ["accountId", "username", "createdAt"],
-
-    FILTERS: ["accountStatus", "roleCode"],
+    FILTERS: ["accountStatus"],
 
     get ALLOWED_KEYS() {
       return [
@@ -26,22 +24,19 @@ const ACCOUNT_FIELDS = {
 
   BODY: {
     CREATE: [
-      "roleCode",
       "username",
-      "email",
+      "accountEmail",
       "password",
       "avatarUrl",
-      "accountStatus",
     ],
-    UPDATE: ["roleCode", "avatarUrl", "accountStatus"],
+    UPDATE: ["avatarUrl", "accountStatus"],
     CHANGE_PASSWORD: ["oldPassword", "newPassword"],
   },
 
   REQUIRED: {
-    CREATE: ["roleCode", "username", "email", "password"],
+    CREATE: ["username", "accountEmail", "password"],
   },
 };
-
 
 const STUDENT_FIELDS = {
   PARAMS: {
@@ -50,9 +45,7 @@ const STUDENT_FIELDS = {
 
   QUERY: {
     SEARCHABLE: ["studentCode", "fullName", "phone", "personalEmail"],
-
     SORTABLE: ["studentId", "studentCode", "fullName", "createdAt"],
-
     FILTERS: ["gender", "studentStatus"],
 
     get ALLOWED_KEYS() {
@@ -69,14 +62,12 @@ const STUDENT_FIELDS = {
 
   BODY: {
     CREATE: [
-      "accountId",
-      "studentCode",
       "fullName",
       "gender",
       "dateOfBirth",
       "phone",
-      "address",
       "personalEmail",
+      "address",
     ],
 
     UPDATE: [
@@ -84,25 +75,21 @@ const STUDENT_FIELDS = {
       "gender",
       "dateOfBirth",
       "phone",
-      "address",
       "personalEmail",
+      "address",
       "studentStatus",
     ],
   },
 
   REQUIRED: {
-    CREATE: [
-      "studentCode",
-      "fullName",
-      "dateOfBirth",
-      "phone",
-      "personalEmail",
-    ],
+    CREATE: ["fullName", "phone"],
   },
 };
 
 const STUDENT_MAPS = {
   SEARCH: {
+    username: "acc.username",
+    accountEmail: "acc.email",
     studentCode: "stu.student_code",
     fullName: "stu.full_name",
     phone: "stu.phone",
@@ -110,39 +97,23 @@ const STUDENT_MAPS = {
   },
 
   SORT: {
+    accountId: "acc.account_id",
+    username: "acc.username",
+    createdAt: "acc.created_at",
     studentId: "stu.student_id",
     studentCode: "stu.student_code",
     fullName: "stu.full_name",
-    createdAt: "stu.created_at",
   },
 
   FILTER: {
     gender: "stu.gender",
     studentStatus: "stu.student_status",
-    accountId: "stu.account_id",
-  },
-};
-
-
-const ACCOUNT_MAPS = {
-  SEARCH: {
-    username: "acc.username",
-    email: "acc.email",
-  },
-  SORT: {
-    accountId: "acc.account_id",
-    username: "acc.username",
-    createdAt: "acc.created_at",
-  },
-  FILTER: {
     accountStatus: "acc.account_status",
-    roleCode: "acc.role_id",
   },
 };
 
 module.exports = {
   ACCOUNT_FIELDS,
   STUDENT_FIELDS,
-  ACCOUNT_MAPS,
   STUDENT_MAPS,
 };

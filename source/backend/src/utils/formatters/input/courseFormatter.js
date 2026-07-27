@@ -10,6 +10,9 @@ function formatCourseData(courseData) {
     ...courseData,
   };
 
+  if (hasField(data, "courseLevel")) {
+    data.courseLevel = normalizeEnum(data.courseLevel);
+  }
   if (hasField(data, "courseStatus")) {
     data.courseStatus = normalizeEnum(data.courseStatus);
   }

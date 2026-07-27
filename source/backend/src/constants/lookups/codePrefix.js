@@ -1,12 +1,18 @@
 const CODE_PREFIX = {
   STUDENT: "STU",
+  REGISTRATION: "REG",
   INSTRUCTOR: "INS",
+  STAFF: "STF",
   COURSE: "CRS",
   CLASS: "CLS",
   PAYMENT: "PAY",
   CERTIFICATE: "CERT",
 };
-
+const CODE_LENGHT = {
+  NORMAL: 6,
+  EXTEND: 8
+};
 module.exports = {
-  CODE_PREFIX
+  CODE_PREFIX,
+  CODE_LENGHT
 }

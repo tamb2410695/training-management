@@ -9,7 +9,7 @@ const getList = asyncHandler(async (req, res, next) => {
 
 const getByCompositeKey = asyncHandler(async (req, res, next) => {
   const { staffId, departmentId } = req.params;
-  const result = await staffDepartmentsService.getByCompositeKey(Number(staffId), Number(departmentId));
+  const result = await staffDepartmentsService.getByCompositeKey(staffId, departmentId);
   return successResponse(res, result, "Get staff department assignment detail successful");
 });
 

@@ -1,27 +1,17 @@
-// src/features/instructors/services/instructorsService.js
 import { API_ROUTES } from "../../../constants";
 import api from "../../../services/api";
 import { createCrudService } from "../../../services/crudService";
-import { unwrapResponse } from "../../../utils";
+
+const BASE_STAFF_PATH = API_ROUTES.STAFF_PROFILE.LIST;
 
 const instructorsService = {
-  ...createCrudService("instructors"),
+  ...createCrudService(BASE_STAFF_PATH),
 
-  updateStatus: (id, status) =>
-    api
-      .patch(`${API_ROUTES.STAFF}/${id}/status`, { status })
-      .then(unwrapResponse),
+  updateStatus: (id, newStatus) =>
+    api.patch(`${BASE_STAFF_PATH}/${id}/status`, { accountStatus: newStatus }), 
 
-  resetPassword: (id) =>
-    api
-      .post(`${API_ROUTES.STAFF}/${id}/reset-password`)
-      .then(unwrapResponse),
-
-  search: (params) =>
-    api.get(`${API_ROUTES.STAFF}/search`, { params }).then(unwrapResponse),
-
-  getStatistics: () =>
-    api.get(`${API_ROUTES.STAFF}/statistics`).then(unwrapResponse),
+  changeRole: (id, targetRoleCode) =>
+    api.put(`${BASE_STAFF_PATH}/${id}/role`, { targetRoleCode }),
 };
 
 export default instructorsService;

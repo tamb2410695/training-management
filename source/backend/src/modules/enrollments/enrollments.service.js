@@ -11,7 +11,6 @@ const {
 const enrollmentsRepository = require("./enrollments.repository");
 const { ENROLLMENT_CODE } = require("./enrollments.constants");
 
-// Giả định bạn đã có các repository này
 const studentsRepository = require("../students/students.repository");
 const classesRepository = require("../classes/classes.repository");
 
@@ -85,7 +84,7 @@ const create = async ({ studentId, classId }, connection = db) => {
     );
 
     return finalEnrollment;
-  });
+  }, connection);
 };
 
 const updateStatus = async (

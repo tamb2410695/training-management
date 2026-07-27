@@ -1,5 +1,5 @@
 const AppError = require("../../utils/errors");
-const { COURSE_LEVEL, COURSE_STATUS, ERROR_MESSAGES } = require("../../constants");
+const { COURSE_LEVELS, COURSE_STATUS, ERROR_MESSAGES } = require("../../constants");
 const { COURSE_FIELDS } = require("./courses.constants");
 
 const {
@@ -21,8 +21,17 @@ const {
 const validateCourseFormats = (courseData) => {
   if (!courseData) return;
 
+
+  if (hasField(courseData, "page") || hasField(courseData, "limit")) {
+    validatePagination(courseData.page, courseData.limit);
+  }
+
   if (hasField(courseData, "courseLevel")) {
-    validateEnum(courseData.courseLevel, Object.values(COURSE_LEVEL), "courseLevel");
+    validateEnum(courseData.courseLevel, Object.values(COURSE_LEVELS), "courseLevel");
+  }
+
+  if (hasField(courseData, "courseStatus")) {
+    validateEnum(courseData.courseStatus, Object.values(COURSE_STATUS), "courseStatus");
   }
 
   if (hasField(courseData, "courseStatus")) {
@@ -37,18 +46,6 @@ const validateGetList = (query) => {
     pickFields(query, COURSE_FIELDS.QUERY.ALLOWED_KEYS)
   );
   const queryData = formatCourseQuery(rawQueryData);
-
-  if (hasField(queryData, "page") || hasField(queryData, "limit")) {
-    validatePagination(queryData.page, queryData.limit);
-  }
-
-  if (hasField(queryData, "courseLevel")) {
-    validateEnum(queryData.courseLevel, Object.values(COURSE_LEVEL), "courseLevel");
-  }
-
-  if (hasField(queryData, "courseStatus")) {
-    validateEnum(queryData.courseStatus, Object.values(COURSE_STATUS), "courseStatus");
-  }
 
   return queryData;
 };

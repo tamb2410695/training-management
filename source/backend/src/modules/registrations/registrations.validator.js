@@ -1,8 +1,18 @@
 const { BadRequestError } = require("../../utils/errors");
-const { ERROR_MESSAGES } = require("../../constants");
-const { REGISTRATION_FIELDS } = require("./registrations.constants");
+const {
+  ERROR_MESSAGES,
+  USER_CREATION,
+  GENDER,
+  REGISTRATION_STATUS,
+} = require("../../constants");
+const { REGISTRATION_FIELDS, ACCOUNT_FIELDS } = require("./registrations.constants");
 const { formatNumericId } = require("../../utils/formatters");
-const { pickFields, sanitizeFields, hasField, throwIf } = require("../../utils/helpers");
+const {
+  pickFields,
+  sanitizeFields,
+  hasField,
+  throwIf,
+} = require("../../utils/helpers");
 const {
   validateId,
   validatePagination,
@@ -11,7 +21,10 @@ const {
   validateAllowedFields,
   validateRequiredFields,
   sanitizePatchBody,
+  validateUsername,
 } = require("../../utils/validators");
+const { formatAccountData } = require("../../utils/formatters/input/accountFormatter");
+const { formatStudentData } = require("../../utils/formatters/input/studentFormatter");
 
 const validateRegistrationFormats = (data) => {
   if (!data) return;
@@ -20,26 +33,36 @@ const validateRegistrationFormats = (data) => {
     validatePagination(data.page, data.limit);
   }
 
+  if (hasField(data, "accountId")) validateId(data.accountId, "accountId");
+
+  if (hasField(data, "username")) {
+    validateUsername(data.username);
+  }
+
+  if (hasField(data, "email")) {
+    validateEmail(data.email);
+  }
+
   if (hasField(data, "personalEmail")) validateEmail(data.personalEmail);
 
   if (hasField(data, "registrationStatus")) {
-    validateEnum(data.registrationStatus, ["PENDING", "REVIEWING", "APPROVED", "REJECTED"], "registrationStatus");
+    validateEnum(
+      data.registrationStatus,
+      Object.values(REGISTRATION_STATUS),
+      "registrationStatus",
+    );
   }
 
   if (hasField(data, "gender")) {
-    validateEnum(data.gender, ["MALE", "FEMALE", "OTHER"], "gender");
-  }
-
-  // Validate định dạng số điện thoại cơ bản (9 - 11 chữ số)
-  if (hasField(data, "phone")) {
-    const phoneRegex = /^[0-9]{9,11}$/;
-    throwIf(!phoneRegex.test(data.phone), BadRequestError, "Invalid phone number format");
+    validateEnum(data.gender, Object.values(GENDER), "gender");
   }
 };
 
 const validateGetList = (query) => {
   validateAllowedFields(query, REGISTRATION_FIELDS.QUERY.ALLOWED_KEYS);
-  const rawQueryData = sanitizeFields(pickFields(query, REGISTRATION_FIELDS.QUERY.ALLOWED_KEYS));
+  const rawQueryData = sanitizeFields(
+    pickFields(query, REGISTRATION_FIELDS.QUERY.ALLOWED_KEYS),
+  );
   validateRegistrationFormats(rawQueryData);
   return rawQueryData;
 };
@@ -50,20 +73,37 @@ const validateGetById = (params) => {
   return registrationId;
 };
 
-const validateGetByCode = (params) => {
-  const { code } = params;
-  // Khớp định dạng mã REG-YYYY-XXXXXX (Ví dụ: REG-2026-000001)
-  const codeRegex = /^REG-\d{4}-\d{6}$/;
-  throwIf(!codeRegex.test(code), BadRequestError, "Invalid registration code format");
-  return code;
-};
-
 const validateCreate = (body) => {
   validateAllowedFields(body, REGISTRATION_FIELDS.BODY.CREATE);
-  const sanitizedData = sanitizeFields(pickFields(body, REGISTRATION_FIELDS.BODY.CREATE));
+  const sanitizedData = sanitizeFields(
+    pickFields(body, REGISTRATION_FIELDS.BODY.CREATE),
+  );
   validateRequiredFields(sanitizedData, REGISTRATION_FIELDS.REQUIRED.CREATE);
   validateRegistrationFormats(sanitizedData);
   return sanitizedData;
+};
+
+const validateActivate = (params, body) => {
+  const registrationId = validateGetById(params);
+
+  validateAllowedFields(body, [
+    ...ACCOUNT_FIELDS.BODY.ACTIVE,
+    ...REGISTRATION_FIELDS.BODY.ACTIVE
+  ]);
+  const rawAccountData = sanitizeFields(
+    pickFields(body, ACCOUNT_FIELDS.BODY.ACTIVE),
+  );
+  const rawStudentData = sanitizeFields(
+    pickFields(body, REGISTRATION_FIELDS.BODY.ACTIVE),
+  );
+  validateRequiredFields(rawAccountData, ACCOUNT_FIELDS.REQUIRED.ACTIVE);
+  const formatedAccountData = formatAccountData(rawAccountData)
+  const formatedProfileData = formatStudentData(rawStudentData)
+  validateRegistrationFormats({ ...rawAccountData, ...rawStudentData });
+  return {
+    id: registrationId,
+    body: { accountData: rawAccountData, profileData: rawStudentData },
+  };
 };
 
 const validateUpdate = (params, body) => {
@@ -71,9 +111,15 @@ const validateUpdate = (params, body) => {
   validateId(registrationId);
 
   validateAllowedFields(body, REGISTRATION_FIELDS.BODY.UPDATE);
-  const sanitizedData = sanitizeFields(pickFields(body, REGISTRATION_FIELDS.BODY.UPDATE));
+  const sanitizedData = sanitizeFields(
+    pickFields(body, REGISTRATION_FIELDS.BODY.UPDATE),
+  );
 
-  throwIf(!sanitizedData || Object.keys(sanitizedData).length === 0, BadRequestError, ERROR_MESSAGES.NO_VALID_FIELDS);
+  throwIf(
+    !sanitizedData || Object.keys(sanitizedData).length === 0,
+    BadRequestError,
+    ERROR_MESSAGES.NO_VALID_FIELDS,
+  );
   validateRegistrationFormats(sanitizedData);
 
   return { registrationId, registrationData: sanitizedData };
@@ -84,9 +130,16 @@ const validatePartialUpdate = (params, body) => {
   validateId(registrationId);
 
   validateAllowedFields(body, REGISTRATION_FIELDS.BODY.UPDATE);
-  const sanitizedData = sanitizePatchBody(body, REGISTRATION_FIELDS.BODY.UPDATE);
+  const sanitizedData = sanitizePatchBody(
+    body,
+    REGISTRATION_FIELDS.BODY.UPDATE,
+  );
 
-  throwIf(!sanitizedData || Object.keys(sanitizedData).length === 0, BadRequestError, ERROR_MESSAGES.NO_VALID_FIELDS);
+  throwIf(
+    !sanitizedData || Object.keys(sanitizedData).length === 0,
+    BadRequestError,
+    ERROR_MESSAGES.NO_VALID_FIELDS,
+  );
   validateRegistrationFormats(sanitizedData);
 
   return { registrationId, registrationData: sanitizedData };
@@ -95,8 +148,8 @@ const validatePartialUpdate = (params, body) => {
 module.exports = {
   validateGetList,
   validateGetById,
-  validateGetByCode,
   validateCreate,
+  validateActivate,
   validateUpdate,
   validatePartialUpdate,
 };

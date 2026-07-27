@@ -73,18 +73,21 @@ const find = async (query, connection = db) => {
       acc.username,
       acc.email AS account_email,
       acc.account_status,
-      GROUP_CONCAT(DISTINCT dpt.department_name) as department_names
+      GROUP_CONCAT(DISTINCT dpt.department_name) as department_names,
+      rl.role_label,
+      rl.role_code
   `;
-
-  // Từ cấu trúc STAFF_MAPS: join qua ACCOUNT và LEFT JOIN qua STAFF_DEPARTMENT/DEPARTMENT để lọc theo phòng ban
+  
   const fromJoinClause = `
     FROM STAFF_PROFILE sp
     JOIN ACCOUNT acc ON sp.account_id = acc.account_id
+    LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
+    LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
     LEFT JOIN STAFF_DEPARTMENT sd ON sp.staff_id = sd.staff_id
     LEFT JOIN DEPARTMENT dpt ON sd.department_id = dpt.department_id
   `;
 
-  const whereParts = ["acc.deleted_at IS NULL"]; // Chỉ lấy nhân viên có tài khoản chưa bị xóa tạm thời
+  const whereParts = ["acc.deleted_at IS NULL"];
   const params = [];
 
   if (searchResult.clause) {
@@ -168,9 +171,13 @@ const findById = async (staffId, connection = db) => {
       acc.username,
       acc.email AS account_email,
       acc.account_status,
-      GROUP_CONCAT(DISTINCT dpt.department_name) as department_names
+      GROUP_CONCAT(DISTINCT dpt.department_name) as department_names,
+      rl.role_label,
+      rl.role_code
     FROM STAFF_PROFILE sp
     JOIN ACCOUNT acc ON sp.account_id = acc.account_id
+    LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
+    LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
     LEFT JOIN STAFF_DEPARTMENT sd ON sp.staff_id = sd.staff_id
     LEFT JOIN DEPARTMENT dpt ON sd.department_id = dpt.department_id
     WHERE sp.staff_id = ? AND acc.deleted_at IS NULL
@@ -188,9 +195,6 @@ const findById = async (staffId, connection = db) => {
   };
 };
 
-/**
- * Tìm kiếm hồ sơ nhân sự theo Mã nhân viên (Kiểm tra duy nhất)
- */
 const findByCode = async (staffCode, connection = db) => {
   const [rows] = await connection.query(
     `
@@ -205,9 +209,54 @@ const findByCode = async (staffCode, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Tìm kiếm hồ sơ nhân sự dựa theo Account ID liên kết
- */
+
+const findByPhone = async (phone, connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      sp.staff_id,
+      sp.account_id,
+      sp.staff_code,
+      sp.full_name,
+      sp.gender,
+      sp.date_of_birth,
+      sp.identity_card,
+      sp.phone,
+      sp.personal_email,
+      sp.address,
+      sp.academic_rank,
+      sp.hire_date,
+      sp.contract_type,
+      sp.staff_status,
+      sp.created_at,
+      sp.updated_at,
+      acc.username,
+      acc.email AS account_email,
+      acc.account_status,
+      GROUP_CONCAT(DISTINCT dpt.department_name) as department_names,
+      rl.role_label,
+      rl.role_code
+    FROM STAFF_PROFILE sp
+    JOIN ACCOUNT acc ON sp.account_id = acc.account_id
+    LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
+    LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
+    LEFT JOIN STAFF_DEPARTMENT sd ON sp.staff_id = sd.staff_id
+    LEFT JOIN DEPARTMENT dpt ON sd.department_id = dpt.department_id
+    WHERE sp.phone = ? AND acc.deleted_at IS NULL
+    GROUP BY sp.staff_id
+    `,
+    [phone],
+  );
+
+  if (!rows || rows.length === 0) return null;
+  
+  const staff = objectToCamelCase(rows[0]);
+  return {
+    ...staff,
+    departmentNames: staff.departmentNames ? staff.departmentNames.split(",") : [],
+  };
+};
+
 const findByAccountId = async (accountId, connection = db) => {
   const [rows] = await connection.query(
     `
@@ -222,9 +271,6 @@ const findByAccountId = async (accountId, connection = db) => {
   return objectToCamelCase(rows[0]);
 };
 
-/**
- * Khởi tạo hồ sơ nhân viên mới
- */
 const create = async (staffData, connection = db) => {
   const data = objectToSnakeCase(staffData);
   const fields = Object.keys(data);
@@ -242,9 +288,6 @@ const create = async (staffData, connection = db) => {
   return findById(result.insertId, connection);
 };
 
-/**
- * Cập nhật thông tin hồ sơ nhân viên
- */
 const update = async (staffId, staffData, connection = db) => {
   const data = objectToSnakeCase(staffData);
   const fields = Object.keys(data);
@@ -261,9 +304,6 @@ const update = async (staffId, staffData, connection = db) => {
   return findById(staffId, connection);
 };
 
-/**
- * Xóa vật lý hồ sơ nhân viên khỏi cơ sở dữ liệu
- */
 const remove = async (staffId, connection = db) => {
   await connection.query(
     `
@@ -286,5 +326,6 @@ module.exports = {
   findByAccountId,
   create,
   update,
+  findByPhone,
   remove,
 };

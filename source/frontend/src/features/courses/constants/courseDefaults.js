@@ -1,38 +1,77 @@
-import { COURSE_FIELDS } from "./courseFields";
+import { ACCOUNT_FIELDS } from "./courseFields";
 
-// Tạo form khởi tạo dựa trên cấu trúc BODY.CREATE ở backend
-export const DEFAULT_COURSE_FORM = {
-  [COURSE_FIELDS.courseName.key]: COURSE_FIELDS.courseName.default,
-  [COURSE_FIELDS.coverImage.key]: COURSE_FIELDS.coverImage.default,
-  [COURSE_FIELDS.courseDescription.key]: COURSE_FIELDS.courseDescription.default,
-  [COURSE_FIELDS.durationHours.key]: COURSE_FIELDS.durationHours.default,
-  [COURSE_FIELDS.totalSessions.key]: COURSE_FIELDS.totalSessions.default,
-  [COURSE_FIELDS.tuitionFee.key]: COURSE_FIELDS.tuitionFee.default,
-  [COURSE_FIELDS.level.key]: COURSE_FIELDS.level.default,
-  [COURSE_FIELDS.certificateAvailable.key]: COURSE_FIELDS.certificateAvailable.default,
-  [COURSE_FIELDS.courseStatus.key]: COURSE_FIELDS.courseStatus.default,
+export const DEFAULT_ACCOUNT_FORM = {
+  [ACCOUNT_FIELDS.username.key]: ACCOUNT_FIELDS.username.default,
+  [ACCOUNT_FIELDS.email.key]: ACCOUNT_FIELDS.email.default,
+  [ACCOUNT_FIELDS.password.key]: ACCOUNT_FIELDS.password.default,
+  [ACCOUNT_FIELDS.roleCodes.key]: ACCOUNT_FIELDS.roleCodes.default,
+  [ACCOUNT_FIELDS.avatarUrl.key]: ACCOUNT_FIELDS.avatarUrl.default,
 };
 
-// Form cập nhật (Dựa trên cấu trúc BODY.UPDATE ở backend)
-export const DEFAULT_COURSE_UPDATE_FORM = { ...DEFAULT_COURSE_FORM };
+export const DEFAULT_ACCOUNT_UPDATE_FORM = {
+  [ACCOUNT_FIELDS.username.key]: ACCOUNT_FIELDS.username.default,
+  [ACCOUNT_FIELDS.email.key]: ACCOUNT_FIELDS.email.default,
+  [ACCOUNT_FIELDS.avatarUrl.key]: ACCOUNT_FIELDS.avatarUrl.default,
+  [ACCOUNT_FIELDS.accountStatus.key]: ACCOUNT_FIELDS.accountStatus.default,
+  [ACCOUNT_FIELDS.roleCodes.key]: ACCOUNT_FIELDS.roleCodes.default,
+};
 
-// Các tham số Query API mặc định
-export const COURSE_QUERY_DEFAULTS = {
+export const ACCOUNT_QUERY_DEFAULTS = {
   page: 1,
   limit: 10,
   search: "",
-  sortBy: COURSE_FIELDS.createdAt.key,
+  sortBy: ACCOUNT_FIELDS.createdAt.key,
   sortOrder: "desc",
-  [COURSE_FIELDS.courseStatus.key]: "",
-  [COURSE_FIELDS.level.key]: "",
-  [COURSE_FIELDS.certificateAvailable.key]: "",
+  [ACCOUNT_FIELDS.roleCodes.key]: [],
+  [ACCOUNT_FIELDS.accountStatus.key]: "",
 };
 
-// Trích xuất các option tìm kiếm và sắp xếp cho thanh công cụ UI
-export const COURSE_SEARCH_OPTIONS = Object.values(COURSE_FIELDS)
+export const ACCOUNT_SEARCH_OPTIONS = Object.values(ACCOUNT_FIELDS)
   .filter((field) => field.searchable)
   .map(({ key, label }) => ({ value: key, label }));
 
-export const COURSE_SORT_OPTIONS = Object.values(COURSE_FIELDS)
+export const ACCOUNT_SORT_OPTIONS = Object.values(ACCOUNT_FIELDS)
   .filter((field) => field.sortable)
   .map(({ key, label }) => ({ value: key, label }));
+
+// src/constants/accountDefaults.js
+
+// export const DEFAULT_ACCOUNT_FORM = {
+//   username: "",
+//   email: "",
+//   password: "",
+//   roleCode: "STUDENT",
+//   avatarUrl: "",
+// };
+
+// export const DEFAULT_ACCOUNT_UPDATE_FORM = {
+//   username: "",
+//   email: "",
+//   avatarUrl: "",
+//   accountStatus: "ACTIVE",
+//   roleCode: "STUDENT",
+// };
+
+// export const ACCOUNT_QUERY_DEFAULTS = {
+//   page: 1,
+//   limit: 10,
+//   search: "",
+//   sortBy: "createdAt",
+//   sortOrder: "desc",
+//   roleCode: "",
+//   accountStatus: "",
+// };
+
+// export const ACCOUNT_SEARCH_OPTIONS = [
+//   { value: "username", label: "Tên đăng nhập" },
+//   { value: "email", label: "Email" },
+// ];
+
+// export const ACCOUNT_SORT_OPTIONS = [
+//   { value: "accountId", label: "Mã tài khoản" },
+//   { value: "username", label: "Tên đăng nhập" },
+//   { value: "email", label: "Email" },
+//   { value: "accountStatus", label: "Trạng thái" },
+//   { value: "createdAt", label: "Ngày tạo" },
+//   { value: "updatedAt", label: "Ngày cập nhật" },
+// ];

@@ -1,9 +1,9 @@
-import AccountsPage from "../../features/accounts/pages/AccountsPage";
+// import AccountsPage from "../../features/accounts/pages/AccountsPage";
 
-function AccountManagementPage() {
-  return (
-    <AccountsPage/>
-  );
-}
+// function AccountManagementPage() {
+//   return (
+//     <AccountsPage/>
+//   );
+// }
 
-export default AccountManagementPage;
+// export default AccountManagementPage;

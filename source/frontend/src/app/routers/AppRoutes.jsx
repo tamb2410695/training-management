@@ -1,32 +1,34 @@
 import { Routes, Route } from "react-router-dom";
 
-import { ROUTES, COMPONENT_ROUTES, ROLES } from "../../constants";
+import { ROUTES, COMPONENT_ROUTES, ROLES } from "@/constants";
 
 import RoleRoute from "./RoleRoutes";
 import ProtectedRoute from "./ProtectedRoute";
 import AnonymousRoute from "./AnonymousRoute";
 
-import PublicLayout from "../../layouts/PublicLayout";
-import UnauthorizedPage from "../../pages/UnauthorizedPage";
+import PublicLayout from "@/layouts/PublicLayout";
+import UnauthorizedPage from "@/pages/UnauthorizedPage";
 
-import HomePage from "../../pages/HomePage";
+import HomePage from "@/pages/HomePage";
 
-import Login from "../../pages/auth/LoginPage";
-import Register from "../../pages/auth/RegisterPage";
+import Login from "@/pages/auth/LoginPage";
+import Register from "@/pages/auth/RegisterPage";
 
-import AdminLayout from "../../layouts/AdminLayout";
-import AdminDashboard from "../../pages/admin/AdminDashboardPage";
-import AccountManagementPage from "../../pages/admin/AccountManagementPage";
-import StudentManagementPage from "../../pages/admin/StudentManagementPage";
-import InstructorManagementPage from "../../pages/admin/InstructorManagementPage";
+import AdminLayout from "@/layouts/AdminLayout";
+import AdminDashboard from "@/features/dashboard/pages/AdminDashboardPage";
+import AccountManagementPage from "@/features/accounts/pages/AccountsPage";
+import StudentManagementPage from "@/features/students/pages/StudentsPage";
+import CoursesManagementPage from "@/features/courses/pages/CoursesPage"
+// import DepartmentsManagementPage from "@/features/departments/pages/DepartmentsPage";
+// import InstructorManagementPage from "@/features/instructors/pages/InstructorsPage";
 
-import StudentLayout from "../../layouts/StudentLayout";
-import MyCoursePage from "../../pages/student/MyCoursePage";
-import StudentProfilePage from "../../pages/student/StudentProfilePage";
+import StudentLayout from "@/layouts/StudentLayout";
+import MyCoursePage from "@/pages/student/MyCoursePage";
+import StudentProfilePage from "@/pages/student/StudentProfilePage";
 
-import InstructorLayout from "../../layouts/InstructorLayout";
-import TeachingPage from "../../pages/instructor/TeachingPage";
-import InstructorProfilePage from "../../pages/instructor/InstructorProfilePage";
+import InstructorLayout from "@/layouts/InstructorLayout";
+import TeachingPage from "@/pages/instructor/TeachingPage";
+import InstructorProfilePage from "@/pages/instructor/InstructorProfilePage";
 
 function AppRoutes() {
   return (
@@ -75,14 +77,25 @@ function AppRoutes() {
           path={COMPONENT_ROUTES.ADMIN.ACCOUNTS}
           element={<AccountManagementPage />}
         />
+        
         <Route
           path={COMPONENT_ROUTES.ADMIN.STUDENTS}
           element={<StudentManagementPage />}
         />
+
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.COURSES}
+          element={<CoursesManagementPage />}
+        />
+
+        {/* <Route
+          path={COMPONENT_ROUTES.ADMIN.DEPARTMENTS}
+          element={<DepartmentsManagementPage />}
+        />
         <Route
           path={COMPONENT_ROUTES.ADMIN.STAFFS}
           element={<InstructorManagementPage />}
-        />
+        /> */}
       </Route>
 
       {/* Student */}

@@ -1,23 +1,10 @@
-// import { API_ROUTES } from "../../../constants/endpoint";
-// import api from "../../../services/api";
-// import { createCrudService } from "../../../services/crudService";
+import { API_ROUTES } from "../../../constants";
+import { createCrudService } from "../../../services/crudService";
 
-// const courseService = {
-//   ...createCrudService("courses"),
+const BASE_COURSE_PATH = API_ROUTES.COURSE.LIST;
 
-//   updateStatus(id, status) {
-//     return api.patch(
-//       `${API_ROUTES.COURSES}/${id}/status`,
-//       { status }
-//     );
-//   },
+const coursesService = {
+  ...createCrudService(BASE_COURSE_PATH),
+};
 
-//   search(params) {
-//     return api.get(
-//       `${API_ROUTES.COURSES}/search`,
-//       { params }
-//     );
-//   },
-// };
-
-// export default courseService;
+export default coursesService;

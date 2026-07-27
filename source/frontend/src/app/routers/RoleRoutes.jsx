@@ -5,7 +5,7 @@ import { useAuth } from "../../hooks";
 function RoleRoute({ children, roles }) {
   const { user } = useAuth();
 
-  const userRoleCode = user?.roleCodes?.[0]; 
+  const userRoleCode = user?.roleCode; 
   if (!roles.includes(userRoleCode)) {
     return <Navigate to={ROUTES.UNAUTHORIZED} />;
   }

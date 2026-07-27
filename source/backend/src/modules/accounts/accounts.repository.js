@@ -14,6 +14,7 @@ const find = async (query, connection = db) => {
     page,
     limit,
     search,
+    searchField,
     sortBy,
     sortOrder,
     accountStatus,
@@ -33,6 +34,7 @@ const find = async (query, connection = db) => {
     page,
     limit,
     search,
+    searchField,
     searchableFields,
     searchMap,
     sortBy,
@@ -53,8 +55,8 @@ const find = async (query, connection = db) => {
       acc.account_status,
       acc.created_at,
       acc.updated_at,
-      GROUP_CONCAT(rl.role_code) as role_codes,
-      GROUP_CONCAT(rl.role_name) as role_names
+      rl.role_code,
+      rl.role_label
   `;
 
   const fromJoinClause = `
@@ -84,7 +86,6 @@ const find = async (query, connection = db) => {
     }
   }
 
-
   if (searchResult.clause) {
     whereParts.push(searchResult.clause);
     params.push(...searchResult.values);
@@ -94,6 +95,7 @@ const find = async (query, connection = db) => {
     whereParts.push(filterResult.clause);
     params.push(...filterResult.values);
   }
+
 
   const whereClause = `WHERE ${whereParts.join(" AND ")}`;
 
@@ -121,21 +123,13 @@ const find = async (query, connection = db) => {
   const dataParams = [...params, pagination.limit, pagination.offset];
   const [rows] = await connection.query(dataSql, dataParams);
 
-  const camelCasedRows = arrayToCamelCase(rows);
-  const formattedAccounts = camelCasedRows.map((account) => {
-    return {
-      ...account,
-      roleCodes: account.roleCodes ? account.roleCodes.split(",") : [],
-      roleNames: account.roleNames ? account.roleNames.split(",") : [],
-    };
-  });
 
   return {
-    data: formattedAccounts,
+    data: arrayToCamelCase(rows),
     pagination: {
       totalRecords,
       limit: pagination.limit,
-      offset: pagination.offset,
+      page: pagination.page,
       totalPages: Math.ceil(totalRecords / pagination.limit),
     },
   };
@@ -152,8 +146,8 @@ const findByUsername = async (username, connection = db) => {
       acc.account_status,
       acc.created_at,
       acc.updated_at,
-      GROUP_CONCAT(rl.role_code) as role_codes,
-      GROUP_CONCAT(rl.role_name) as role_names
+      rl.role_code,
+      rl.role_label
     FROM ACCOUNT acc
     LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
     LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
@@ -164,14 +158,8 @@ const findByUsername = async (username, connection = db) => {
   );
 
   if (!rows[0] || rows[0].account_id === null) return null;
-
-  const account = objectToCamelCase(rows[0]);
   
-  return {
-    ...account,
-    roleCodes: account.roleCodes ? account.roleCodes.split(",") : [],
-    roleNames: account.roleNames ? account.roleNames.split(",") : [],
-  };
+  return objectToCamelCase(rows[0]);
 };
 
 const findByEmail = async (email, connection = db) => {
@@ -185,8 +173,8 @@ const findByEmail = async (email, connection = db) => {
       acc.account_status,
       acc.created_at,
       acc.updated_at,
-      GROUP_CONCAT(rl.role_code) as role_codes,
-      GROUP_CONCAT(rl.role_name) as role_names
+      rl.role_code,
+      rl.role_label
     FROM ACCOUNT acc
     LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
     LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
@@ -198,13 +186,7 @@ const findByEmail = async (email, connection = db) => {
 
   if (!rows[0] || rows[0].account_id === null) return null;
 
-  const account = objectToCamelCase(rows[0]);
-  
-  return {
-    ...account,
-    roleCodes: account.roleCodes ? account.roleCodes.split(",") : [],
-    roleNames: account.roleNames ? account.roleNames.split(",") : [],
-  };
+  return objectToCamelCase(rows[0]);
 };
 
 const findById = async (accountId, connection = db) => {
@@ -218,8 +200,8 @@ const findById = async (accountId, connection = db) => {
       acc.account_status,
       acc.created_at,
       acc.updated_at,
-      GROUP_CONCAT(rl.role_code) as role_codes,
-      GROUP_CONCAT(rl.role_name) as role_names
+      rl.role_code,
+      rl.role_label
     FROM ACCOUNT acc
     LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
     LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
@@ -229,14 +211,7 @@ const findById = async (accountId, connection = db) => {
     [accountId],
   );
 
-  if (!rows || rows.length === 0 || rows[0].account_id === null) return null;
-  const account = objectToCamelCase(rows[0]);
-  
-  return {
-    ...account,
-    roleCodes: account.roleCodes ? account.roleCodes.split(",") : [],
-    roleNames: account.roleNames ? account.roleNames.split(",") : [],
-  };
+  return objectToCamelCase(rows[0]);
 };
 
 const findDeletedById = async (accountId, connection = db) => {
@@ -250,8 +225,8 @@ const findDeletedById = async (accountId, connection = db) => {
       acc.account_status,
       acc.created_at,
       acc.updated_at,
-      GROUP_CONCAT(rl.role_code) as role_codes,
-      GROUP_CONCAT(rl.role_name) as role_names
+      rl.role_code,
+      rl.role_label
     FROM ACCOUNT acc
     LEFT JOIN USER_ROLE ur ON acc.account_id = ur.account_id
     LEFT JOIN ROLE rl ON ur.role_id = rl.role_id
@@ -262,13 +237,8 @@ const findDeletedById = async (accountId, connection = db) => {
   );
 
   if (!rows || rows.length === 0 || rows[0].account_id === null) return null;
-  const account = objectToCamelCase(rows[0]);
   
-  return {
-    ...account,
-    roleCodes: account.roleCodes ? account.roleCodes.split(",") : [],
-    roleNames: account.roleNames ? account.roleNames.split(",") : [],
-  };
+  return objectToCamelCase(rows[0]);
 };
 
 const create = async (accountData, connection = db) => {

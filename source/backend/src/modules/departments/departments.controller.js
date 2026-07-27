@@ -2,8 +2,8 @@ const { asyncHandler, successResponse } = require("../../utils/helpers");
 const departmentsService = require("./departments.service");
 
 const getList = asyncHandler(async (req, res, next) => {
-  const queryOptions = req.query;
-  const result = await departmentsService.getList(queryOptions);
+  const queryData = req.query;
+  const result = await departmentsService.getList(queryData);
   return successResponse(res, result, "Get list of departments successful");
 });
 

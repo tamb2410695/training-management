@@ -1,4 +1,21 @@
 const { QUERY_COMMON_FIELDS } = require("../../constants");
+
+const ACCOUNT_FIELDS = {
+  BODY: {
+    ACTIVE: [
+      "username",
+      "email",
+      "password",
+      "avatarUrl",
+    ],
+  },
+
+  REQUIRED: {
+    ACTIVE: ["password"],
+  },
+};
+
+
 const REGISTRATION_FIELDS = {
   PARAMS: {
     ID: ["id"],
@@ -31,6 +48,7 @@ const REGISTRATION_FIELDS = {
       "phone",
       "personalEmail",
       "address",
+      "courseId",
     ],
 
     UPDATE: [
@@ -40,12 +58,23 @@ const REGISTRATION_FIELDS = {
       "phone",
       "personalEmail",
       "address",
+      "courseId",
+      "studentId",
       "registrationStatus",
     ],
+    ACTIVE: [
+      "fullName",
+      "gender",
+      "dateOfBirth",
+      "phone",
+      "personalEmail",
+      "address",
+      "courseId",
+    ]
   },
 
   REQUIRED: {
-    CREATE: ["fullName", "dateOfBirth", "phone", "personalEmail"],
+    CREATE: ["fullName", "phone", "personalEmail"],
   },
 };
 
@@ -55,6 +84,7 @@ const REGISTRATION_MAPS = {
     fullName: "reg.full_name",
     phone: "reg.phone",
     personalEmail: "reg.personal_email",
+    courseId: "reg.course_id",
   },
 
   SORT: {
@@ -71,4 +101,5 @@ const REGISTRATION_MAPS = {
 module.exports = {
   REGISTRATION_FIELDS,
   REGISTRATION_MAPS,
+  ACCOUNT_FIELDS
 };

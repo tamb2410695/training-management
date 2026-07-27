@@ -1,5 +1,12 @@
 const { QUERY_COMMON_FIELDS } = require("../../constants");
 
+
+const DOCUMENT_ENUMS = {
+  LEVEL: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
+  STATUS: ["AVAILABLE", "ARCHIVED", "DELETED"],
+  CATEGORY: ["GENERAL", "SLIDE", "EXAM", "ASSIGNMENT", "REFERENCE"]
+};
+
 const DOCUMENT_FIELDS = {
   PARAMS: {
     ID: ["id"],
@@ -71,6 +78,7 @@ const DOCUMENT_MAPS = {
 };
 
 module.exports = {
+  DOCUMENT_ENUMS,
   DOCUMENT_FIELDS,
   DOCUMENT_MAPS,
 };

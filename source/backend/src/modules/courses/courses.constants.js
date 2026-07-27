@@ -63,22 +63,22 @@ const COURSE_FIELDS = {
 
 const COURSE_MAPS = {
   SEARCH: {
-    courseCode: "c.course_code",
-    courseName: "c.course_name",
+    courseCode: "crs.course_code",
+    courseName: "crs.course_name",
   },
 
   SORT: {
-    courseId: "c.course_id",
-    courseCode: "c.course_code",
-    courseName: "c.course_name",
-    tuitionFee: "c.tuition_fee",
-    createdAt: "c.created_at",
+    courseId: "crs.course_id",
+    courseCode: "crs.course_code",
+    courseName: "crs.course_name",
+    tuitionFee: "crs.tuition_fee",
+    createdAt: "crs.created_at",
   },
 
   FILTER: {
-    courseLevel: "c.course_level",
-    courseStatus: "c.course_status",
-    certificateAvailable: "c.certificate_available",
+    courseLevel: "crs.course_level",
+    courseStatus: "crs.course_status",
+    certificateAvailable: "crs.certificate_available",
   },
 };
 

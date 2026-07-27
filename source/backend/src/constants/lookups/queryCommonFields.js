@@ -1,7 +1,7 @@
 const QUERY_COMMON_FIELDS = {
   FIELDS: {
     PAGINATION: ["page", "limit", "offset"],
-    SEARCH: ["search"],
+    SEARCH: ["search", "searchField"],
     SORT: ["sortBy", "sortOrder"],
   },
 

@@ -13,37 +13,37 @@ const {
 } = require("./students.validator");
 
 router.get(
-  ROUTES.STUDENT?.ROOT || "/",
+  ROUTES.STUDENT.ROOT ,
   createValidationMiddleware(validateGetList, "query"),
   studentsController.getList,
 );
 
 router.post(
-  ROUTES.STUDENT?.ROOT || "/",
+  ROUTES.STUDENT.ROOT ,
   createValidationMiddleware(validateCreate),
   studentsController.create,
 );
 
 router.get(
-  ROUTES.STUDENT?.DETAIL || "/:id",
+  ROUTES.STUDENT.DETAIL,
   createValidationMiddleware(validateGetById, "params"),
   studentsController.getById,
 );
 
 router.patch(
-  ROUTES.STUDENT?.DETAIL || "/:id",
+  ROUTES.STUDENT.DETAIL,
   createMultiValidator(validatePartialUpdate),
   studentsController.update,
 );
 
 router.put(
-  ROUTES.STUDENT?.DETAIL || "/:id",
+  ROUTES.STUDENT.DETAIL,
   createMultiValidator(validateUpdate),
   studentsController.update,
 );
 
 router.delete(
-  ROUTES.STUDENT?.DETAIL || "/:id",
+  ROUTES.STUDENT.DETAIL,
   createValidationMiddleware(validateGetById, "params"),
   studentsController.remove,
 );

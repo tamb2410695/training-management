@@ -10,6 +10,7 @@ module.exports = {
   ...require("./common/updateDataHelper"),
   ...require("./common/codeGenerator"),
   ...require("./common/parseQueryArray"),
+  ...require("./common/generateUsername"),
 
   ...require("./fields/hasField"),
   ...require("./fields/pickFields"),

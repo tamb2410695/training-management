@@ -25,13 +25,3 @@ function arrayToCamelCase(array) {
 function arrayToSnakeCase(array) {
   return array.map(objectToSnakeCase);
 }
-module.exports = {
-  toCamelCase,
-  toSnakeCase,
-
-  objectToCamelCase,
-  objectToSnakeCase,
-
-  arrayToCamelCase,
-  arrayToSnakeCase,
-};

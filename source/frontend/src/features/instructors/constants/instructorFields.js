@@ -1,80 +1,63 @@
-export const INSTRUCTOR_FIELDS = {
-  instructorId: {
-    key: "instructorId",
-    label: "ID Giảng viên",
+// constants/accountFields.js
+
+export const ACCOUNT_FIELDS = {
+  accountId: {
+    key: "accountId",
+    label: "Mã tài khoản",
     sortable: true,
   },
 
-  instructorCode: {
-    key: "instructorCode",
-    label: "Mã giảng viên",
-    searchable: true,
-    sortable: true,
-  },
-
-  fullName: {
-    key: "fullName",
-    label: "Họ và tên",
+  username: {
+    key: "username",
+    label: "Tên đăng nhập",
     required: { create: true, update: true },
     searchable: true,
     sortable: true,
     default: "",
   },
 
-  dateOfBirth: {
-    key: "dateOfBirth",
-    label: "Ngày sinh",
-    required: { create: true, update: true },
-    sortable: true,
-    default: null,
-  },
-
-  gender: {
-    key: "gender",
-    label: "Giới tính",
-    required: { create: false, update: true },
-    filterable: true,
-    default: "",
-  },
-
-  specialization: {
-    key: "specialization",
-    label: "Chuyên môn",
+  email: {
+    key: "email",
+    label: "Email",
     required: { create: true, update: true },
     searchable: true,
-    filterable: true,
     sortable: true,
     default: "",
   },
 
-  phone: {
-    key: "phone",
-    label: "Số điện thoại",
-    required: { create: true, update: true },
+  password: {
+    key: "password",
+    label: "Mật khẩu",
+    required: { create: true, update: false },
+    default: "",
+  },
+
+  roleCodes: {
+    key: "roleCodes",
+    label: "Vai trò",
+    default: [],
+    sortable: false,
+    searchable: false,
+  },
+
+  roleNames: {
+    key: "roleNames",
+    label: "Vai trò",
     searchable: true,
-    default: "",
+    default: [],
   },
 
-  address: {
-    key: "address",
-    label: "Địa chỉ",
-    default: "",
-  },
-
-  hireDate: {
-    key: "hireDate",
-    label: "Ngày vào làm",
-    required: { create: false, update: false },
-    sortable: true,
-    default: null,
-  },
-
-  instructorStatus: {
-    key: "instructorStatus",
+  accountStatus: {
+    key: "accountStatus",
     label: "Trạng thái",
     required: { create: false, update: true },
     filterable: true,
-    sortable: true,
+    default: "ACTIVE",
+  },
+
+  avatarUrl: {
+    key: "avatarUrl",
+    label: "Ảnh đại diện",
     default: "",
   },
 
@@ -91,11 +74,13 @@ export const INSTRUCTOR_FIELDS = {
   },
 };
 
-// Cột hiển thị bảng giảng viên mặc định (Table Columns)
-export const INSTRUCTOR_COLUMNS = [
-  INSTRUCTOR_FIELDS.instructorCode,
-  INSTRUCTOR_FIELDS.fullName,
-  INSTRUCTOR_FIELDS.specialization,
-  INSTRUCTOR_FIELDS.phone,
-  INSTRUCTOR_FIELDS.instructorStatus,
-].map(({ key, label }) => ({ key, label }));
+export const ACCOUNT_COLUMNS = [
+  ACCOUNT_FIELDS.accountId,
+  ACCOUNT_FIELDS.username,
+  ACCOUNT_FIELDS.email,
+  {
+    ...ACCOUNT_FIELDS.roleNames,
+    render: (roleNames) => roleNames?.join(", ") || "N/A",
+  },
+  ACCOUNT_FIELDS.accountStatus,
+];

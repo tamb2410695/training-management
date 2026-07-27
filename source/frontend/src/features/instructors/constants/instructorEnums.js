@@ -1,55 +1,42 @@
-export const INSTRUCTOR_STATUS = {
-  ACTIVE: { CODE: "ACTIVE", LABEL: "Đang làm việc", COLOR: "green" },
-  PROBATION: { CODE: "PROBATION", LABEL: "Thử việc", COLOR: "orange" },
-  ON_LEAVE: { CODE: "ON_LEAVE", LABEL: "Nghỉ phép dài hạn", COLOR: "blue" },
-  RESIGNED: { CODE: "RESIGNED", LABEL: "Đã nghỉ việc", COLOR: "red" },
+export const ACCOUNT_STATUS = {
+  PENDING: { CODE: "PENDING", LABEL: "Chờ duyệt", COLOR: "warning" },
+  ACTIVE: { CODE: "ACTIVE", LABEL: "Hoạt động", COLOR: "success" },
+  LOCKED: { CODE: "LOCKED", LABEL: "Đang khóa", COLOR: "danger" },
+  DISABLED: { CODE: "DISABLED", LABEL: "Vô hiệu hóa", COLOR: "secondary" },
+  DELETED: { CODE: "DELETED", LABEL: "Đã xóa", COLOR: "dark" },
 };
 
-export const INSTRUCTOR_GENDER = {
-  MALE: { CODE: "MALE", LABEL: "Nam" },
-  FEMALE: { CODE: "FEMALE", LABEL: "Nữ" },
-  OTHER: { CODE: "OTHER", LABEL: "Khác" },
+export const ACCOUNT_ROLES = {
+  ADMIN: { CODE: "ADMIN", LABEL: "Quản trị viên" },
+  STUDENT: { CODE: "STUDENT", LABEL: "Học viên" },
+  INSTRUCTOR: { CODE: "INSTRUCTOR", LABEL: "Giảng viên" },
 };
 
-// Danh mục chuyên môn mẫu (Cái này có thể linh động theo DB hoặc cố định ở FE nếu ít thay đổi)
-export const INSTRUCTOR_SPECIALIZATION = {
-  IT: { CODE: "IT", LABEL: "Công nghệ thông tin" },
-  ENGLISH: { CODE: "ENGLISH", LABEL: "Tiếng Anh" },
-  MARKETING: { CODE: "MARKETING", LABEL: "Marketing" },
-};
-
-// Map tự động ra các UI Options cho Select box / Filter
-export const INSTRUCTOR_STATUS_OPTIONS = Object.values(INSTRUCTOR_STATUS).map((status) => ({
+export const ACCOUNT_STATUS_OPTIONS = Object.values(ACCOUNT_STATUS).map((status) => ({
   value: status.CODE,
   label: status.LABEL,
 }));
 
-export const INSTRUCTOR_GENDER_OPTIONS = Object.values(INSTRUCTOR_GENDER).map((gender) => ({
-  value: gender.CODE,
-  label: gender.LABEL,
+export const ACCOUNT_ROLE_OPTIONS = Object.values(ACCOUNT_ROLES).map((role) => ({
+  value: role.CODE,
+  label: role.LABEL,
 }));
 
-export const INSTRUCTOR_SPECIALIZATION_OPTIONS = Object.values(INSTRUCTOR_SPECIALIZATION).map((spec) => ({
-  value: spec.CODE,
-  label: spec.LABEL,
-}));
-
-export const INSTRUCTOR_FILTERS = {
-  instructorStatus: INSTRUCTOR_STATUS_OPTIONS,
-  gender: INSTRUCTOR_GENDER_OPTIONS,
-  specialization: INSTRUCTOR_SPECIALIZATION_OPTIONS,
+export const ACCOUNT_FILTERS = {
+  accountStatus: ACCOUNT_STATUS_OPTIONS,
+  roleCodes: ACCOUNT_ROLE_OPTIONS, 
 };
 
-// Cấu hình định dạng mã (từ INSTRUCTOR_CODE của backend)
-export const INSTRUCTOR_CODE_CONFIG = {
-  PREFIX: "INS",
-  LENGTH: 6,
-};
-
-// Bộ thông báo hệ thống thuần Việt
-export const INSTRUCTOR_MESSAGES = {
-  CREATE_SUCCESS: "Thêm giảng viên thành công.",
-  UPDATE_SUCCESS: "Cập nhật hồ sơ giảng viên thành công.",
-  DELETE_SUCCESS: "Xóa hồ sơ giảng viên thành công.",
-  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa hồ sơ giảng viên này không?",
+export const ACCOUNT_MESSAGES = {
+  CREATE_SUCCESS: "Tạo tài khoản thành công.",
+  UPDATE_SUCCESS: "Cập nhật tài khoản thành công.",
+  DELETE_SUCCESS: "Xóa tài khoản thành công.",
+  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa tài khoản này không?",
+  
+  ACTIVATE_SUCCESS: "Kích hoạt tài khoản thành công.",
+  LOCK_SUCCESS: "Khóa tài khoản thành công.",
+  DISABLE_SUCCESS: "Vô hiệu hóa tài khoản thành công.",
+  
+  LOCK_CONFIRM: "Bạn có chắc chắn muốn khóa tài khoản này không?",
+  DISABLE_CONFIRM: "Bạn có chắc chắn muốn vô hiệu hóa tài khoản này không?",
 };

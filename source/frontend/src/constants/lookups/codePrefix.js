@@ -1,4 +1,4 @@
-const CODE_PREFIX = {
+export const CODE_PREFIX = {
   STUDENT: "STU",
   INSTRUCTOR: "INS",
   COURSE: "CRS",
@@ -6,7 +6,3 @@ const CODE_PREFIX = {
   PAYMENT: "PAY",
   CERTIFICATE: "CERT",
 };
-
-module.exports = {
-  CODE_PREFIX
-}

@@ -22,13 +22,12 @@ const getList = async (query, connection = db) => {
 };
 
 const getById = async (departmentId, connection = db) => {
-  const department = await departmentsRepository.findById(departmentId, connection);
-
-  throwIf(
-    !department,
-    NotFoundError,
-    ERROR_CODES.DEPARTMENT_NOT_FOUND
+  const department = await departmentsRepository.findById(
+    departmentId,
+    connection,
   );
+
+  throwIf(!department, NotFoundError, ERROR_CODES.DEPARTMENT_NOT_FOUND);
 
   return department;
 };
@@ -36,33 +35,34 @@ const getById = async (departmentId, connection = db) => {
 const create = async (departmentData, connection = db) => {
   const { departmentCode } = departmentData;
 
-  const existedDepartment = await departmentsRepository.findByCode(departmentCode, connection);
+  const existedDepartment = await departmentsRepository.findByCode(
+    departmentCode,
+    connection,
+  );
 
   throwIf(
     existedDepartment,
     ConflictError,
-    ERROR_CODES.DEPARTMENT_CODE_EXISTED
+    ERROR_CODES.DEPARTMENT_CODE_EXISTED,
   );
 
-  const createdDepartment = await departmentsRepository.create(departmentData, connection);
-
-  throwIf(
-    !createdDepartment,
-    ConflictError,
-    ERROR_CODES.NO_CHANGES
+  const createdDepartment = await departmentsRepository.create(
+    departmentData,
+    connection,
   );
+
+  throwIf(!createdDepartment, ConflictError, ERROR_CODES.NO_CHANGES);
 
   return createdDepartment;
 };
 
 const getDepartmentOrThrow = async (departmentId, connection = db) => {
-  const department = await departmentsRepository.findById(departmentId, connection);
-
-  throwIf(
-    !department,
-    NotFoundError,
-    ERROR_CODES.DEPARTMENT_NOT_FOUND
+  const department = await departmentsRepository.findById(
+    departmentId,
+    connection,
   );
+
+  throwIf(!department, NotFoundError, ERROR_CODES.DEPARTMENT_NOT_FOUND);
   return department;
 };
 
@@ -82,7 +82,7 @@ const resolveCodeUpdate = async (
   throwIf(
     existed && existed.departmentId !== department.departmentId,
     ConflictError,
-    ERROR_CODES.DEPARTMENT_CODE_EXISTED
+    ERROR_CODES.DEPARTMENT_CODE_EXISTED,
   );
 
   updateDepartmentData.departmentCode = departmentData.departmentCode;
@@ -111,7 +111,7 @@ const buildUpdateDepartmentData = async (
   throwIf(
     Object.keys(updateDepartmentData).length === 0,
     BadRequestError,
-    ERROR_CODES.NO_VALID_FIELDS
+    ERROR_CODES.NO_VALID_FIELDS,
   );
 
   return updateDepartmentData;
@@ -119,7 +119,7 @@ const buildUpdateDepartmentData = async (
 
 const update = async (departmentId, departmentData, connection = db) => {
   const department = await getDepartmentOrThrow(departmentId, connection);
-  
+
   const updateDepartmentData = await buildUpdateDepartmentData(
     department,
     departmentData,
@@ -132,11 +132,7 @@ const update = async (departmentId, departmentData, connection = db) => {
     connection,
   );
 
-  throwIf(
-    !updatedDepartment,
-    ConflictError,
-    ERROR_CODES.NO_CHANGES
-  );
+  throwIf(!updatedDepartment, ConflictError, ERROR_CODES.NO_CHANGES);
 
   return updatedDepartment;
 };
@@ -144,7 +140,10 @@ const update = async (departmentId, departmentData, connection = db) => {
 const remove = async (departmentId, connection = db) => {
   await getDepartmentOrThrow(departmentId, connection);
 
-  const deletedResult = await departmentsRepository.remove(departmentId, connection);
+  const deletedResult = await departmentsRepository.remove(
+    departmentId,
+    connection,
+  );
   return deletedResult;
 };
 

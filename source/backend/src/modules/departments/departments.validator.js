@@ -20,6 +20,7 @@ const {
   validateRequiredFields,
   sanitizePatchBody,
 } = require("../../utils/validators");
+const { formatDepartmentQuery } = require("../../utils/formatters");
 
 const validateDepartmentFormats = (departmentData) => {
   if (!departmentData) return;
@@ -31,7 +32,7 @@ const validateDepartmentFormats = (departmentData) => {
   if (hasField(departmentData, "departmentCode")) {
     const code = departmentData.departmentCode;
     throwIf(
-      typeof code !== "string" || code.trim().length === 0,
+      typeof code !== "string" || code.length === 0,
       BadRequestError,
       "Department code must be a non-empty string"
     );
@@ -45,7 +46,7 @@ const validateDepartmentFormats = (departmentData) => {
   if (hasField(departmentData, "departmentName")) {
     const name = departmentData.departmentName;
     throwIf(
-      typeof name !== "string" || name.trim().length === 0,
+      typeof name !== "string" || name.length === 0,
       BadRequestError,
       "Department name must be a non-empty string"
     );
@@ -63,10 +64,10 @@ const validateGetList = (query) => {
   const rawQueryData = sanitizeFields(
     pickFields(query, DEPARTMENT_FIELDS.QUERY.ALLOWED_KEYS),
   );
-  
-  validateDepartmentFormats(rawQueryData);
+  const queryData = formatDepartmentQuery(rawQueryData);
+  validateDepartmentFormats(queryData);
 
-  return rawQueryData;
+  return queryData;
 };
 
 const validateGetById = (params) => {
@@ -106,11 +107,12 @@ const validateUpdate = (params, body) => {
     ERROR_MESSAGES.NO_VALID_FIELDS,
   );
 
-  validateDepartmentFormats(sanitizedData);
+  const departmentData = formatDepartmentQuery(sanitizedData);
+  validateDepartmentFormats(departmentData);
 
   return {
     departmentId,
-    departmentData: sanitizedData,
+    departmentData,
   };
 };
 
@@ -128,11 +130,12 @@ const validatePartialUpdate = (params, body) => {
     ERROR_MESSAGES.NO_VALID_FIELDS,
   );
 
-  validateDepartmentFormats(sanitizedData);
+  const departmentData = formatDepartmentQuery(sanitizedData);
+  validateDepartmentFormats(departmentData);
 
   return {
     departmentId,
-    departmentData: sanitizedData,
+    departmentData,
   };
 };
 

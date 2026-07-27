@@ -3,34 +3,31 @@ const {
   NotFoundError,
   ConflictError,
   BadRequestError,
+  ValidationError,
 } = require("../../utils/errors");
 
 const { withTransaction } = require("../../utils/database/transaction");
-const { ERROR_CODES, ERROR_MESSAGES } = require("../../constants");
-const { throwIf, hasField } = require("../../utils/helpers");
+const {
+  ERROR_CODES,
+  ERROR_MESSAGES,
+  CODE_PREFIX,
+  CODE_LENGHT,
+  USER_CREATION,
+} = require("../../constants");
+const { throwIf, hasField, generateCode } = require("../../utils/helpers");
 
 const studentsRepository = require("./students.repository");
 const accountsRepository = require("../accounts/accounts.repository");
 const accountsService = require("../accounts/accounts.service");
+const { STUDENT_FIELDS } = require("./students.constants");
 
-/**
- * Lấy danh sách hồ sơ sinh viên (phân trang, lọc, tìm kiếm nâng cao)
- */
+const userCreationService = require("../users/userCreation.service");
+const { PROFILE_TYPE } = require("../../constants/lookups/userCreation");
+
 const getList = async (query, connection = db) => {
-  const { data: students, pagination } = await studentsRepository.find(
-    query,
-    connection,
-  );
-
-  return {
-    students,
-    pagination,
-  };
+  return await studentsRepository.find(query, connection);
 };
 
-/**
- * Lấy chi tiết hồ sơ sinh viên theo ID
- */
 const getById = async (studentId, connection = db) => {
   const student = await studentsRepository.findById(studentId, connection);
 
@@ -38,55 +35,76 @@ const getById = async (studentId, connection = db) => {
     !student,
     NotFoundError,
     ERROR_CODES.STUDENT_NOT_FOUND || "STUDENT_NOT_FOUND",
-    "Student profile not found"
+    "Student profile not found",
   );
 
   return student;
 };
 
-/**
- * Khởi tạo hồ sơ sinh viên mới
- */
-const create = async (studentData, connection = db) => {
-  const { accountId, studentCode } = studentData;
+// const create = async (accountData, profileData, connection = db) => {
+//   return await withTransaction(async (txConnection) => {
+//     return await userCreationService.createStudent(
+//       {
+//         accountData,
+//         profileData,
+//       },
+//       txConnection,
+//     );
+//   }, connection);
+// };
 
-  // 1. Kiểm tra tài khoản liên kết có tồn tại hay không
-  const accountExists = await accountsRepository.findById(accountId, connection);
-  throwIf(!accountExists, NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND, ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-
-  // 2. Đảm bảo tài khoản này chưa gán cho sinh viên nào khác (Mối quan hệ 1-1)
-  const linkedStudent = await studentsRepository.findByAccountId(accountId, connection);
+// local
+const createProfile = async (profileData, connection = db) => {
+  const { accountId, phone } = profileData;
   throwIf(
-    linkedStudent,
-    ConflictError,
-    ERROR_CODES.VALIDATION_FAILED,
-    "This account is already linked to another student profile",
+    !accountId || !phone,
+    ValidationError,
+    `${ERROR_CODES.MISSING_REQUIRED_FIELDS}: accountId or phone`,
   );
 
-  // 3. Kiểm tra trùng lặp mã sinh viên (studentCode)
-  const existedCode = await studentsRepository.findByCode(studentCode, connection);
-  throwIf(
-    existedCode,
-    ConflictError,
-    ERROR_CODES.VALIDATION_FAILED,
-    "Student code already exists in the system",
+  const accountExists = await accountsRepository.findById(
+    accountId,
+    connection,
+  );
+  throwIf(!accountExists, NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND);
+
+  const linkedStudent = await studentsRepository.findByAccountId(
+    accountId,
+    connection,
+  );
+  throwIf(linkedStudent, ConflictError, ERROR_CODES.PROFILE_ALREADY_LINKED);
+
+  const existedPhone = await studentsRepository.findByPhone(
+    phone,
+    connection,
+  );
+  throwIf(existedPhone, ConflictError, ERROR_CODES.VALIDATION_FAILED);
+
+  // const finalPayload = {
+  //   ...profileData,
+  // };
+
+  const createdProfile = await studentsRepository.create(
+    profileData,
+    connection,
   );
 
-  // 4. Tiến hành lưu thông tin với trạng thái mặc định ban đầu là đang theo học
-  const finalPayload = {
-    ...studentData,
-    studentStatus: studentData.studentStatus || "ENROLLED"
-  };
+  throwIf(!createdProfile, ConflictError, ERROR_CODES.NO_CHANGES);
 
-  const createdStudent = await studentsRepository.create(finalPayload, connection);
-  throwIf(!createdStudent, ConflictError, ERROR_CODES.NO_CHANGES);
+  const studentCode = generateCode(
+    CODE_PREFIX.STUDENT,
+    createdProfile.studentId,
+  );
 
-  return createdStudent;
+  const updatedStudent = await update(
+    createdProfile.studentId,
+    { studentCode },
+    connection,
+  );
+
+  return updatedStudent;
 };
 
-/**
- * Hàm hỗ trợ kiểm tra nhanh sự tồn tại của sinh viên
- */
 const getStudentOrThrow = async (studentId, connection = db) => {
   const student = await studentsRepository.findById(studentId, connection);
   throwIf(
@@ -97,21 +115,9 @@ const getStudentOrThrow = async (studentId, connection = db) => {
   return student;
 };
 
-/**
- * Gom cụm xử lý dữ liệu cập nhật động từ client
- */
 const buildUpdateStudentData = async (student, studentData) => {
   const updateStudentData = {};
-  const allowedUpdateFields = [
-    "fullName",
-    "gender",
-    "dateOfBirth",
-    "phone",
-    "address",
-    "personalEmail",
-    "studentStatus",
-  ];
-
+  const allowedUpdateFields = [...STUDENT_FIELDS.BODY.UPDATE, "studentCode"];
   allowedUpdateFields.forEach((field) => {
     if (hasField(studentData, field)) {
       updateStudentData[field] = studentData[field];
@@ -127,9 +133,6 @@ const buildUpdateStudentData = async (student, studentData) => {
   return updateStudentData;
 };
 
-/**
- * Cập nhật thông tin hồ sơ sinh viên
- */
 const update = async (studentId, studentData, connection = db) => {
   const student = await getStudentOrThrow(studentId, connection);
   const updatePayload = await buildUpdateStudentData(student, studentData);
@@ -145,9 +148,6 @@ const update = async (studentId, studentData, connection = db) => {
   return updatedStudent;
 };
 
-/**
- * Xóa hồ sơ sinh viên: Đồng bộ hóa Soft Delete tài khoản và chuyển trạng thái học tập
- */
 const remove = async (studentId, connection = db) => {
   return await withTransaction(async (txConnection) => {
     const student = await studentsRepository.findById(studentId, txConnection);
@@ -182,7 +182,8 @@ const remove = async (studentId, connection = db) => {
 module.exports = {
   getList,
   getById,
-  create,
+  // create,
+  createProfile,
   update,
   remove,
 };

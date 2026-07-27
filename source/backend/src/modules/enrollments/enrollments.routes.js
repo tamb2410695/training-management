@@ -2,24 +2,24 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES, ENROLLMENT_ROUTES } = require("../../constants");
-
+const { ROLES, ROUTES } = require("../../constants");
+const enrollmentsController = require("./enrollments.controller")
 const { authenticate, authorize } = require("../../middlewares");
 
-// router.get(ENROLLMENT_ROUTES.ROOT, enrollmentsController.getList);
+router.get(ROUTES.ENROLLMENT.ROOT, enrollmentsController.getList);
 
-// router.post(ENROLLMENT_ROUTES.ROOT, enrollmentsController.create);
+router.post(ROUTES.ENROLLMENT.ROOT, enrollmentsController.create);
 
-// router.get(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.getById);
+router.get(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.getById);
 
-// router.patch(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.update);
+router.patch(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.update);
 
-// router.delete(ENROLLMENT_ROUTES.DETAIL, enrollmentsController.remove);
+router.delete(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.remove);
 
-// router.patch(ENROLLMENT_ROUTES.CONFIRM, enrollmentsController.confirm);
+// router.patch(ROUTES.ENROLLMENT.CONFIRM, enrollmentsController.confirm);
 
-// router.patch(ENROLLMENT_ROUTES.CANCEL, enrollmentsController.cancel);
+// router.patch(ROUTES.ENROLLMENT.CANCEL, enrollmentsController.cancel);
 
-// router.patch(ENROLLMENT_ROUTES.REFUND, enrollmentsController.refund);
+// router.patch(ROUTES.ENROLLMENT.REFUND, enrollmentsController.refund);
 
 module.exports = router;

@@ -55,6 +55,14 @@ const validateAccountFormats = (accountData) => {
     });
   }
 
+  if(hasField(accountData, "roleCode"))  {
+    validateEnum(accountData.roleCode, Object.values(ROLES), "roleCode")
+  }
+
+  if(hasField(accountData, "searchField"))  {
+    validateEnum(accountData.searchField, ACCOUNT_FIELDS.QUERY.SEARCHABLE, "searchField")
+  }
+
   if (hasField(accountData, "accountStatus")) {
     validateEnum(
       accountData.accountStatus,
@@ -71,8 +79,8 @@ const validateGetList = (query) => {
     pickFields(query, ACCOUNT_FIELDS.QUERY.ALLOWED_KEYS),
   );
   const queryData = formatAccountQuery(rawQueryData);
-  console.log(queryData);
   validateAccountFormats(queryData);
+  console.log(queryData)
 
   return queryData;
 };
@@ -117,8 +125,8 @@ const validateUpdate = (params, body) => {
   validateAccountFormats(accountData);
 
   return {
-    accountId,
-    accountData,
+    params: accountId,
+    body: accountData,
   };
 };
 
@@ -200,4 +208,5 @@ module.exports = {
   validatePartialUpdate,
   validateRemove,
   validateStatusTransition,
+  validateAccountFormats
 };
