@@ -7,27 +7,30 @@ export function useFeatureSubmit({
   featureFeedback,
   buildPayload,
   fields,
-  messages,
+  successMessages,
   idKey = "id",
 }) {
   const submit = useCallback(async () => {
     try {
-      const payload = buildPayload(fields, form.values, modal.mode);
+      const mode = modal.mode ?? "create";
+      const payload = buildPayload(fields, form.values, mode);
 
-      const validation = form.validate(payload, fields, modal.mode);
+      const validation = form.validate(payload, fields, mode);
+      console.log(validation)
 
       if (!validation.valid) {
-        return false;
+        featureFeedback.handleError(validation.error);
+        return validation.error;
       }
 
       if (modal.isCreate) {
         await actions.create(payload);
-        featureFeedback.success(messages.create);
+        featureFeedback.success({ message: successMessages[mode].message });
       }
 
       if (modal.isUpdate) {
         await actions.update(modal.record[idKey], payload);
-        featureFeedback.success(messages.update);
+        featureFeedback.success({ message: successMessages[mode].message });
       }
 
       modal.close();
@@ -47,7 +50,7 @@ export function useFeatureSubmit({
     idKey,
     buildPayload,
     fields,
-    messages,
+    successMessages,
   ]);
 
   return {

@@ -58,10 +58,6 @@ export function buildEnum(definition) {
       return items.filter(predicate);
     },
 
-    filterSelectable() {
-      return items.filter((item => item.selectable))
-    },
-
     filterOptions(predicate) {
       return items
         .filter(predicate)

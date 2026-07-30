@@ -1,10 +1,8 @@
-import { API_ROUTES } from "../../../constants";
-import { createCrudService } from "../../../services/crudService";
+import { createCrudService } from "@/services/crudService";
+import { COURSE_FEATURE } from "../constants/courseFeature";
 
-const BASE_COURSE_PATH = API_ROUTES.COURSE.LIST;
+const BASE_COURSE_PATH = COURSE_FEATURE.config.api;
 
-const coursesService = {
-  ...createCrudService(BASE_COURSE_PATH),
-};
-
-export default coursesService;
+export default function coursesService() {
+  return createCrudService(BASE_COURSE_PATH)
+}

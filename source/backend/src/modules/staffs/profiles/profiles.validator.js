@@ -19,6 +19,7 @@ const {
 } = require("../../../utils/validators");
 const {
   formatStaffData,
+  formatStaffQuery,
 } = require("../../../utils/formatters/input/staffFormatter");
 const {
   formatAccountData,
@@ -72,10 +73,9 @@ const validateGetList = (query) => {
   const rawQueryData = sanitizeFields(
     pickFields(query, STAFF_FIELDS.QUERY.ALLOWED_KEYS),
   );
-  if (rawQueryData.departmentId)
-    rawQueryData.departmentId = formatNumericId(rawQueryData.departmentId);
-  validateStaffFormats(rawQueryData);
-  return rawQueryData;
+  const formatedQueryData = formatStaffQuery(rawQueryData);
+  validateStaffFormats(formatedQueryData);
+  return formatedQueryData;
 };
 
 const validateGetById = (params) => {
@@ -113,14 +113,10 @@ const validateUpdate = (params, body) => {
     pickFields(body, STAFF_FIELDS.BODY.UPDATE),
   );
 
-  throwIf(
-    !sanitizedData || Object.keys(sanitizedData).length === 0,
-    BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS,
-  );
-  validateStaffFormats(sanitizedData);
+  const staffData = formatStaffData(sanitizedData)
+  validateStaffFormats(staffData);
 
-  return { staffId, staffData: sanitizedData };
+  return { params: staffId, body: staffData };
 };
 
 const validatePartialUpdate = (params, body) => {
@@ -135,9 +131,10 @@ const validatePartialUpdate = (params, body) => {
     BadRequestError,
     ERROR_MESSAGES.NO_VALID_FIELDS,
   );
-  validateStaffFormats(sanitizedData);
+  const staffData = formatStaffData(sanitizedData)
+  validateStaffFormats(staffData);
 
-  return { staffId, staffData: sanitizedData };
+  return {params: staffId, body: staffData };
 };
 
 module.exports = {

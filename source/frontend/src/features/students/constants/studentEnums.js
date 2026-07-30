@@ -1,6 +1,6 @@
 import { buildEnum } from "@/utils";
 
-export const STUDENT_GENDER = buildEnum({
+export const GENDER = buildEnum({
   MALE: {
     label: "Nam",
     color: "primary",

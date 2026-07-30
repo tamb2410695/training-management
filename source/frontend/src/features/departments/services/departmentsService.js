@@ -1,10 +1,8 @@
-import { API_ROUTES } from "../../../constants";
-import { createCrudService } from "../../../services/crudService";
+import { createCrudService } from "@/services/crudService";
+import { DEPARTMENT_FEATURE } from "../constants/departmentFeature";
 
-const BASE_DEPARTMENT_PATH = API_ROUTES.DEPARTMENT.LIST;
+const BASE_DEPARTMENT_PATH = DEPARTMENT_FEATURE.config.api;
 
-const departmentsService = {
-  ...createCrudService(BASE_DEPARTMENT_PATH),
-};
-
-export default departmentsService;
+export default function departmentsService() {
+  return createCrudService(BASE_DEPARTMENT_PATH)
+}

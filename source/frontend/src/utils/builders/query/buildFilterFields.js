@@ -41,17 +41,18 @@ export function resolveFilterConfig(field) {
   };
 }
 
-export function buildFilterFields(fields) {
+export function buildFilterFields({fields, overrides = {}}) {
   return Object.values(fields)
     .map((field) => {
       const filter = resolveFilterConfig(field);
       if (!filter) {
         return null;
       }
+      const override = overrides[field.key] ?? {};
       return {
         key: field.key,
         label: field.label,
-        options: field.enum?.options ?? [],
+        options: override.options ?? field.enum?.options ?? [],
         ...filter,
       };
     })

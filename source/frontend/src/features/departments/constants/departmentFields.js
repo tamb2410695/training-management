@@ -1,34 +1,36 @@
-// constants/departmentFields.js
+import { buildFields, defineFields, Rules } from "@/utils";
 
-export const DEPARTMENT_FIELDS = {
-  departmentId: {
-    key: "departmentId",
-    label: "Mã định danh",
-    sortable: true,
-  },
+const Field = buildFields();
 
-  departmentCode: {
-    key: "departmentCode",
-    label: "Mã phòng ban",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+export const DEPARTMENT_FIELDS = defineFields({
+  departmentId: Field.text("departmentId", "Mã định danh")
+    .disableApi()
+    .disableOnCreate()
+    .disableOnUpdate()
+    .hideOnForm()
+    .sortable(),
 
-  departmentName: {
-    key: "departmentName",
-    label: "Tên phòng ban",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
-};
+  departmentCode: Field.text("departmentCode", "Mã phòng ban")
+    .required()
+    .placeholder("Nhập mã phòng ban")
+    .searchable()
+    .sortable()
+    .tableWidth(180)
+    .col(6)
+    .validation(
+      Rules.minLength(2),
+      Rules.maxLength(50),
+    ),
 
-// Cấu hình các cột hiển thị trên Table danh sách phòng ban
-export const DEPARTMENT_COLUMNS = [
-  DEPARTMENT_FIELDS.departmentId,
-  DEPARTMENT_FIELDS.departmentCode,
-  DEPARTMENT_FIELDS.departmentName,
-];
+  departmentName: Field.text("departmentName", "Tên phòng ban")
+    .required()
+    .placeholder("Nhập tên phòng ban")
+    .searchable()
+    .sortable()
+    .tableWidth(250)
+    .col(6)
+    .validation(
+      Rules.minLength(2),
+      Rules.maxLength(255),
+    ),
+});

@@ -5,7 +5,6 @@
 // export * from "./enrollmentFormatter";
 // export * from "./instructorFormatter";
 // export * from "./paramsFormatter";
+// export * from './primitives';
 // export * from "./queryFormatter";
 // export * from "./studentFormatter";
-
-export * from './primitives';

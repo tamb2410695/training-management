@@ -46,9 +46,7 @@ function StudentsPage() {
       >
         <StudentForm
           modal={student.modal}
-          formSchema={student.formView.formSchema}
-          viewSchema={student.formView.viewSchema}
-          wizardSchema={student.formView.wizardSchema}
+          formSchema={student.formView}
           form={student.form}
           onSubmit={student.actions.submit}
           loading={student.crud.loading}

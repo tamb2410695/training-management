@@ -3,6 +3,7 @@ import { STUDENT_FEATURE } from "../constants";
 
 import { useStudentsCrud } from "./useStudentCrud";
 import {
+  useAuth,
   useDebounce,
   useFeatureFeedback,
   useFeatureForm,
@@ -15,18 +16,31 @@ import { useStudentActions } from "./useStudentActions";
 import { useEffect } from "react";
 import { useFeatureToolbar } from "@/hooks/feature/useFeatureToolbar";
 import { useActions } from "@/hooks/state/useActions";
+import { useRuntimeFeature } from "@/hooks/feature/useRuntimeFeature";
 
 export function useStudentFeature() {
   const crud = useStudentsCrud();
   const modal = useFeatureModal(STUDENT_FEATURE.config.form);
-  const studentQuery = useFeatureQuery(STUDENT_FEATURE.query);
+  const { user } = useAuth();
+  const context = {
+    record: modal.record ?? {},
+    mode: modal.mode ?? "create",
+    user,
+  };
+
+  const runtimeFeature = useRuntimeFeature({
+    feature: STUDENT_FEATURE,
+    context,
+  });
+
   const form = useFeatureForm({
     validationSchema: STUDENT_FEATURE.validation,
     initialData: STUDENT_FEATURE.forms.defaultValues,
     mode: modal.mode,
   });
-  const feedback = useFeatureFeedback(form);
 
+  const feedback = useFeatureFeedback({form});
+  const studentQuery = useFeatureQuery(runtimeFeature.query);
   const debouncedSearch = useDebounce(studentQuery.query.search, 1000);
 
   useEffect(() => {
@@ -55,11 +69,10 @@ export function useStudentFeature() {
     form,
     modal,
     featureFeedback: feedback,
-    fields: STUDENT_FEATURE.fields,
+    fields: runtimeFeature.feature.fields,
   });
 
   const toolbar = useFeatureToolbar({
-    schema: STUDENT_FEATURE,
     query: studentQuery,
     config: STUDENT_FEATURE.config.table.toolbar,
     actions: {
@@ -90,7 +103,7 @@ export function useStudentFeature() {
   const formView = useFeatureFormView({
     modal,
     form,
-    schema: STUDENT_FEATURE,
+    schema: runtimeFeature,
   });
 
   const crudModal = {

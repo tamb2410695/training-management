@@ -80,10 +80,6 @@ const createProfile = async (profileData, connection = db) => {
   );
   throwIf(existedPhone, ConflictError, ERROR_CODES.VALIDATION_FAILED);
 
-  // const finalPayload = {
-  //   ...profileData,
-  // };
-
   const createdProfile = await studentsRepository.create(
     profileData,
     connection,

@@ -6,10 +6,22 @@ export const useQueryState = (defaultQuery) => {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const updateQuery = useCallback((updates) => {
-    setQuery((previous) => ({
-      ...previous,
-      ...updates,
-    }));
+    setQuery((previous) => {
+      const next = {
+        ...previous,
+        ...updates,
+      };
+
+      const resetPage = Object.keys(updates).some(
+        (key) => !["page", "limit"].includes(key),
+      );
+
+      if (resetPage) {
+        next.page = 1;
+      }
+
+      return next;
+    });
   }, []);
 
   const buildQuery = useCallback(

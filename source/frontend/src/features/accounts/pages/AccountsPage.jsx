@@ -46,11 +46,8 @@ function AccountsPage() {
       >
         <AccountForm
           modal={account.modal}
-          formSchema={account.formView.formSchema}
-          viewSchema={account.formView.viewSchema}
-          wizardSchema={account.formView.wizardSchema}
+          formSchema={account.formView}
           form={account.form}
-          runtime={account.runtimeForm}
           onSubmit={account.actions.submit}
           loading={account.crud.loading}
         />

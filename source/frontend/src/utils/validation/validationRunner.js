@@ -12,7 +12,6 @@ export function runValidator(fieldSchema, value) {
       throw new ValidationError(ERROR_CODES.VALIDATION_FAILED, `Unknown validator: ${rule.type}`);
     }
     const error = validator(value, rule);
-
     if (error) {
       return error;
     }

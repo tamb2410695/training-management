@@ -1,4 +1,4 @@
 export * from './capabilities';
 export * from './departments';
-export * from './profile';
+export * from './profiles';
 export * from './test';

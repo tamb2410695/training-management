@@ -13,7 +13,6 @@ export function errorHandler(error) {
     };
   }
 
-
   if (error instanceof AppError) {
     return {
       errorCode: error.errorCode,

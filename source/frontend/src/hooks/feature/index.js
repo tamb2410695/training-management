@@ -7,3 +7,4 @@ export * from "./useFeatureModal";
 export * from "./useFeatureQuery";
 export * from "./useFeatureTable";
 export * from "./useFeatureToolbar";
+export * from "./useRuntimeFeature";

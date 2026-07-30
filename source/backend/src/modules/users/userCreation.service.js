@@ -132,17 +132,15 @@ const createStudent = async (accountData, profileData, connection = db) => {
 const createStaff = async (accountData, profileData, connection = db) => {
   return await withTransaction(async (txConnection) => {
     throwIf(
-      ![
-        ROLES.ADMIN,
-        ROLES.INSTRUCTOR,
-      ].includes(accountData.roleCode),
+      ![ROLES.ADMIN, ROLES.INSTRUCTOR].includes(accountData.roleCode),
       ConflictError,
       ERROR_CODES.PROFILE_INVALID_TYPE,
     );
     if (!profileData.personalEmail)
-      profileData.personalEmail = createdAccount.email;
+      profileData.personalEmail = accountData.email;
 
-    const createdAccount = await accountsService.create(accountData,
+    const createdAccount = await accountsService.create(
+      { ...accountData, email: accountData.accountEmail },
       txConnection,
     );
     const createdProfile = await staffProfilesService.createProfile(
@@ -158,7 +156,7 @@ const createStaff = async (accountData, profileData, connection = db) => {
       ConflictError,
       ERROR_CODES.NO_CHANGES,
     );
-    
+
     return { createdUserData: createdProfile };
   }, connection);
 };

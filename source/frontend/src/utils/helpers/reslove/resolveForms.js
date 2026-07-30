@@ -1,23 +1,23 @@
 import { buildForm } from "@/utils/builders";
 
-export function resolveForms({ fields, context }) {
+export function resolveForms({ feature, policy }) {
   return {
     create: buildForm({
-      fields,
+      fields: feature.fields,
       mode: "create",
-      overrides: context
+      overrides: policy.form ?? {}
     }),
 
     update: buildForm({
-      fields,
+      fields: feature.fields,
       mode: "update",
-      overrides: context
+      overrides: policy.form ?? {}
     }),
 
     view: buildForm({
-      fields,
+      fields: feature.fields,
       mode: "view",
-      overrides: context
+      overrides: policy.form ?? {}
     }),
   };
 }

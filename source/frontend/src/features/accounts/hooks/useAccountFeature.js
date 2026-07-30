@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { ACCOUNT_FEATURE } from "../constants";
+import { useEffect } from "react";
 
 import {
   useAuth,
@@ -11,50 +12,35 @@ import {
   useFeatureQuery,
   useFeatureTable,
 } from "@/hooks";
-import { useEffect } from "react";
+
 import { useFeatureToolbar } from "@/hooks/feature/useFeatureToolbar";
 import { useActions } from "@/hooks/state/useActions";
 import { useAccountActions } from "./useAccountActions";
 import { useAccountsCrud } from "./useAccountCrud";
-import { useAccountSchema } from "./useAccountSchema";
 import { useRuntimeFeature } from "@/hooks/feature/useRuntimeFeature";
-import { resolveAccountPolicy } from "../policies/resolveAccountPolicy";
-import { useState } from "react";
 
 export function useAccountFeature() {
   const crud = useAccountsCrud();
-  const [accountType, setAccountType] = useState("student");
   const modal = useFeatureModal(ACCOUNT_FEATURE.config.form);
   const { user } = useAuth();
   const context = {
-    account: modal.record ?? {},
+    record: modal.record ?? {},
     mode: modal.mode ?? "create",
-    currentStatus: modal.record.accountStatus,
     user,
-    accountType,
   };
-  const accountPolicy = resolveAccountPolicy({context});
+
   const runtimeFeature = useRuntimeFeature({
     feature: ACCOUNT_FEATURE,
-    context: {
-      record: modal.record,
-      mode: modal.mode,
-      actions: resolveAccountPolicy,
-    },
+    context,
   });
 
-  const accountQuery = useFeatureQuery(ACCOUNT_FEATURE.query);
   const form = useFeatureForm({
     validationSchema: ACCOUNT_FEATURE.validation,
     initialData: ACCOUNT_FEATURE.forms.defaultValues,
     mode: modal.mode,
   });
+  const accountQuery = useFeatureQuery(runtimeFeature.query);
   const feedback = useFeatureFeedback(form);
-
-  const runtimeForm = useAccountSchema({
-    mode: modal.mode,
-    account: modal.record,
-  });
 
   const debouncedSearch = useDebounce(accountQuery.query.search, 1000);
 
@@ -77,6 +63,7 @@ export function useAccountFeature() {
     debouncedSearch,
     accountQuery.refreshKey,
   ]);
+
 
   const actions = useAccountActions({
     crud,
@@ -119,7 +106,7 @@ export function useAccountFeature() {
   const formView = useFeatureFormView({
     modal,
     form,
-    schema: ACCOUNT_FEATURE,
+    schema: runtimeFeature,
   });
 
   const crudModal = {
@@ -140,6 +127,5 @@ export function useAccountFeature() {
     modal,
     feedback,
     crudModal,
-    runtimeForm,
   };
 }

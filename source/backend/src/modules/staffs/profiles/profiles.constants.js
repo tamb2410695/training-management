@@ -6,7 +6,7 @@ const ACCOUNT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "email", "roleLabel"],
+    SEARCHABLE: ["username", "accountEmail", "roleLabel"],
 
     SORTABLE: ["accountId", "username", "createdAt", "roleCode"],
 
@@ -28,7 +28,7 @@ const ACCOUNT_FIELDS = {
     CREATE: [
       "roleCode",
       "username",
-      "email",
+      "accountEmail",
       "password",
       "avatarUrl",
     ],
@@ -37,7 +37,7 @@ const ACCOUNT_FIELDS = {
   },
 
   REQUIRED: {
-    CREATE: ["roleCode", "username", "email", "password"],
+    CREATE: ["roleCode", "username", "accountEmail", "password"],
   },
 };
 
@@ -87,6 +87,7 @@ const STAFF_FIELDS = {
       "identityCard",
       "phone",
       "personalEmail",
+      "hireDate",
       "address",
       "academicRank",
       "contractType",
@@ -95,14 +96,14 @@ const STAFF_FIELDS = {
   },
 
   REQUIRED: {
-    CREATE: ["fullName", "phone", "personalEmail"],
+    CREATE: ["fullName", "phone"],
   },
 };
 
 const STAFF_MAPS = {
   SEARCH: {
     username: "acc.username",
-    email: "acc.email",
+    accountEmail: "acc.email",
     roleLabel: "rl.role_label",
     staffCode: "sp.staff_code",
     fullName: "sp.full_name",

@@ -7,17 +7,17 @@ import { buildApiPayload } from "@/utils";
 import { STUDENT_FEATURE } from "../constants";
 
 export const STUDENT_FEEDBACK = {
-  createSuccess: {
+  create: {
     code: "STUDENT_CREATE_SUCCESS",
     message: "Tạo học viên thành công",
   },
 
-  updateSuccess: {
+  update: {
     code: "STUDENT_UPDATE_SUCCESS",
     message: "Cập nhật học viên thành công",
   },
 
-  deleteSuccess: {
+  delete: {
     code: "STUDENT_DELETE_SUCCESS",
     message: "Xóa học viên thành công",
   },
@@ -50,7 +50,7 @@ export function useStudentActions({
     featureFeedback,
     fields,
     buildPayload: buildApiPayload,
-    messages: STUDENT_FEEDBACK,
+    successMessages: STUDENT_FEEDBACK,
     idKey: STUDENT_FEATURE.config.idField
   });
 

@@ -1,3 +1,4 @@
-export * from "./departmentDefaults";
-export * from "./departmentEnums";
-export * from "./departmentFields";
+export * from "./staffDepartmentConfig";
+export * from "./staffDepartmentEnums";
+export * from "./staffDepartmentFeature";
+export * from "./staffDepartmentFields";

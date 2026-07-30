@@ -5,30 +5,35 @@ export const ACCOUNT_STATUS = buildEnum({
     label: "Chờ kích hoạt",
     color: "warning",
     order: 1,
+    filterable: true,
   },
 
   ACTIVE: {
     label: "Đang hoạt động",
     color: "success",
     order: 2,
+    filterable: true,
   },
 
   LOCKED: {
     label: "Khóa",
     color: "danger",
     order: 3,
+    filterable: true,
   },
 
   DISABLED: {
     label: "Vô hiệu hóa",
     color: "secondary",
     order: 4,
+    filterable: true,
   },
 
   DELETED: {
     label: "Đã xóa",
     color: "dark",
     order: 5,
+    filterable: false,
   },
 });
 

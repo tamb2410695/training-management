@@ -19,7 +19,8 @@ import AdminDashboard from "@/features/dashboard/pages/AdminDashboardPage";
 import AccountManagementPage from "@/features/accounts/pages/AccountsPage";
 import StudentManagementPage from "@/features/students/pages/StudentsPage";
 import CoursesManagementPage from "@/features/courses/pages/CoursesPage"
-// import DepartmentsManagementPage from "@/features/departments/pages/DepartmentsPage";
+import StaffProfileManagementPage from "@/features/staffs/profiles/pages/ProfilesPage";
+import DepartmentsManagementPage from "@/features/departments/pages/DepartmentsPage";
 // import InstructorManagementPage from "@/features/instructors/pages/InstructorsPage";
 
 import StudentLayout from "@/layouts/StudentLayout";
@@ -88,14 +89,14 @@ function AppRoutes() {
           element={<CoursesManagementPage />}
         />
 
-        {/* <Route
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.STAFFS}
+          element={<StaffProfileManagementPage />}
+        />
+        <Route
           path={COMPONENT_ROUTES.ADMIN.DEPARTMENTS}
           element={<DepartmentsManagementPage />}
         />
-        <Route
-          path={COMPONENT_ROUTES.ADMIN.STAFFS}
-          element={<InstructorManagementPage />}
-        /> */}
       </Route>
 
       {/* Student */}

@@ -12,11 +12,20 @@ export function buildDefaultQuery(config = {}) {
   };
 }
 
-export function buildQuery(fields, config = {}) {
+export function buildQuery({ fields, config = {}, overrides = {} }) {
   return {
-    searchableFields: buildSearchFields(fields),
-    sortableFields: buildSortFields(fields),
-    filterFields: buildFilterFields(fields),
+    searchableFields: buildSearchFields({
+      fields,
+      overrides: overrides?.searchableFields,
+    }),
+    sortableFields: buildSortFields({
+      fields,
+      overrides: overrides?.sortableFields,
+    }),
+    filterFields: buildFilterFields({
+      fields,
+      overrides: overrides?.filterFields,
+    }),
     defaultQuery: buildDefaultQuery(config),
   };
 }

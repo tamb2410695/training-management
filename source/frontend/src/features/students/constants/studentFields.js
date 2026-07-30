@@ -1,5 +1,5 @@
 import { buildFields, Rules, defineFields } from "@/utils";
-import { STUDENT_GENDER, STUDENT_STATUS } from "./studentEnums";
+import { GENDER, STUDENT_STATUS } from "./studentEnums";
 import { ACCOUNT_STATUS } from "@/features/accounts";
 
 const Field = buildFields();
@@ -56,8 +56,8 @@ export const STUDENT_FIELDS = defineFields({
     .col(6)
     .validation(Rules.email(), Rules.maxLength(255)),
 
-  gender: Field.select("gender", "Giới tính", STUDENT_GENDER)
-    .defaultValue(STUDENT_GENDER.values[2])
+  gender: Field.select("gender", "Giới tính", GENDER)
+    .defaultValue(GENDER.values[2])
     .filter("text")
     .col(6),
 
@@ -86,7 +86,7 @@ export const STUDENT_FIELDS = defineFields({
     .disabled({
       create: true,
     })
-    .required()
+    .requiredOnUpdate()
     .disableApiCreate()
     .tableWidth(140)
     .col(6),

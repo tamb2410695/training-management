@@ -1,5 +1,5 @@
-export function resolveFields({ fields, context }) {
-  const overrides = context.policy?.fields ?? {};
+export function resolveFields({ fields, policy }) {
+  const overrides = policy?.fields ?? {};
 
   return Object.entries(fields).reduce((result, [key, field]) => {
     result[key] = {
@@ -7,7 +7,6 @@ export function resolveFields({ fields, context }) {
 
       form: {
         ...field.form,
-
         ...(overrides[key] ?? {}),
       },
     };

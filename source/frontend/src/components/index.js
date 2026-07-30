@@ -7,3 +7,4 @@ export * from './modal';
 export * from './query';
 export * from './table';
 export * from './toolbar';
+export * from './view';

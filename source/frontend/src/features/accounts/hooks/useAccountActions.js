@@ -7,17 +7,17 @@ import { buildApiPayload } from "@/utils";
 import { ACCOUNT_FEATURE } from "../constants";
 
 export const ACCOUNT_FEEDBACK = {
-  createSuccess: {
+  create: {
     code: "ACCOUNT_CREATE_SUCCESS",
     message: "Tạo tài khoản thành công",
   },
 
-  updateSuccess: {
+  update: {
     code: "ACCOUNT_UPDATE_SUCCESS",
     message: "Cập nhật tài khoản thành công",
   },
 
-  deleteSuccess: {
+  delete: {
     code: "ACCOUNT_DELETE_SUCCESS",
     message: "Xóa tài khoản thành công",
   },
@@ -50,7 +50,7 @@ export function useAccountActions({
     featureFeedback,
     fields,
     buildPayload: buildApiPayload,
-    messages: ACCOUNT_FEEDBACK,
+    successMessages: ACCOUNT_FEEDBACK,
     idKey: ACCOUNT_FEATURE.config.idField
   });
 

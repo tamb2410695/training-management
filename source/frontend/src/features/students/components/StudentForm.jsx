@@ -2,23 +2,15 @@ import DynamicForm from "@/components/form/DynamicForm";
 import WizardForm from "@/components/form/WizardForm";
 import DynamicView from "@/components/view/DynamicView";
 
-export function StudentForm({
-  modal,
-  formSchema,
-  viewSchema,
-  wizardSchema,
-  form,
-  onSubmit,
-  loading,
-}) {
+export function StudentForm({ modal, formSchema, form, onSubmit, loading }) {
   if (modal.mode === "view") {
-    return <DynamicView schema={viewSchema} record={modal.record} />;
+    return <DynamicView schema={formSchema.formSchema} record={modal.record} />;
   }
 
-  if (wizardSchema) {
+  if (formSchema.isWizard) {
     return (
       <WizardForm
-        schema={wizardSchema}
+        schema={formSchema.wizardSchema}
         values={form.values}
         errors={form.errors}
         onChange={form.setValue}
@@ -30,7 +22,7 @@ export function StudentForm({
 
   return (
     <DynamicForm
-      schema={formSchema}
+      schema={formSchema.formSchema}
       values={form.values}
       errors={form.errors}
       onChange={form.setValue}

@@ -51,30 +51,8 @@ export const ACCOUNT_CONFIG = {
   },
 };
 
-export const ACCOUNT_WIZARD_CONFIG = {
-  mode: "create",
-  steps: [
-    {
-      key: "account",
-      title: "Tài khoản",
-      fields: ["username", "accountEmail", "password"],
-    },
-    {
-      key: "student",
-      title: "Học viên",
-      fields: [
-        "fullName",
-        "personalEmail",
-        "phone",
-        "address",
-        "dateOfBirth",
-        "gender",
-      ],
-    },
-  ],
-};
-
 export const ACCOUNT_WIZARD = {
+  mode: "create",
   steps: {
     account: {
       title: "Tài khoản",

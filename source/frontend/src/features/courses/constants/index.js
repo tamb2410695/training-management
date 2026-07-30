@@ -1,5 +1,4 @@
-export * from "./courseConstants";
-export * from "./courseDefaults";
+export * from "./courseConfig";
+export * from "./courseFeature";
 export * from "./courseEnums";
 export * from "./courseFields";
-export * from "./coursesConstants";

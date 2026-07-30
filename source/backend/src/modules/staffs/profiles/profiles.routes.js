@@ -13,37 +13,37 @@ const {
 } = require("./profiles.validator");
 
 router.get(
-  ROUTES.STAFF?.ROOT,
+  ROUTES.STAFF.ROOT,
   createValidationMiddleware(validateGetList, "query"),
   staffProfilesController.getList,
 );
 
 router.post(
-  ROUTES.STAFF?.ROOT,
+  ROUTES.STAFF.ROOT,
   createValidationMiddleware(validateCreate),
   staffProfilesController.create,
 );
 
 router.get(
-  ROUTES.STAFF?.DETAIL,
+  ROUTES.STAFF.DETAIL,
   createValidationMiddleware(validateGetById, "params"),
   staffProfilesController.getById,
 );
 
 router.patch(
-  ROUTES.STAFF?.DETAIL,
+  ROUTES.STAFF.DETAIL,
   createMultiValidator(validatePartialUpdate),
   staffProfilesController.update,
 );
 
 router.put(
-  ROUTES.STAFF?.DETAIL,
+  ROUTES.STAFF.DETAIL,
   createMultiValidator(validateUpdate),
   staffProfilesController.update,
 );
 
 router.delete(
-  ROUTES.STAFF?.DETAIL,
+  ROUTES.STAFF.DETAIL,
   createValidationMiddleware(validateGetById, "params"),
   staffProfilesController.remove,
 );

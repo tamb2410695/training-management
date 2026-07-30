@@ -1,86 +1,36 @@
-// constants/accountFields.js
+import { buildFields, defineFields, Rules } from "@/utils";
 
-export const ACCOUNT_FIELDS = {
-  accountId: {
-    key: "accountId",
-    label: "Mã tài khoản",
-    sortable: true,
-  },
+const Field = buildFields();
 
-  username: {
-    key: "username",
-    label: "Tên đăng nhập",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+export const COURSE_FIELDS = defineFields({
+  departmentId: Field.text("departmentId", "Mã định danh")
+    .disableApi()
+    .disableOnCreate()
+    .disableOnUpdate()
+    .hideOnForm()
+    .sortable(),
 
-  email: {
-    key: "email",
-    label: "Email",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+  departmentCode: Field.text("departmentCode", "Mã phòng ban")
+    .required()
+    .placeholder("Nhập mã phòng ban")
+    .searchable()
+    .sortable()
+    .tableWidth(180)
+    .col(6)
+    .validation(
+      Rules.minLength(2),
+      Rules.maxLength(50),
+    ),
 
-  password: {
-    key: "password",
-    label: "Mật khẩu",
-    required: { create: true, update: false },
-    default: "",
-  },
-
-  roleCodes: {
-    key: "roleCodes",
-    label: "Vai trò",
-    default: [],
-    sortable: false,
-    searchable: false,
-  },
-
-  roleNames: {
-    key: "roleNames",
-    label: "Vai trò",
-    searchable: true,
-    default: [],
-  },
-
-  accountStatus: {
-    key: "accountStatus",
-    label: "Trạng thái",
-    required: { create: false, update: true },
-    filterable: true,
-    default: "ACTIVE",
-  },
-
-  avatarUrl: {
-    key: "avatarUrl",
-    label: "Ảnh đại diện",
-    default: "",
-  },
-
-  createdAt: {
-    key: "createdAt",
-    label: "Ngày tạo",
-    sortable: true,
-  },
-
-  updatedAt: {
-    key: "updatedAt",
-    label: "Ngày cập nhật",
-    sortable: true,
-  },
-};
-
-export const ACCOUNT_COLUMNS = [
-  ACCOUNT_FIELDS.accountId,
-  ACCOUNT_FIELDS.username,
-  ACCOUNT_FIELDS.email,
-  {
-    ...ACCOUNT_FIELDS.roleNames,
-    render: (roleNames) => roleNames?.join(", ") || "N/A",
-  },
-  ACCOUNT_FIELDS.accountStatus,
-];
+  departmentName: Field.text("departmentName", "Tên phòng ban")
+    .required()
+    .placeholder("Nhập tên phòng ban")
+    .searchable()
+    .sortable()
+    .tableWidth(250)
+    .col(6)
+    .validation(
+      Rules.minLength(2),
+      Rules.maxLength(255),
+    ),
+});

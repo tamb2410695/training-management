@@ -34,16 +34,6 @@ const getById = async (profileId, connection = db) => {
   return profile;
 };
 
-// const create = async (accountData, profileData, connection = db) => {
-//     return await userCreationService.createStaff(
-//       {
-//         accountData,
-//         profileData,
-//       },
-//       connection,
-//     );
-// };
-
 const createProfile = async (profileData, connection = db) => {
   const { accountId, staffPhone } = profileData;
   throwIf(

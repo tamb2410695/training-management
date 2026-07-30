@@ -22,6 +22,14 @@ function formatStudentData(studentData) {
     data.dateOfBirth = toDate(data.dateOfBirth);
   }
 
+  if(hasField(data, "accountEmail")) {
+    data.accountEmail = formatEmail(data.accountEmail)
+  }
+
+  if(hasField(data, "personalEmail")) {
+    data.personalEmail = formatEmail(data.personalEmail)
+  }
+
   return data;
 }
 

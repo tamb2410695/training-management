@@ -36,23 +36,15 @@ export function useCrud(service, options = {}) {
         const params = buildRequestParams(query);
         const response = await service.getList(params);
         const data = response.data ?? {};
-        
-        const items = data[resourceName] ?? [];
-        const pagination = data.pagination ?? DEFAULT_PAGINATION;
 
-        if (
-          pagination.page > pagination.totalPages &&
-          pagination.totalPages > 0
-        ) {
-          setPagination((prev) => ({
-            ...prev,
-            page: pagination.totalPages,
-          }));
-          return response;
-        }
+        setItems(data[resourceName] ?? []);
+        setPagination(
+          data.pagination.totalRecords !== 0
+            ? data.pagination
+            : DEFAULT_PAGINATION,
+        );
 
-        setItems(items);
-        setPagination(pagination);
+        return response;
       });
     },
     [execute, service, resourceName],

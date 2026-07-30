@@ -1,30 +1,88 @@
+import { buildEnum } from "@/utils";
 
+export const GENDER = buildEnum({
+  MALE: {
+    label: "Nam",
+    color: "primary",
+    order: 1,
+  },
 
-export const DEPARTMENT_MESSAGES = {
-  CREATE_SUCCESS: "Tạo phòng ban chuyên môn mới thành công.",
-  UPDATE_SUCCESS: "Cập nhật thông tin phòng ban thành công.",
-  DELETE_SUCCESS: "Xóa phòng ban khỏi hệ thống thành công.",
-  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa phòng ban này? Hành động này có thể ảnh hưởng đến dữ liệu nhân sự thuộc phòng ban này.",
-  
-  // Thông báo đặc thù cho nghiệp vụ phân bổ nhân sự (Staff Department)
-  ASSIGN_SUCCESS: "Phân phối nhân sự vào phòng ban thành công.",
-  ASSIGN_DUPLICATE: "Nhân sự này đã tồn tại trong phòng ban được chọn.",
-  PRIMARY_CONFLICT: "Nhân viên này đã có một phòng ban làm việc chính thức (PRIMARY).",
-};
+  FEMALE: {
+    label: "Nữ",
+    color: "danger",
+    order: 2,
+  },
 
-// Định nghĩa các loại hình bổ nhiệm/phân bổ dựa trên CHECK CONSTRAINT của backend
-export const APPOINTMENT_TYPES = {
-  PRIMARY: { CODE: "PRIMARY", LABEL: "Chính thức", COLOR: "primary" },
-  PART_TIME: { CODE: "PART_TIME", LABEL: "Kiêm nhiệm/Biệt phái", COLOR: "info" },
-};
+  OTHER: {
+    label: "Khác",
+    color: "secondary",
+    order: 3,
+  },
+});
 
-export const APPOINTMENT_TYPE_OPTIONS = Object.values(APPOINTMENT_TYPES).map((type) => ({
-  value: type.CODE,
-  label: type.LABEL,
-}));
+export const STAFF_STATUS = buildEnum({
+  DISABLE: {
+    label: "Vô hiệu hóa",
+    color: "secondary",
+    order: 1,
+  },
 
-// Cấu hình các bộ lọc (Filters) xuất hiện trên giao diện danh sách bộ phận/phòng ban
-export const DEPARTMENT_FILTERS = {
-  // Cho phép lọc nhân sự theo loại hình làm việc tại phòng ban (Nếu làm màn hình danh sách nhân sự theo phòng)
-  appointmentType: APPOINTMENT_TYPE_OPTIONS,
+  ACTIVE: {
+    label: "Đang làm việc",
+    color: "success",
+    order: 2,
+  },
+
+  SUSPENDED: {
+    label: "Tạm đình chỉ",
+    color: "warning",
+    order: 3,
+  },
+
+  ON_LEAVE: {
+    label: "Đang nghỉ phép",
+    color: "info",
+    order: 4,
+  },
+
+  TERMINATED: {
+    label: "Đã nghỉ việc",
+    color: "danger",
+    order: 5,
+  },
+});
+
+export const CONTRACT_TYPE = buildEnum({
+  PROBATION: {
+    label: "Thử việc",
+    color: "warning",
+    order: 1,
+  },
+
+  FULL_TIME: {
+    label: "Toàn thời gian",
+    color: "success",
+    order: 2,
+  },
+
+  PART_TIME: {
+    label: "Bán thời gian",
+    color: "info",
+    order: 3,
+  },
+});
+
+export const STAFF_MESSAGES = {
+  CREATE_SUCCESS: "Tạo hồ sơ học viên thành công.",
+  UPDATE_SUCCESS: "Cập nhật hồ sơ học viên thành công.",
+  DELETE_SUCCESS: "Xóa hồ sơ học viên thành công.",
+  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa học viên này khỏi hệ thống không?",
+
+  SUSPEND_SUCCESS: "Bảo lưu trạng thái học viên thành công.",
+  GRADUATE_SUCCESS: "Xác nhận tốt nghiệp cho học viên thành công.",
+  WITHDRAW_SUCCESS: "Cập nhật trạng thái thôi học thành công.",
+
+  SUSPEND_CONFIRM: "Bạn có chắc chắn muốn bảo lưu học phần của học viên này?",
+  WITHDRAW_CONFIRM:
+    "Bạn có chắc chắn muốn chuyển trạng thái học viên này sang thôi học?",
 };

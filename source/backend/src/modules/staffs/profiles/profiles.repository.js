@@ -127,7 +127,6 @@ const find = async (query, connection = db) => {
 
   const [rows] = await connection.query(dataSql, dataParams);
 
-  // Định dạng mảng chuỗi danh sách phòng ban trả về cho sạch sẽ
   const camelCasedRows = arrayToCamelCase(rows);
   const formattedStaffs = camelCasedRows.map((staff) => ({
     ...staff,

@@ -16,15 +16,25 @@ const getById = asyncHandler(async (req, res, next) => {
 });
 
 const create = asyncHandler(async (req, res, next) => {
-  const {accountData, profileData} = req.body
-  const result = await userCreationService.createStaff(accountData, profileData);
-  
-  return successResponse(res, result, SUCCESS_CODES.STAFF_PROFILE_CREATED, undefined, 201);
+  const { accountData, profileData } = req.body;
+  const result = await userCreationService.createStaff(
+    accountData,
+    profileData,
+  );
+
+  return successResponse(
+    res,
+    result,
+    SUCCESS_CODES.STAFF_PROFILE_CREATED,
+    undefined,
+    201,
+  );
 });
 
 const update = asyncHandler(async (req, res, next) => {
-  const { staffId, staffData } = req.validatedData;
-  const result = await staffProfilesService.update(staffId, staffData);
+  const { id } = req.params;
+  const staffData = req.body;
+  const result = await staffProfilesService.update(id, staffData);
   return successResponse(res, result, SUCCESS_CODES.STAFF_PROFILE_UPDATED);
 });
 

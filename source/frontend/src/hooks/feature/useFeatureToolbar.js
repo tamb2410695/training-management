@@ -1,7 +1,6 @@
 import { useActions } from "../state/useActions";
 
 export function useFeatureToolbar({
-  schema,
   config = [],
   query,
   actions = {},
@@ -9,7 +8,7 @@ export function useFeatureToolbar({
   const toolbarActions = useActions(config, actions);
 
   return {
-    schema: schema.query,
+    schema: query.schema,
     query: query.query,
     onChange: query.updateQuery,
     actions: toolbarActions,

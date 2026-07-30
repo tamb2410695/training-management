@@ -1,9 +1,7 @@
 export function useFeatureFormView({ modal, form, schema }) {
-  const mode = modal.isCreate ? "create" : "update";
+  const mode = modal.mode;
 
-  const formSchema = schema.forms[mode];
-
-  const viewSchema = schema.view;
+  const formSchema = schema.form[mode];
 
   return {
     mode,
@@ -11,8 +9,7 @@ export function useFeatureFormView({ modal, form, schema }) {
     setValue: form.setValue,
 
     formSchema,
-    viewSchema,
     isWizard: schema.wizard?.mode === mode,
-    wizardSchema: schema.wizard?.mode === mode ? schema.wizard : null,
+    wizardSchema: schema.wizard,
   };
 }

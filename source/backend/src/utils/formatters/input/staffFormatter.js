@@ -4,6 +4,7 @@ const { toDate } = require("./primitives/dateFormatter");
 const { formatEmail } = require("./primitives/emailFormatter");
 const { normalizeEnum } = require("./primitives/enumFormatter");
 const { formatUsername } = require("./primitives/usernameFormatter");
+const { formatKeyword } = require("./queryFormatter");
 
 function formatStaffData(staffData) {
   const data = {
@@ -21,6 +22,15 @@ function formatStaffData(staffData) {
   if (hasField(data, "dateOfBirth")) {
     data.dateOfBirth = toDate(data.dateOfBirth);
   }
+
+  if(hasField(data, "accountEmail")) {
+    data.accountEmail = formatEmail(data.accountEmail)
+  }
+
+  if(hasField(data, "personalEmail")) {
+    data.personalEmail = formatEmail(data.personalEmail)
+  }
+
 
   return data;
 }
