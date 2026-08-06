@@ -1,31 +1,37 @@
-const db = require("../../config/database");
+const db = require("@/config/database");
+
 const {
   NotFoundError,
   ConflictError,
   BadRequestError,
   ValidationError,
-} = require("../../utils/errors");
+} = require("@/utils/errors");
 
-const { withTransaction } = require("../../utils/database/transaction");
-const {
-  ERROR_CODES,
-  ERROR_MESSAGES,
-  CODE_PREFIX,
-  CODE_LENGHT,
-  USER_CREATION,
-} = require("../../constants");
-const { throwIf, hasField, generateCode } = require("../../utils/helpers");
+const { withTransaction } = require("@/utils/database/transaction");
+
+const { ERROR_CODES, CODE_PREFIX, STUDENT_STATUS } = require("@/constants");
+
+const { throwIf, hasField, generateCode } = require("@/utils/helpers");
 
 const studentsRepository = require("./students.repository");
 const accountsRepository = require("../accounts/accounts.repository");
-const accountsService = require("../accounts/accounts.service");
-const { STUDENT_FIELDS } = require("./students.constants");
 
-const userCreationService = require("../users/userCreation.service");
-const { PROFILE_TYPE } = require("../../constants/lookups/userCreation");
+const { STUDENT_PROFILE_FIELDS } = require("./students.constants");
+
+// ===============================
+// Query
+// ===============================
 
 const getList = async (query, connection = db) => {
-  return await studentsRepository.find(query, connection);
+  const { data: profiles, pagination } = await studentsRepository.list(
+    query,
+    connection,
+  );
+
+  return {
+    profiles,
+    pagination,
+  };
 };
 
 const getById = async (studentId, connection = db) => {
@@ -34,152 +40,290 @@ const getById = async (studentId, connection = db) => {
   throwIf(
     !student,
     NotFoundError,
-    ERROR_CODES.STUDENT_NOT_FOUND || "STUDENT_NOT_FOUND",
+    ERROR_CODES.STUDENT_NOT_FOUND,
     "Student profile not found",
   );
 
   return student;
 };
 
-// const create = async (accountData, profileData, connection = db) => {
-//   return await withTransaction(async (txConnection) => {
-//     return await userCreationService.createStudent(
-//       {
-//         accountData,
-//         profileData,
-//       },
-//       txConnection,
-//     );
-//   }, connection);
-// };
+// ===============================
+// Create
+// ===============================
 
-// local
 const createProfile = async (profileData, connection = db) => {
-  const { accountId, phone } = profileData;
-  throwIf(
-    !accountId || !phone,
-    ValidationError,
-    `${ERROR_CODES.MISSING_REQUIRED_FIELDS}: accountId or phone`,
-  );
+  return withTransaction(async (txConnection) => {
+    const { accountId, phone } = profileData;
 
-  const accountExists = await accountsRepository.findById(
-    accountId,
-    connection,
-  );
-  throwIf(!accountExists, NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND);
+    throwIf(
+      !accountId || !phone,
+      ValidationError,
+      ERROR_CODES.MISSING_REQUIRED_FIELDS,
+    );
 
-  const linkedStudent = await studentsRepository.findByAccountId(
-    accountId,
-    connection,
-  );
-  throwIf(linkedStudent, ConflictError, ERROR_CODES.PROFILE_ALREADY_LINKED);
+    const account = await accountsRepository.findById(accountId, txConnection);
 
-  const existedPhone = await studentsRepository.findByPhone(
-    phone,
-    connection,
-  );
-  throwIf(existedPhone, ConflictError, ERROR_CODES.VALIDATION_FAILED);
+    throwIf(!account, NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND);
 
-  const createdProfile = await studentsRepository.create(
-    profileData,
-    connection,
-  );
+    const existedProfile = await studentsRepository.findByAccountId(
+      accountId,
+      txConnection,
+    );
 
-  throwIf(!createdProfile, ConflictError, ERROR_CODES.NO_CHANGES);
+    throwIf(existedProfile, ConflictError, ERROR_CODES.PROFILE_ALREADY_LINKED);
 
-  const studentCode = generateCode(
-    CODE_PREFIX.STUDENT,
-    createdProfile.studentId,
-  );
+    const existedPhone = await studentsRepository.findByPhone(
+      phone,
+      txConnection,
+    );
 
-  const updatedStudent = await update(
-    createdProfile.studentId,
-    { studentCode },
-    connection,
-  );
+    throwIf(existedPhone, ConflictError, ERROR_CODES.VALIDATION_FAILED);
 
-  return updatedStudent;
+    const profile = await studentsRepository.create(profileData, txConnection);
+
+    throwIf(!profile, ConflictError, ERROR_CODES.NO_CHANGES);
+
+    const studentCode = generateCode(CODE_PREFIX.STUDENT, profile.studentId);
+
+    return studentsRepository.update(
+      profile.studentId,
+      {
+        studentCode,
+      },
+      txConnection,
+    );
+  }, connection);
 };
+
+// ===============================
+// Update
+// ===============================
 
 const getStudentOrThrow = async (studentId, connection = db) => {
   const student = await studentsRepository.findById(studentId, connection);
-  throwIf(
-    !student,
-    NotFoundError,
-    ERROR_CODES.STUDENT_NOT_FOUND || "STUDENT_NOT_FOUND",
-  );
+
+  throwIf(!student, NotFoundError, ERROR_CODES.STUDENT_NOT_FOUND);
+
   return student;
 };
 
-const buildUpdateStudentData = async (student, studentData) => {
-  const updateStudentData = {};
-  const allowedUpdateFields = [...STUDENT_FIELDS.BODY.UPDATE, "studentCode"];
-  allowedUpdateFields.forEach((field) => {
+const buildUpdateStudentData = (studentData) => {
+  const payload = {};
+
+  [...STUDENT_PROFILE_FIELDS.BODY.UPDATE, "studentCode"].forEach((field) => {
     if (hasField(studentData, field)) {
-      updateStudentData[field] = studentData[field];
+      payload[field] = studentData[field];
     }
   });
 
   throwIf(
-    Object.keys(updateStudentData).length === 0,
+    Object.keys(payload).length === 0,
     BadRequestError,
     ERROR_CODES.NO_VALID_FIELDS,
   );
 
-  return updateStudentData;
+  return payload;
 };
 
 const update = async (studentId, studentData, connection = db) => {
   const student = await getStudentOrThrow(studentId, connection);
-  const updatePayload = await buildUpdateStudentData(student, studentData);
 
-  const updatedStudent = await studentsRepository.update(
+  const payload = buildUpdateStudentData(studentData);
+
+  if (hasField(studentData, "phone")) {
+    const existedPhone = await studentsRepository.findByPhone(
+      studentData.phone,
+      connection,
+    );
+
+    throwIf(
+      existedPhone && existedPhone.studentId !== student.studentId,
+
+      ConflictError,
+
+      ERROR_CODES.VALIDATION_FAILED,
+    );
+  }
+
+  const updated = await studentsRepository.update(
     studentId,
-    updatePayload,
+    payload,
     connection,
   );
 
-  throwIf(!updatedStudent, ConflictError, ERROR_CODES.NO_CHANGES);
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
 
-  return updatedStudent;
+  return updated;
 };
 
+// ===============================
+// Remove
+// ===============================
+
 const remove = async (studentId, connection = db) => {
-  return await withTransaction(async (txConnection) => {
+  return withTransaction(async (txConnection) => {
     const student = await studentsRepository.findById(studentId, txConnection);
-    throwIf(
-      !student,
-      NotFoundError,
-      ERROR_CODES.STUDENT_NOT_FOUND || "STUDENT_NOT_FOUND",
-    );
 
-    const accountDeleted = await accountsService.remove(
-      student.accountId,
-      txConnection,
-    );
-    throwIf(!accountDeleted, ConflictError, "FAILED_TO_SOFT_DELETE_ACCOUNT");
+    throwIf(!student, NotFoundError, ERROR_CODES.STUDENT_NOT_FOUND);
 
-    const updatedStudent = await studentsRepository.update(
+    await studentsRepository.update(
       studentId,
-      { studentStatus: "DROPPED_OUT" },
+      {
+        studentStatus: STUDENT_STATUS.WITHDRAWN,
+      },
       txConnection,
     );
-    throwIf(!updatedStudent, ConflictError, "FAILED_TO_UPDATE_STUDENT_STATUS");
 
     return {
       studentId,
       accountId: student.accountId,
-      status: "DROPPED_OUT",
-      accountSoftDeleted: true,
+      studentStatus: STUDENT_STATUS.WITHDRAWN,
     };
   }, connection);
 };
 
+const findByAccountId = async (accountId, connection = db) => {
+  const student = studentsRepository.findByAccountId(accountId, connection);
+
+  throwIf(
+    !student,
+    NotFoundError,
+    ERROR_CODES.STUDENT_NOT_FOUND,
+    "Student profile not found",
+  );
+
+  return student;
+};
+
+// ===============================
+// Business Actions
+// ===============================
+
+const activate = async (studentId, connection = db) => {
+  const student = await getStudentOrThrow(studentId, connection);
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.GRADUATED,
+    BadRequestError,
+    ERROR_CODES.VALIDATION_FAILED,
+    "Graduated student cannot be activated",
+  );
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.ACTIVE,
+    BadRequestError,
+    ERROR_CODES.NO_CHANGES,
+  );
+
+  const updated = await studentsRepository.update(
+    studentId,
+    {
+      studentStatus: STUDENT_STATUS.ACTIVE,
+    },
+    connection,
+  );
+
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
+
+  return updated;
+};
+
+const suspend = async (studentId, connection = db) => {
+  const student = await getStudentOrThrow(studentId, connection);
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.WITHDRAWN,
+    BadRequestError,
+    ERROR_CODES.VALIDATION_FAILED,
+    "Withdrawn student cannot be suspended",
+  );
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.GRADUATED,
+    BadRequestError,
+    ERROR_CODES.VALIDATION_FAILED,
+    "Graduated student cannot be suspended",
+  );
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.SUSPENDED,
+    BadRequestError,
+    ERROR_CODES.NO_CHANGES,
+  );
+
+  const updated = await studentsRepository.update(
+    studentId,
+    {
+      studentStatus: STUDENT_STATUS.SUSPENDED,
+    },
+    connection,
+  );
+
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
+
+  return updated;
+};
+
+const graduate = async (studentId, connection = db) => {
+  const student = await getStudentOrThrow(studentId, connection);
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.WITHDRAWN,
+    BadRequestError,
+    ERROR_CODES.VALIDATION_FAILED,
+    "Withdrawn student cannot graduate",
+  );
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.GRADUATED,
+    BadRequestError,
+    ERROR_CODES.NO_CHANGES,
+  );
+
+  const updated = await studentsRepository.update(
+    studentId,
+    {
+      studentStatus: STUDENT_STATUS.GRADUATED,
+    },
+    connection,
+  );
+
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
+
+  return updated;
+};
+
+const withdraw = async (studentId, connection = db) => {
+  const student = await getStudentOrThrow(studentId, connection);
+
+  throwIf(
+    student.studentStatus === STUDENT_STATUS.WITHDRAWN,
+    BadRequestError,
+    ERROR_CODES.NO_CHANGES,
+  );
+
+  const updated = await studentsRepository.update(
+    studentId,
+    {
+      studentStatus: STUDENT_STATUS.WITHDRAWN,
+    },
+    connection,
+  );
+
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
+
+  return updated;
+};
 module.exports = {
   getList,
   getById,
-  // create,
   createProfile,
   update,
   remove,
+  findByAccountId,
+
+  activate,
+  suspend,
+  graduate,
+  withdraw,
 };

@@ -1,58 +1,81 @@
 const express = require("express");
+
 const router = express.Router();
 
-const { ROUTES } = require("../../constants");
+const { ROUTES } = require("@/constants");
+
+const registrationsMiddleware = require("./registrations.middleware");
+
 const registrationsController = require("./registrations.controller");
-const { createValidationMiddleware, createMultiValidator } = require("../../utils/helpers");
-const {
-  validateCreate,
-  validateGetList,
-  validateGetById,
-  validateActivate,
-  validateUpdate,
-  validatePartialUpdate,
-} = require("./registrations.validator");
+
+const { createValidator, createMultiValidator } = require("@/utils/helpers");
+
+// ===============================
+// Query
+// ===============================
 
 router.get(
   ROUTES.REGISTRATION.ROOT,
-  createValidationMiddleware(validateGetList, "query"),
+
+  createValidator(registrationsMiddleware.getList, "query"),
+
   registrationsController.getList,
 );
 
-router.post(
-  ROUTES.REGISTRATION.ROOT,
-  createValidationMiddleware(validateCreate),
-  registrationsController.create,
-);
+// ===============================
+// CRUD
+// ===============================
 
 router.post(
-  ROUTES.REGISTRATION.ACTIVATE,
-  createMultiValidator(validateActivate),
-  registrationsController.activate,
+  ROUTES.REGISTRATION.ROOT,
+
+  createValidator(registrationsMiddleware.create),
+
+  registrationsController.create,
 );
 
 router.get(
   ROUTES.REGISTRATION.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
+
+  createValidator(registrationsMiddleware.getById, "params"),
+
   registrationsController.getById,
 );
 
 router.patch(
   ROUTES.REGISTRATION.DETAIL,
-  createMultiValidator(validatePartialUpdate),
-  registrationsController.update,
-);
 
-router.put(
-  ROUTES.REGISTRATION.DETAIL,
-  createMultiValidator(validateUpdate),
+  createMultiValidator(registrationsMiddleware.partialUpdate),
+
   registrationsController.update,
 );
 
 router.delete(
   ROUTES.REGISTRATION.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
+
+  createValidator(registrationsMiddleware.getById, "params"),
+
   registrationsController.remove,
+);
+
+// ===============================
+// Business Actions
+// ===============================
+
+router.patch(
+  ROUTES.REGISTRATION.APPROVE,
+
+  createMultiValidator(registrationsMiddleware.approve),
+
+  registrationsController.approve,
+);
+
+router.patch(
+  ROUTES.REGISTRATION.REJECT,
+
+  createValidator(registrationsMiddleware.reject, "params"),
+
+  registrationsController.reject,
 );
 
 module.exports = router;

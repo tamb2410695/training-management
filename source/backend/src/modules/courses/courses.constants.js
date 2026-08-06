@@ -1,4 +1,15 @@
-const { QUERY_COMMON_FIELDS } = require("../../constants");
+const { QUERY_COMMON_FIELDS } = require("@/constants");
+
+const COURSE_STATUS = {
+  DRAFT: "DRAFT",
+  PUBLISHED: "PUBLISHED",
+  ARCHIVED: "ARCHIVED",
+};
+
+const COURSE_ACTIONS = {
+  PUBLISH: "publish",
+  ARCHIVE: "archive",
+};
 
 const COURSE_FIELDS = {
   PARAMS: {
@@ -6,17 +17,30 @@ const COURSE_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["courseCode", "courseName"],
+    SEARCHABLE: [
+      "courseCode",
+      "courseName",
+      "description",
+      "categoryName",
+      "categoryCode",
+    ],
 
     SORTABLE: [
       "courseId",
       "courseCode",
       "courseName",
-      "tuitionFee",
+      "durationHours",
+      "courseStatus",
       "createdAt",
+      "updatedAt",
+      "categoryName",
+      "categoryCode",
     ],
 
-    FILTERS: ["courseLevel", "courseStatus", "certificateAvailable"],
+    FILTERS: [
+      "categoryId",
+      "courseStatus",
+    ],
 
     get ALLOWED_KEYS() {
       return [
@@ -32,32 +56,28 @@ const COURSE_FIELDS = {
 
   BODY: {
     CREATE: [
-      "courseName",
+      "categoryId",
       "courseCode",
-      "courseDescription",
+      "courseName",
+      "description",
       "durationHours",
-      "totalSessions",
-      "tuitionFee",
-      "courseLevel",
-      "certificateAvailable",
-      "coverImage",
     ],
 
     UPDATE: [
+      "categoryId",
+      "courseCode",
       "courseName",
-      "courseDescription",
+      "description",
       "durationHours",
-      "totalSessions",
-      "tuitionFee",
-      "courseLevel",
-      "certificateAvailable",
-      "courseStatus",
-      "coverImage",
     ],
   },
 
   REQUIRED: {
-    CREATE: ["courseName", "durationHours", "totalSessions"],
+    CREATE: [
+      "categoryId",
+      "courseName",
+      "durationHours",
+    ],
   },
 };
 
@@ -65,24 +85,32 @@ const COURSE_MAPS = {
   SEARCH: {
     courseCode: "crs.course_code",
     courseName: "crs.course_name",
+    description: "crs.description",
+    categoryName: "cc.category_name",
+    categoryCode: "cc.category_code",
   },
 
   SORT: {
     courseId: "crs.course_id",
     courseCode: "crs.course_code",
     courseName: "crs.course_name",
-    tuitionFee: "crs.tuition_fee",
+    durationHours: "crs.duration_hours",
+    courseStatus: "crs.course_status",
     createdAt: "crs.created_at",
+    updatedAt: "crs.updated_at",
+    categoryName: "cc.category_name",
+    categoryCode: "cc.category_code",
   },
 
   FILTER: {
-    courseLevel: "crs.course_level",
+    categoryId: "crs.category_id",
     courseStatus: "crs.course_status",
-    certificateAvailable: "crs.certificate_available",
   },
 };
 
 module.exports = {
+  COURSE_STATUS,
+  COURSE_ACTIONS,
   COURSE_FIELDS,
   COURSE_MAPS,
 };

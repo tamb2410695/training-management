@@ -1,44 +1,31 @@
+import { useCallback, useState } from "react";
+
 import { FeedbackContext } from "@/contexts";
-import { useState } from "react";
-import { useCallback } from "react";
+
+const DEFAULT_DURATION = 3000;
+
+const DEFAULT_DURATION_BY_TYPE = {
+  success: 3000,
+  info: 3000,
+  warning: 4000,
+  error: 5000,
+};
 
 export function FeedbackProvider({ children }) {
   const [feedback, setFeedback] = useState(null);
 
   const showFeedback = useCallback((payload) => {
+    const { display = "toast", type = "info", duration, ...rest } = payload;
+
     setFeedback({
-      display: "toast",
-      duration: 3000,
-      ...payload,
-    });
-  }, []);
-
-  const setSuccess = useCallback(
-    (payload) => {
-      showFeedback({
-        type: "success",
-        ...payload,
-      });
-    },
-    [showFeedback],
-  );
-
-  const setError = useCallback(
-    (payload) => {
-      showFeedback({
-        type: "error",
-        duration: 5000,
-        ...payload,
-      });
-    },
-    [showFeedback],
-  );
-
-  const setStateError = useCallback((payload) => {
-    setFeedback({
-      display: "state",
-      type: "error",
-      ...payload,
+      display,
+      type,
+      duration:
+        duration ??
+        (display === "toast"
+          ? (DEFAULT_DURATION_BY_TYPE[type] ?? DEFAULT_DURATION)
+          : undefined),
+      ...rest,
     });
   }, []);
 
@@ -50,11 +37,7 @@ export function FeedbackProvider({ children }) {
     <FeedbackContext.Provider
       value={{
         feedback,
-
-        setSuccess,
-        setError,
-        setStateError,
-
+        showFeedback,
         clearFeedback,
       }}
     >

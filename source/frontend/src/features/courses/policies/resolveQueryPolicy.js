@@ -1,11 +1,11 @@
-import { ACCOUNT_STATUS } from "@/features/accounts";
+import { COURSE_STATUS } from "../constants";
 
-const ACCOUNT_FILTER_OPTIONS = {
-  options: [...ACCOUNT_STATUS.filterOptions((item) => item.filterable)],
+const COURSE_FILTER_OPTIONS = {
+  options: [...COURSE_STATUS.filterOptions((item) => item.filterable)],
 };
 
 export function resolveQueryPolicy(context) {
   return {
-    filterFields: { accountStatus: ACCOUNT_FILTER_OPTIONS },
+    filterFields: { courseStatus: COURSE_FILTER_OPTIONS },
   };
 }

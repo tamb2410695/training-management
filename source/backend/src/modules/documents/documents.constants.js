@@ -1,10 +1,9 @@
-const { QUERY_COMMON_FIELDS } = require("../../constants");
+const { QUERY_COMMON_FIELDS } = require("@/constants");
 
-
-const DOCUMENT_ENUMS = {
-  LEVEL: ["BEGINNER", "INTERMEDIATE", "ADVANCED"],
-  STATUS: ["AVAILABLE", "ARCHIVED", "DELETED"],
-  CATEGORY: ["GENERAL", "SLIDE", "EXAM", "ASSIGNMENT", "REFERENCE"]
+const DOCUMENT_STATUS = {
+  AVAILABLE: "AVAILABLE",
+  ARCHIVED: "ARCHIVED",
+  DELETED: "DELETED",
 };
 
 const DOCUMENT_FIELDS = {
@@ -13,11 +12,31 @@ const DOCUMENT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["documentCode", "title", "originalName"],
+    SEARCHABLE: [
+      "documentCode",
+      "title",
+      "description",
+      "category",
+      "originalName",
+      "courseName",
+      "uploaderName",
+    ],
 
-    SORTABLE: ["documentId", "fileSize", "uploadedAt", "updatedAt"],
+    SORTABLE: [
+      "documentId",
+      "documentCode",
+      "title",
+      "category",
+      "fileSize",
+      "documentStatus",
+      "isVisible",
+      "createdAt",
+      "updatedAt",
+      "courseName",
+      "uploaderName",
+    ],
 
-    FILTERS: ["courseId", "category", "documentStatus", "isVisible"],
+    FILTERS: ["courseId", "uploadedBy", "documentStatus", "isVisible"],
 
     get ALLOWED_KEYS() {
       return [
@@ -32,21 +51,9 @@ const DOCUMENT_FIELDS = {
   },
 
   BODY: {
-    CREATE: [
-      "courseId",
-      "title",
-      "documentDescription",
-      "category",
-      "isVisible",
-    ],
+    CREATE: ["courseId", "title", "description", "category", "isVisible"],
 
-    UPDATE: [
-      "title",
-      "documentDescription",
-      "category",
-      "isVisible",
-      "documentStatus",
-    ],
+    UPDATE: ["title", "description", "category", "isVisible"],
   },
 
   REQUIRED: {
@@ -58,27 +65,37 @@ const DOCUMENT_MAPS = {
   SEARCH: {
     documentCode: "doc.document_code",
     title: "doc.title",
+    description: "doc.description",
+    category: "doc.category",
     originalName: "doc.original_name",
     courseName: "crs.course_name",
+    uploaderName: "sp.full_name",
   },
 
   SORT: {
     documentId: "doc.document_id",
+    documentCode: "doc.document_code",
+    title: "doc.title",
+    category: "doc.category",
     fileSize: "doc.file_size",
-    uploadedAt: "doc.uploaded_at",
+    documentStatus: "doc.document_status",
+    isVisible: "doc.is_visible",
+    createdAt: "doc.created_at",
     updatedAt: "doc.updated_at",
+    courseName: "crs.course_name",
+    uploaderName: "sp.full_name",
   },
 
   FILTER: {
     courseId: "doc.course_id",
-    category: "doc.category",
+    uploadedBy: "doc.uploaded_by",
     documentStatus: "doc.document_status",
     isVisible: "doc.is_visible",
   },
 };
 
 module.exports = {
-  DOCUMENT_ENUMS,
+  DOCUMENT_STATUS,
   DOCUMENT_FIELDS,
   DOCUMENT_MAPS,
 };

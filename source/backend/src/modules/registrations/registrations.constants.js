@@ -1,20 +1,15 @@
 const { QUERY_COMMON_FIELDS } = require("../../constants");
 
-const ACCOUNT_FIELDS = {
-  BODY: {
-    ACTIVE: [
-      "username",
-      "email",
-      "password",
-      "avatarUrl",
-    ],
-  },
-
-  REQUIRED: {
-    ACTIVE: ["password"],
-  },
+const REGISTRATION_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
 };
 
+const REGISTRATION_ACTIONS = {
+  APPROVE: "approve",
+  REJECT: "reject",
+};
 
 const REGISTRATION_FIELDS = {
   PARAMS: {
@@ -22,11 +17,24 @@ const REGISTRATION_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["registrationCode", "fullName", "phone", "personalEmail"],
+    SEARCHABLE: [
+      "registrationCode",
+      "fullName",
+      "phone",
+      "personalEmail",
+    ],
 
-    SORTABLE: ["registrationId", "registrationCode", "createdAt"],
+    SORTABLE: [
+      "registrationId",
+      "registrationCode",
+      "createdAt",
+    ],
 
-    FILTERS: ["registrationStatus"],
+    FILTERS: [
+      "registrationStatus",
+      "studentId",
+      "courseId",
+    ],
 
     get ALLOWED_KEYS() {
       return [
@@ -59,22 +67,18 @@ const REGISTRATION_FIELDS = {
       "personalEmail",
       "address",
       "courseId",
-      "studentId",
-      "registrationStatus",
     ],
-    ACTIVE: [
+  },
+
+  REQUIRED: {
+    CREATE: [
       "fullName",
       "gender",
       "dateOfBirth",
       "phone",
       "personalEmail",
-      "address",
       "courseId",
-    ]
-  },
-
-  REQUIRED: {
-    CREATE: ["fullName", "phone", "personalEmail"],
+    ],
   },
 };
 
@@ -84,22 +88,24 @@ const REGISTRATION_MAPS = {
     fullName: "reg.full_name",
     phone: "reg.phone",
     personalEmail: "reg.personal_email",
-    courseId: "reg.course_id",
   },
 
   SORT: {
     registrationId: "reg.registration_id",
+    registrationCode: "reg.registration_code",
     createdAt: "reg.created_at",
   },
 
   FILTER: {
     registrationStatus: "reg.registration_status",
     studentId: "reg.student_id",
+    courseId: "reg.course_id",
   },
 };
 
 module.exports = {
+  REGISTRATION_STATUS,
+  REGISTRATION_ACTIONS,
   REGISTRATION_FIELDS,
   REGISTRATION_MAPS,
-  ACCOUNT_FIELDS
 };

@@ -2,24 +2,100 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES, ROUTES } = require("../../constants");
-const enrollmentsController = require("./enrollments.controller")
-const { authenticate, authorize } = require("../../middlewares");
+const { ROUTES } = require("@/constants");
 
-router.get(ROUTES.ENROLLMENT.ROOT, enrollmentsController.getList);
+const enrollmentsMiddleware = require("./enrollments.middleware");
 
-router.post(ROUTES.ENROLLMENT.ROOT, enrollmentsController.create);
+const enrollmentsController = require("./enrollments.controller");
 
-router.get(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.getById);
+const { createValidator, createMultiValidator } = require("@/utils/helpers");
 
-router.patch(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.update);
+// ===============================
+// Query
+// ===============================
 
-router.delete(ROUTES.ENROLLMENT.DETAIL, enrollmentsController.remove);
+router.get(
+  ROUTES.ENROLLMENT.ROOT,
 
-// router.patch(ROUTES.ENROLLMENT.CONFIRM, enrollmentsController.confirm);
+  createValidator(
+    enrollmentsMiddleware.getList,
 
-// router.patch(ROUTES.ENROLLMENT.CANCEL, enrollmentsController.cancel);
+    "query",
+  ),
 
-// router.patch(ROUTES.ENROLLMENT.REFUND, enrollmentsController.refund);
+  enrollmentsController.getList,
+);
+
+// ===============================
+// CRUD
+// ===============================
+
+router.post(
+  ROUTES.ENROLLMENT.ROOT,
+
+  createValidator(enrollmentsMiddleware.create),
+
+  enrollmentsController.create,
+);
+
+router.get(
+  ROUTES.ENROLLMENT.DETAIL,
+
+  createValidator(
+    enrollmentsMiddleware.getById,
+
+    "params",
+  ),
+
+  enrollmentsController.getById,
+);
+
+router.patch(
+  ROUTES.ENROLLMENT.DETAIL,
+
+  createMultiValidator(enrollmentsMiddleware.partialUpdate),
+
+  enrollmentsController.update,
+);
+
+router.delete(
+  ROUTES.ENROLLMENT.DETAIL,
+
+  createValidator(
+    enrollmentsMiddleware.getById,
+
+    "params",
+  ),
+
+  enrollmentsController.remove,
+);
+
+// ===============================
+// Business Actions
+// ===============================
+
+router.patch(
+  ROUTES.ENROLLMENT.APPROVE,
+
+  createValidator(
+    enrollmentsMiddleware.approve,
+
+    "params",
+  ),
+
+  enrollmentsController.approve,
+);
+
+router.patch(
+  ROUTES.ENROLLMENT.REJECT,
+
+  createValidator(
+    enrollmentsMiddleware.reject,
+
+    "params",
+  ),
+
+  enrollmentsController.reject,
+);
 
 module.exports = router;

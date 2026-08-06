@@ -4,24 +4,17 @@ const studentsService = require("./students.service");
 const userCreationService = require("../users/userCreation.service");
 
 const getList = asyncHandler(async (req, res, next) => {
-  const queryOptions = req.query;
-  const result = await studentsService.getList(queryOptions);
+  const result = await studentsService.getList(req.query);
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
 const getById = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await studentsService.getById(id);
+  const result = await studentsService.getById(req.params.id);
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
 const create = asyncHandler(async (req, res, next) => {
-  const { accountData, profileData } = req.body;
-  const result = await userCreationService.createStudent(
-    accountData,
-    profileData,
-  );
-
+  const result = await userCreationService.createStudent(...req.body);
   return successResponse(
     res,
     result,
@@ -31,9 +24,7 @@ const create = asyncHandler(async (req, res, next) => {
 });
 
 const update = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const studentData = req.body;
-  const result = await studentsService.update(id, studentData);
+  const result = await studentsService.update(req.params.id, req.body);
   return successResponse(res, result, SUCCESS_CODES.STUDENT_PROFILE_UPDATED);
 });
 

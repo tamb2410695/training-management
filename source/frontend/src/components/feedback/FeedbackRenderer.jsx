@@ -37,9 +37,12 @@ function FeedbackRenderer() {
     return (
       <ConfirmModal
         {...feedback}
-        onConfirm={() => {
-          feedback.onConfirm?.();
-          clearFeedback();
+        onConfirm={async () => {
+          try {
+            await feedback.onConfirm?.();
+          } finally {
+            clearFeedback();
+          }
         }}
         onCancel={clearFeedback}
       />

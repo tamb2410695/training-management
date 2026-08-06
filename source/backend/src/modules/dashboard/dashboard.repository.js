@@ -1,108 +1,248 @@
-const db = require("../../config/database");
-const { arrayToCamelCase } = require("../../utils/helpers");
+const db = require("@/config/database");
 
-// 1. Lấy nhanh số lượng tổng quan của toàn hệ thống (Tổng Student, Class, Course, Doanh thu)
-const getCounterOverview = async (connection = db) => {
-  const sql = `
-    SELECT 
-      (SELECT COUNT(*) FROM STUDENT WHERE student_status = 'ACTIVE') as total_active_students,
-      (SELECT COUNT(*) FROM COURSE WHERE course_status = 'ACTIVE' AND deleted_at IS NULL) as total_active_courses,
-      (SELECT COUNT(*) FROM CLASS WHERE class_status = 'ONGOING' AND deleted_at IS NULL) as total_ongoing_classes,
-      (SELECT COALESCE(SUM(amount), 0) FROM PAYMENT WHERE payment_status = 'FULLY_PAID') as total_revenue
-  `;
-  const [rows] = await connection.query(sql);
-  return rows[0];
-};
+const getOverview = async (connection = db) => {
+  const [
+    studentRows,
+    staffRows,
+    courseRows,
+    classRows,
+    enrollmentRows,
+    documentRows,
+  ] = await Promise.all([
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM STUDENT_PROFILE stu
+      LEFT JOIN ACCOUNT acc
+        ON stu.account_id = acc.account_id
+      WHERE acc.deleted_at IS NULL
+    `),
 
-// 2. Thống kê cơ cấu học viên theo trạng thái học tập và giới tính
-const getStudentAnalytics = async (connection = db) => {
-  const [statusRows] = await connection.query(
-    `SELECT student_status, COUNT(*) as count FROM STUDENT GROUP BY student_status`
-  );
-  const [genderRows] = await connection.query(
-    `SELECT gender, COUNT(*) as count FROM STUDENT GROUP BY gender`
-  );
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM STAFF_PROFILE sp
+      LEFT JOIN ACCOUNT acc
+        ON sp.account_id = acc.account_id
+      WHERE acc.deleted_at IS NULL
+    `),
+
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM COURSE
+      WHERE deleted_at IS NULL
+    `),
+
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM CLASS
+      WHERE deleted_at IS NULL
+    `),
+
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM ENROLLMENT
+    `),
+
+    connection.query(`
+      SELECT COUNT(*) AS total
+      FROM DOCUMENT
+      WHERE deleted_at IS NULL
+    `),
+  ]);
+
   return {
-    byStatus: arrayToCamelCase(statusRows),
-    byGender: arrayToCamelCase(genderRows)
+    totalStudents: studentRows[0][0].total,
+    totalStaff: staffRows[0][0].total,
+    totalCourses: courseRows[0][0].total,
+    totalClasses: classRows[0][0].total,
+    totalEnrollments: enrollmentRows[0][0].total,
+    totalDocuments: documentRows[0][0].total,
   };
 };
 
-// 3. Thống kê khóa học phổ biến (Xếp hạng theo số lượt Enrollment nhiều nhất)
-const getCourseAnalytics = async (connection = db) => {
-  const sql = `
-    SELECT co.course_id, co.course_code, co.course_name, COUNT(e.enrollment_id) as total_enrollments
-    FROM COURSE co
-    LEFT JOIN CLASS cl ON co.course_id = cl.course_id AND cl.deleted_at IS NULL
-    LEFT JOIN ENROLLMENT e ON cl.class_id = e.class_id AND e.deleted_at IS NULL
-    WHERE co.deleted_at IS NULL
-    GROUP BY co.course_id
-    ORDER BY total_enrollments DESC
-    LIMIT 5
-  `;
-  const [rows] = await connection.query(sql);
-  return arrayToCamelCase(rows);
-};
 
-// 4. Thống kê lớp học: Tỷ lệ lấp đầy (current_students / max_students) và trạng thái lớp
-const getClassAnalytics = async (connection = db) => {
-  const [statusRows] = await connection.query(
-    `SELECT class_status, COUNT(*) as count FROM CLASS WHERE deleted_at IS NULL GROUP BY class_status`
+const getStudentStatistics = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      student_status AS status,
+      COUNT(*) AS total
+    FROM STUDENT_PROFILE
+    GROUP BY student_status
+    `
   );
-  const [fillRateRows] = await connection.query(`
-    SELECT 
-      class_code, max_students, current_students,
-      ROUND((current_students / max_students) * 100, 2) as fill_percentage
-    FROM CLASS 
-    WHERE deleted_at IS NULL AND class_status IN ('OPEN_REGISTRATION', 'ONGOING')
-    LIMIT 10
-  `);
-  return {
-    classStatusSummary: arrayToCamelCase(statusRows),
-    classFillRates: arrayToCamelCase(fillRateRows)
-  };
+
+  return rows;
 };
 
-// 5. Thống kê hóa đơn thanh toán: Tỷ lệ thanh toán thành công / thất bại
-const getPaymentAnalytics = async (connection = db) => {
-  const sql = `SELECT payment_status, COUNT(*) as count, COALESCE(SUM(amount), 0) as total_amount 
-               FROM PAYMENT GROUP BY payment_status`;
-  const [rows] = await connection.query(sql);
-  return arrayToCamelCase(rows);
+
+const getCourseStatistics = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      course_status AS status,
+      COUNT(*) AS total
+    FROM COURSE
+    WHERE deleted_at IS NULL
+    GROUP BY course_status
+    `
+  );
+
+  return rows;
 };
 
-// 6. Thống kê doanh thu theo mốc thời gian biểu đồ (Dùng câu lệnh DATE_FORMAT)
-const getRevenueAnalytics = async (daysLimit, connection = db) => {
-  const sql = `
-    SELECT DATE(payment_date) as date, COALESCE(SUM(amount), 0) as daily_revenue
-    FROM PAYMENT
-    WHERE payment_status = 'FULLY_PAID' AND payment_date >= NOW() - INTERVAL ? DAY
-    GROUP BY DATE(payment_date)
-    ORDER BY date ASC
-  `;
-  const [rows] = await connection.query(sql, [daysLimit]);
-  return arrayToCamelCase(rows);
+
+const getClassStatistics = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      class_status AS status,
+      COUNT(*) AS total
+    FROM CLASS
+    WHERE deleted_at IS NULL
+    GROUP BY class_status
+    `
+  );
+
+  return rows;
 };
 
-// 7. Thống kê xu hướng đăng ký học (Enrollment trend) trong 6 tháng gần nhất
-const getEnrollmentAnalytics = async (connection = db) => {
-  const sql = `
-    SELECT DATE_FORMAT(enrollment_date, '%Y-%m') as month, COUNT(*) as enrollment_count
+
+const getEnrollmentStatistics = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      enrollment_status AS status,
+      COUNT(*) AS total
     FROM ENROLLMENT
-    WHERE deleted_at IS NULL AND enrollment_date >= NOW() - INTERVAL 6 MONTH
-    GROUP BY DATE_FORMAT(enrollment_date, '%Y-%m')
-    ORDER BY month ASC
-  `;
-  const [rows] = await connection.query(sql);
-  return arrayToCamelCase(rows);
+    GROUP BY enrollment_status
+    `
+  );
+
+  return rows;
 };
+
+
+const getClassEnrollmentOverview = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      cls.class_id,
+      cls.class_code,
+      cls.class_name,
+
+      crs.course_name,
+
+      COUNT(e.enrollment_id) AS total_students
+
+    FROM CLASS cls
+
+    LEFT JOIN COURSE crs
+      ON cls.course_id = crs.course_id
+
+    LEFT JOIN ENROLLMENT e
+      ON cls.class_id = e.class_id
+      AND e.enrollment_status = 'ACTIVE'
+
+    WHERE cls.deleted_at IS NULL
+      AND crs.deleted_at IS NULL
+
+    GROUP BY
+      cls.class_id,
+      cls.class_code,
+      cls.class_name,
+      crs.course_name
+
+    ORDER BY total_students DESC
+    `
+  );
+
+  return rows;
+};
+
+
+const getPopularCourses = async (connection = db) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      crs.course_id,
+      crs.course_code,
+      crs.course_name,
+
+      COUNT(e.enrollment_id) AS total_students
+
+    FROM COURSE crs
+
+    LEFT JOIN CLASS cls
+      ON crs.course_id = cls.course_id
+
+    LEFT JOIN ENROLLMENT e
+      ON cls.class_id = e.class_id
+      AND e.enrollment_status = 'ACTIVE'
+
+    WHERE crs.deleted_at IS NULL
+      AND cls.deleted_at IS NULL
+
+    GROUP BY
+      crs.course_id,
+      crs.course_code,
+      crs.course_name
+
+    ORDER BY total_students DESC
+    LIMIT 10
+    `
+  );
+
+  return rows;
+};
+
+
+const getRecentDocuments = async (
+  limit = 10,
+  connection = db,
+) => {
+  const [rows] = await connection.query(
+    `
+    SELECT
+      doc.document_id,
+      doc.title,
+      doc.category,
+      doc.created_at,
+
+      crs.course_name,
+
+      sp.full_name AS uploader_name
+
+    FROM DOCUMENT doc
+
+    LEFT JOIN COURSE crs
+      ON doc.course_id = crs.course_id
+
+    LEFT JOIN STAFF_PROFILE sp
+      ON doc.uploaded_by = sp.staff_id
+
+    WHERE doc.deleted_at IS NULL
+      AND crs.deleted_at IS NULL
+
+    ORDER BY doc.created_at DESC
+
+    LIMIT ?
+    `,
+    [limit],
+  );
+
+  return rows;
+};
+
 
 module.exports = {
-  getCounterOverview,
-  getStudentAnalytics,
-  getCourseAnalytics,
-  getClassAnalytics,
-  getPaymentAnalytics,
-  getRevenueAnalytics,
-  getEnrollmentAnalytics,
+  getOverview,
+
+  getStudentStatistics,
+  getCourseStatistics,
+  getClassStatistics,
+  getEnrollmentStatistics,
+
+  getClassEnrollmentOverview,
+  getPopularCourses,
+  getRecentDocuments,
 };

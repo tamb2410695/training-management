@@ -1,166 +1,228 @@
-const { AppError } = require("../../utils/errors");
-const { CLASS_STATUS, ERROR_CODES, ERROR_MESSAGES } = require("../../constants");
-const { throwIf, hasField, generateCode } = require("../../utils/helpers");
+const db = require("@/config/database");
+
+const {
+  NotFoundError,
+  ConflictError,
+  BadRequestError,
+} = require("@/utils/errors");
+
+const { ERROR_CODES } = require("@/constants");
+
+const { throwIf, pickFields } = require("@/utils/helpers");
+
+const { withTransaction } = require("@/utils/database");
+
+const { CLASS_STATUS, CLASS_FIELDS } = require("./classes.constants");
 
 const classesRepository = require("./classes.repository");
-const coursesRepository = require("../courses/courses.repository"); 
 
-const db = require("../../config/database");
-const { CLASS_CODE } = require("./classes.constants");
-const { withTransaction } = require("../../utils/database");
+const getClassOrThrow = async (classId, connection = db) => {
+  const classData = await classesRepository.findById(classId, connection);
+
+  throwIf(!classData, NotFoundError, ERROR_CODES.CLASS_NOT_FOUND);
+
+  return classData;
+};
 
 const getList = async (query, connection = db) => {
-  const { data: classes, pagination } = await classesRepository.find(query, connection);
-  return { classes, pagination };
+  const result = await classesRepository.list(query, connection);
+
+  return {
+    classes: result.data,
+    pagination: result.pagination,
+  };
 };
 
-const getById = async (classId, connection = db) => {
-  const targetClass = await classesRepository.findById(classId, connection);
-  throwIf(
-    !targetClass, 
-    AppError, 
-    ERROR_CODES.CLASS_NOT_FOUND || "CLASS_NOT_FOUND",
-    ERROR_MESSAGES.RESOURCE_NOT_FOUND
-  );
-  return targetClass;
-};
+const getById = async (classId, connection = db) =>
+  getClassOrThrow(classId, connection);
 
 const create = async (classData, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    // 1. Kiểm tra khóa ngoại xem khóa học gốc có tồn tại hay không
-    const course = await coursesRepository.findById(classData.courseId, txConnection);
-    throwIf(
-      !course, 
-      AppError, 
-      ERROR_CODES.COURSE_NOT_FOUND || "COURSE_NOT_FOUND"
+  return withTransaction(async (tx) => {
+    const courseExists = await classesRepository.existsCourse(
+      classData.courseId,
+      tx,
     );
 
-    // 2. Kiểm tra logic ngày bắt đầu và kết thúc lớp học
-    if (new Date(classData.endDate) < new Date(classData.startDate)) {
-      throw new AppError(
-        ERROR_CODES.INVALID_CLASS_DATES || "INVALID_CLASS_DATES",
-        400
-      );
-    }
-    
-    // 3. Thiết lập các giá trị mặc định nếu client không truyền lên
-    if (!hasField(classData, "classStatus")) {
-      classData.classStatus = CLASS_STATUS.PENDING || "PENDING";
-    }
-    if (!hasField(classData, "maxStudents")) {
-      classData.maxStudents = 30;
-    }
+    throwIf(!courseExists, NotFoundError, ERROR_CODES.COURSE_NOT_FOUND);
 
-    // 4. Tiến hành tạo bản ghi để lấy classId sinh mã code
-    const createdClass = await classesRepository.create(classData, txConnection);
-    throwIf(!createdClass, AppError, ERROR_CODES.INTERNAL_SERVER_ERROR);
-
-    // 5. Sinh mã classCode tự động dựa theo Id vừa sinh ra
-    const classCode = generateCode(
-      CLASS_CODE.PREFIX,
-      createdClass.classId,
-      CLASS_CODE.LENGTH
+    const instructorExists = await classesRepository.existsInstructor(
+      classData.teacherId,
+      tx,
     );
 
-    // 6. Cập nhật mã classCode ngược lại vào db
-    const finalClass = await classesRepository.update(
-      createdClass.classId,
-      { classCode },
-      txConnection
-    );
+    throwIf(!instructorExists, NotFoundError, ERROR_CODES.INSTRUCTOR_NOT_FOUND);
 
-    return finalClass;
-  });
+    const payload = {
+      ...classData,
+      classStatus: CLASS_STATUS.DRAFT,
+    };
+
+    const created = await classesRepository.create(payload, tx);
+
+    throwIf(!created, ConflictError, ERROR_CODES.NO_CHANGES);
+
+    return created;
+  }, connection);
 };
 
 const update = async (classId, classData, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    const targetClass = await classesRepository.findById(classId, txConnection);
-    throwIf(
-      !targetClass, 
-      AppError, 
-      ERROR_CODES.CLASS_NOT_FOUND || "CLASS_NOT_FOUND"
+  await getClassOrThrow(classId, connection);
+
+  const payload = pickFields(classData, CLASS_FIELDS.BODY.UPDATE);
+
+  delete payload.classStatus;
+
+  throwIf(
+    Object.keys(payload).length === 0,
+    BadRequestError,
+    ERROR_CODES.NO_VALID_FIELDS,
+  );
+
+  if (payload.courseId) {
+    const courseExists = await classesRepository.existsCourse(
+      payload.courseId,
+      connection,
     );
 
-    const updateClassPayload = {};
-    const allowedFields = [
-      "courseId",
-      "startDate",
-      "endDate",
-      "maxStudents",
-      "classStatus"
-    ];
+    throwIf(!courseExists, NotFoundError, ERROR_CODES.COURSE_NOT_FOUND);
+  }
 
-    allowedFields.forEach((field) => {
-      if (hasField(classData, field)) {
-        updateClassPayload[field] = classData[field];
-      }
-    });
-
-    // Xác thực logic ngày tháng sau khi trộn dữ liệu mới và cũ
-    const finalStartDate = updateClassPayload.startDate || targetClass.startDate;
-    const finalEndDate = updateClassPayload.endDate || targetClass.endDate;
-    if (new Date(finalEndDate) < new Date(finalStartDate)) {
-      throw new AppError(
-        ERROR_CODES.INVALID_CLASS_DATES || "INVALID_CLASS_DATES",
-        400
-      );
-    }
-
-    // Kiểm tra tính hợp lệ nếu thay đổi khóa ngoại courseId
-    if (hasField(updateClassPayload, "courseId")) {
-      const course = await coursesRepository.findById(updateClassPayload.courseId, txConnection);
-      throwIf(
-        !course, 
-        AppError, 
-        ERROR_CODES.COURSE_NOT_FOUND || "COURSE_NOT_FOUND"
-      );
-    }
-
-    let updatedClass = null;
-    if (Object.keys(updateClassPayload).length > 0) {
-      updatedClass = await classesRepository.update(
-        classId,
-        updateClassPayload,
-        txConnection
-      );
-    }
-
-    throwIf(
-      !updatedClass, 
-      AppError, 
-      ERROR_CODES.NO_CHANGES || "NO_CHANGES"
+  if (payload.teacherId) {
+    const instructorExists = await classesRepository.existsInstructor(
+      payload.teacherId,
+      connection,
     );
-    return updatedClass;
-  });
+
+    throwIf(!instructorExists, NotFoundError, ERROR_CODES.INSTRUCTOR_NOT_FOUND);
+  }
+
+  const updated = await classesRepository.update(classId, payload, connection);
+
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
+
+  return updated;
 };
 
 const remove = async (classId, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    const targetClass = await classesRepository.findById(classId, txConnection);
-    throwIf(
-      !targetClass, 
-      AppError, 
-      ERROR_CODES.CLASS_NOT_FOUND || "CLASS_NOT_FOUND"
-    );
+  await getClassOrThrow(classId, connection);
 
-    // Tránh việc gửi yêu cầu xóa một lớp học đã ở trạng thái DELETED từ trước
-    throwIf(
-      targetClass.classStatus === (CLASS_STATUS.DELETED || "DELETED"),
-      AppError,
-      ERROR_CODES.CLASS_CLOSED || "CLASS_CLOSED",
-      "Class has already been deleted"
-    );
+  return classesRepository.remove(classId, connection);
+};
 
-    const result = await classesRepository.remove(classId, txConnection);
-    throwIf(
-      !result, 
-      AppError, 
-      ERROR_CODES.NO_CHANGES || "NO_CHANGES"
-    );
+const assignInstructor = async (classId, teacherId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
 
-    return result;
-  });
+  throwIf(
+    classData.classStatus === CLASS_STATUS.COMPLETED,
+    ConflictError,
+    ERROR_CODES.CLASS_CANNOT_UPDATE,
+  );
+
+  const instructorExists = await classesRepository.existsInstructor(
+    teacherId,
+    connection,
+  );
+
+  throwIf(!instructorExists, NotFoundError, ERROR_CODES.INSTRUCTOR_NOT_FOUND);
+
+  return classesRepository.update(
+    classId,
+    {
+      teacherId,
+    },
+    connection,
+  );
+};
+
+const open = async (classId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
+
+  throwIf(
+    classData.classStatus !== CLASS_STATUS.DRAFT,
+    ConflictError,
+    ERROR_CODES.INVALID_CLASS_STATUS,
+  );
+
+  return classesRepository.updateStatus(classId, CLASS_STATUS.OPEN, connection);
+};
+
+const start = async (classId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
+
+  throwIf(
+    classData.classStatus !== CLASS_STATUS.OPEN,
+    ConflictError,
+    ERROR_CODES.INVALID_CLASS_STATUS,
+  );
+
+  return classesRepository.updateStatus(
+    classId,
+    CLASS_STATUS.ONGOING,
+    connection,
+  );
+};
+
+const complete = async (classId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
+
+  throwIf(
+    classData.classStatus !== CLASS_STATUS.ONGOING,
+    ConflictError,
+    ERROR_CODES.INVALID_CLASS_STATUS,
+  );
+
+  return classesRepository.updateStatus(
+    classId,
+    CLASS_STATUS.COMPLETED,
+    connection,
+  );
+};
+
+const cancel = async (classId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
+
+  const cancellableStatuses = [CLASS_STATUS.DRAFT, CLASS_STATUS.OPEN];
+
+  throwIf(
+    !cancellableStatuses.includes(classData.classStatus),
+    ConflictError,
+    ERROR_CODES.INVALID_CLASS_STATUS,
+  );
+
+  return classesRepository.updateStatus(
+    classId,
+    CLASS_STATUS.CANCELLED,
+    connection,
+  );
+};
+
+const getCapacity = async (classId, connection = db) => {
+  const classData = await getClassOrThrow(classId, connection);
+
+  const capacity = await classesRepository.findCapacity(classId, connection);
+
+  if (!capacity) {
+    return {
+      classId,
+      maxStudents: classData.maxStudents,
+      approvedStudents: 0,
+      isFull: false,
+      remainingSlots: classData.maxStudents,
+    };
+  }
+
+  const isFull = capacity.approvedStudents >= capacity.maxStudents;
+
+  return {
+    classId: capacity.classId,
+    maxStudents: Number(capacity.maxStudents),
+    approvedStudents: Number(capacity.approvedStudents),
+    isFull,
+    remainingSlots: Math.max(
+      capacity.maxStudents - capacity.approvedStudents,
+      0,
+    ),
+  };
 };
 
 module.exports = {
@@ -169,4 +231,10 @@ module.exports = {
   create,
   update,
   remove,
+  assignInstructor,
+  open,
+  start,
+  complete,
+  cancel,
+  getCapacity,
 };

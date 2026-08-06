@@ -1,4 +1,11 @@
-const { QUERY_COMMON_FIELDS } = require("../../constants");
+const { QUERY_COMMON_FIELDS } = require("@/constants");
+
+const ACCOUNT_STATUS = {
+  ACTIVE: "ACTIVE",
+  LOCK: "LOCK",
+  DISABLE: "DISABLE",
+  DELETED: "DELETED",
+};
 
 const ACCOUNT_FIELDS = {
   PARAMS: {
@@ -6,18 +13,18 @@ const ACCOUNT_FIELDS = {
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "email", "roleLabel"],
+    SEARCHABLE: ["username", "email", "roleLabel", "roleCode"],
 
     SORTABLE: [
       "accountId",
       "username",
       "email",
-      "accountStatus",
       "createdAt",
       "updatedAt",
+      "roleCode",
     ],
 
-    FILTERS: ["accountStatus", "roleCode", "roleCode"],
+    FILTERS: ["accountStatus", "roleCode"],
 
     get ALLOWED_KEYS() {
       return [
@@ -32,13 +39,21 @@ const ACCOUNT_FIELDS = {
   },
 
   BODY: {
-    CREATE: ["username", "email", "password", "roleCode", "avatarUrl"],
-    UPDATE: ["username", "email", "avatarUrl", "accountStatus", "roleCode"],
+    CREATE: ["roleCode", "username", "email", "password"],
+
+    UPDATE: ["username", "email", "password"],
+
+    CHANGE_PASSWORD: ["oldPassword", "newPassword"],
+
+    CHANGE_ROLE: ["roleCode"],
   },
 
   REQUIRED: {
-    CREATE: ["username", "email", "password", "roleCode"],
-    UPDATE: ["username", "email", "accountStatus", "roleCode"],
+    CREATE: ["roleCode", "username", "email", "password"],
+
+    CHANGE_PASSWORD: ["oldPassword", "newPassword"],
+
+    CHANGE_ROLE: ["roleCode"],
   },
 };
 
@@ -46,7 +61,8 @@ const ACCOUNT_MAPS = {
   SEARCH: {
     username: "acc.username",
     email: "acc.email",
-    roleLabel: "rl.role_label"
+    roleLabel: "rl.role_label",
+    roleCode: "rl.role_code",
   },
 
   SORT: {
@@ -56,15 +72,18 @@ const ACCOUNT_MAPS = {
     accountStatus: "acc.account_status",
     createdAt: "acc.created_at",
     updatedAt: "acc.updated_at",
+    roleCode: "rl.role_code",
   },
 
   FILTER: {
     accountStatus: "acc.account_status",
-    roleId: "ur.role_id",
+    roleId: "acc.role_id",
+    roleCode: "rl.role_code",
   },
 };
 
 module.exports = {
+  ACCOUNT_STATUS,
   ACCOUNT_FIELDS,
   ACCOUNT_MAPS,
 };

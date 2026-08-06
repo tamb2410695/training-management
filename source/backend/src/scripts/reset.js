@@ -1,6 +1,7 @@
-require('module-alias/register');
-const { ERROR_CODES, ERROR_MESSAGES } = require("../constants");
-const { AppError } = require("../utils/errors");
+require("module-alias/register");
+
+const { ERROR_CODES, ERROR_MESSAGES } = require("@/constants");
+const { AppError } = require("@/utils/errors");
 const initSchema = require("./init");
 const runSeed = require("./seed");
 

@@ -7,7 +7,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import AnonymousRoute from "./AnonymousRoute";
 
 import PublicLayout from "@/layouts/PublicLayout";
-import UnauthorizedPage from "@/pages/UnauthorizedPage";
+import UnauthorizedPage from "@/pages/feedback/StatusPage";
 
 import HomePage from "@/pages/HomePage";
 
@@ -17,11 +17,14 @@ import Register from "@/pages/auth/RegisterPage";
 import AdminLayout from "@/layouts/AdminLayout";
 import AdminDashboard from "@/features/dashboard/pages/AdminDashboardPage";
 import AccountManagementPage from "@/features/accounts/pages/AccountsPage";
+import CoursesManagementPage from "@/features/courses/pages/CoursesPage";
+import CoursesCategoriesManagementPage from "@/features/coureCategories/pages/CoureCategoriesPage";
+import ClassesManagementPage from "@/features/classes/pages/ClassesPage";
+import EnrollmentsManagementPage from "@/features/enrollments/pages/EnrollmentsPage";
+import RegistrationsManagementPage from "@/features/registrations/pages/RegistrationsPage";
+import DocumentsManagementPage from "@/features/documents/pages/DocumentsPage";
+import StaffManagementPage from "@/features/staffs/pages/ProfilesPage";
 import StudentManagementPage from "@/features/students/pages/StudentsPage";
-import CoursesManagementPage from "@/features/courses/pages/CoursesPage"
-import StaffProfileManagementPage from "@/features/staffs/profiles/pages/ProfilesPage";
-import DepartmentsManagementPage from "@/features/departments/pages/DepartmentsPage";
-// import InstructorManagementPage from "@/features/instructors/pages/InstructorsPage";
 
 import StudentLayout from "@/layouts/StudentLayout";
 import MyCoursePage from "@/pages/student/MyCoursePage";
@@ -78,7 +81,7 @@ function AppRoutes() {
           path={COMPONENT_ROUTES.ADMIN.ACCOUNTS}
           element={<AccountManagementPage />}
         />
-        
+
         <Route
           path={COMPONENT_ROUTES.ADMIN.STUDENTS}
           element={<StudentManagementPage />}
@@ -91,11 +94,33 @@ function AppRoutes() {
 
         <Route
           path={COMPONENT_ROUTES.ADMIN.STAFFS}
-          element={<StaffProfileManagementPage />}
+          element={<StaffManagementPage />}
+        />
+
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.COURSE_CATEGORY}
+          element={<CoursesCategoriesManagementPage />}
         />
         <Route
-          path={COMPONENT_ROUTES.ADMIN.DEPARTMENTS}
-          element={<DepartmentsManagementPage />}
+          path={COMPONENT_ROUTES.ADMIN.ENROLLMENTS}
+          element={<EnrollmentsManagementPage />}
+        />
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.CLASSES}
+          element={<ClassesManagementPage />}
+        />
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.REGISTRATIONS}
+          element={<RegistrationsManagementPage />}
+        />
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.STAFFS}
+          element={<StaffManagementPage />}
+        />
+
+        <Route
+          path={COMPONENT_ROUTES.ADMIN.DOCUMENTS}
+          element={<DocumentsManagementPage />}
         />
       </Route>
 

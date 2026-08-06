@@ -1,51 +1,43 @@
 const express = require("express");
 const router = express.Router();
 
-const { ROUTES } = require("../../constants");
-const studentsController = require("./students.controller");
-const { createValidationMiddleware, createMultiValidator } = require("../../utils/helpers");
+const { ROUTES } = require("@/constants");
 const {
-  validateCreate,
-  validateGetList,
-  validateGetById,
-  validateUpdate,
-  validatePartialUpdate,
-} = require("./students.validator");
+  createValidator,
+  createMultiValidator,
+} = require("@/utils/helpers");
+
+const studentProfilesController = require("./students.controller")
+const studentProfilesMiddleware = require("./students.middleware");
 
 router.get(
-  ROUTES.STUDENT.ROOT ,
-  createValidationMiddleware(validateGetList, "query"),
-  studentsController.getList,
+  ROUTES.STUDENT.ROOT,
+  createValidator(studentProfilesMiddleware.getList, "query"),
+  studentProfilesController.getList,
 );
 
 router.post(
-  ROUTES.STUDENT.ROOT ,
-  createValidationMiddleware(validateCreate),
-  studentsController.create,
+  ROUTES.STUDENT.ROOT,
+  createValidator(studentProfilesMiddleware.create),
+  studentProfilesController.create,
 );
 
 router.get(
   ROUTES.STUDENT.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
-  studentsController.getById,
+  createValidator(studentProfilesMiddleware.getById, "params"),
+  studentProfilesController.getById,
 );
 
 router.patch(
   ROUTES.STUDENT.DETAIL,
-  createMultiValidator(validatePartialUpdate),
-  studentsController.update,
-);
-
-router.put(
-  ROUTES.STUDENT.DETAIL,
-  createMultiValidator(validateUpdate),
-  studentsController.update,
+  createMultiValidator(studentProfilesMiddleware.partialUpdate),
+  studentProfilesController.update,
 );
 
 router.delete(
   ROUTES.STUDENT.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
-  studentsController.remove,
+  createValidator(studentProfilesMiddleware.getById, "params"),
+  studentProfilesController.remove,
 );
 
 module.exports = router;

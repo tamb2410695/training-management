@@ -1,45 +1,92 @@
 const dashboardRepository = require("./dashboard.repository");
 
-const getOverview = async () => {
-  return await dashboardRepository.getCounterOverview();
+const getDashboardOverview = async () => {
+  const overview = await dashboardRepository.getOverview();
+  return overview;
 };
 
-const getStudentStats = async () => {
-  return await dashboardRepository.getStudentAnalytics();
+const getStudentStatistics = async () => {
+  const statistics = await dashboardRepository.getStudentStatistics();
+  return statistics;
 };
 
-const getCourseStats = async () => {
-  return await dashboardRepository.getCourseAnalytics();
+const getCourseStatistics = async () => {
+  const statistics = await dashboardRepository.getCourseStatistics();
+  return statistics;
 };
 
-const getClassStats = async () => {
-  return await dashboardRepository.getClassAnalytics();
+const getClassStatistics = async () => {
+  const statistics = await dashboardRepository.getClassStatistics();
+  return statistics;
 };
 
-const getPaymentStats = async () => {
-  return await dashboardRepository.getPaymentAnalytics();
+const getEnrollmentStatistics = async () => {
+  const statistics = await dashboardRepository.getEnrollmentStatistics();
+  return statistics;
 };
 
-const getRevenueStats = async (period) => {
-  let daysLimit = 30; // Mặc định 30 ngày qua
-  
-  if (period === "7_DAYS") daysLimit = 7;
-  if (period === "30_DAYS" || period === "THIS_MONTH") daysLimit = 30;
-  if (period === "THIS_YEAR") daysLimit = 365;
-
-  return await dashboardRepository.getRevenueAnalytics(daysLimit);
+const getClassEnrollmentOverview = async () => {
+  const data = await dashboardRepository.getClassEnrollmentOverview();
+  return data;
 };
 
-const getEnrollmentStats = async () => {
-  return await dashboardRepository.getEnrollmentAnalytics();
+const getPopularCourses = async () => {
+  const courses = await dashboardRepository.getPopularCourses();
+  return courses;
+};
+
+const getRecentDocuments = async (limit) => {
+  const documents = await dashboardRepository.getRecentDocuments(limit);
+  return documents;
+};
+
+const getDashboard = async () => {
+  const [
+    overview,
+    studentStatistics,
+    courseStatistics,
+    classStatistics,
+    enrollmentStatistics,
+    classEnrollmentOverview,
+    popularCourses,
+    recentDocuments,
+  ] = await Promise.all([
+    dashboardRepository.getOverview(),
+    dashboardRepository.getStudentStatistics(),
+    dashboardRepository.getCourseStatistics(),
+    dashboardRepository.getClassStatistics(),
+    dashboardRepository.getEnrollmentStatistics(),
+    dashboardRepository.getClassEnrollmentOverview(),
+    dashboardRepository.getPopularCourses(),
+    dashboardRepository.getRecentDocuments(),
+  ]);
+
+  return {
+    overview,
+    statistics: {
+      students: studentStatistics,
+      courses: courseStatistics,
+      classes: classStatistics,
+      enrollments: enrollmentStatistics,
+    },
+
+    classEnrollmentOverview,
+    popularCourses,
+    recentDocuments,
+  };
 };
 
 module.exports = {
-  getOverview,
-  getStudentStats,
-  getCourseStats,
-  getClassStats,
-  getPaymentStats,
-  getRevenueStats,
-  getEnrollmentStats,
+  getDashboardOverview,
+
+  getStudentStatistics,
+  getCourseStatistics,
+  getClassStatistics,
+  getEnrollmentStatistics,
+
+  getClassEnrollmentOverview,
+  getPopularCourses,
+  getRecentDocuments,
+
+  getDashboard,
 };

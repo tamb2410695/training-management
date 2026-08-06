@@ -11,7 +11,7 @@ export function useActions(config = [], handlers = {}) {
     return config
       .map((key) => {
         const meta = ACTION_MAP[key];
-        const onClick = handlers[key];
+        const onClick = handlers[key]
         if (!meta || !onClick) {
           return null;
         }

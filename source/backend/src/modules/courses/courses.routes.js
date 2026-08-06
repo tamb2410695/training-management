@@ -1,65 +1,111 @@
 const express = require("express");
+
 const router = express.Router();
 
-const { ROLES, ROUTES } = require("../../constants");
-const { authenticate, authorize } = require("../../middlewares");
+const { ROUTES } = require("@/constants");
+
+const coursesMiddleware = require("./courses.middleware");
 
 const coursesController = require("./courses.controller");
-const { createValidationMiddleware, createMultiValidator } = require("../../utils/helpers");
-const { validateGetById, validateGetList, validateCreate, validateUpdate, validatePartialUpdate, validateRemove } = require("./courses.validator");
+
+const {
+  createValidator,
+  createMultiValidator,
+} = require("@/utils/helpers");
+
+
+// ===============================
+// Query
+// ===============================
 
 router.get(
-  ROUTES.COURSE.ROOT, 
-  createValidationMiddleware(validateGetList, "query"), 
-  coursesController.getList
+  ROUTES.COURSE.ROOT,
+
+  createValidator(
+    coursesMiddleware.getList,
+    "query",
+  ),
+
+  coursesController.getList,
 );
 
+
 router.get(
-  ROUTES.COURSE.DETAIL, 
-  createValidationMiddleware(validateGetById, "params"), 
-  coursesController.getById
+  ROUTES.COURSE.DETAIL,
+
+  createValidator(
+    coursesMiddleware.getById,
+    "params",
+  ),
+
+  coursesController.getById,
 );
+
+
+// ===============================
+// CRUD
+// ===============================
 
 router.post(
-  ROUTES.COURSE.ROOT, 
-  createValidationMiddleware(validateCreate),
-  coursesController.create
+  ROUTES.COURSE.ROOT,
+
+  createValidator(
+    coursesMiddleware.create,
+  ),
+
+  coursesController.create,
 );
 
-router.put(
-  ROUTES.COURSE.DETAIL, 
-  createMultiValidator(validateUpdate), 
-  coursesController.update
-);
 
 router.patch(
-  ROUTES.COURSE.DETAIL, 
-  createMultiValidator(validatePartialUpdate), 
-  coursesController.partialUpdate
+  ROUTES.COURSE.DETAIL,
+
+  createMultiValidator(
+    coursesMiddleware.partialUpdate,
+  ),
+
+  coursesController.update,
 );
 
+
 router.delete(
-  ROUTES.COURSE.DETAIL, 
-  createValidationMiddleware(validateRemove, "params"), 
-  coursesController.remove
+  ROUTES.COURSE.DETAIL,
+
+  createValidator(
+    coursesMiddleware.getById,
+    "params",
+  ),
+
+  coursesController.remove,
 );
+
+
+// ===============================
+// Business Actions
+// ===============================
 
 router.patch(
   ROUTES.COURSE.PUBLISH,
-  createValidationMiddleware(validateUpdate, "params"), 
-  coursesController.publish
+
+  createValidator(
+    coursesMiddleware.publish,
+    "params",
+  ),
+
+  coursesController.publish,
 );
+
 
 router.patch(
-  ROUTES.COURSE.LOCK,
-  createValidationMiddleware(validateUpdate, "params"), 
-  coursesController.lock
+  ROUTES.COURSE.ARCHIVE,
+
+  createValidator(
+    coursesMiddleware.archive,
+    "params",
+  ),
+
+  coursesController.archive,
 );
 
-router.get(
-  ROUTES.COURSE.DOCUMENTS,
-  createValidationMiddleware(validateUpdate, "params"), 
-  coursesController.getDocuments
-);
 
 module.exports = router;

@@ -15,14 +15,14 @@ export const ACCOUNT_STATUS = buildEnum({
     filterable: true,
   },
 
-  LOCKED: {
+  LOCK: {
     label: "Khóa",
     color: "danger",
     order: 3,
     filterable: true,
   },
 
-  DISABLED: {
+  DISABLE: {
     label: "Vô hiệu hóa",
     color: "secondary",
     order: 4,

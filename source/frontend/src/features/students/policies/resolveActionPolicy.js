@@ -1,8 +1,8 @@
-export function resolveActionPolicy({ account, user }) {
+export function resolveActionPolicy({ student, user }) {
   return {
     canView: true,
     canEdit: user.roleCode === "ADMIN",
-    canDelete: account.accountStatus !== "DELETED",
-    canRestore: account.accountStatus === "DELETED",
+    canRemove: student.studentStatus !== "DELETED",
+    canRestore: student.studentStatus === "DELETED",
   };
 }

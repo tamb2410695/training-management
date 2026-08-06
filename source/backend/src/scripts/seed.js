@@ -1,14 +1,33 @@
-require('module-alias/register');
+require("module-alias/register");
+
 const { ERROR_CODES, ERROR_MESSAGES } = require("../constants");
 const { AppError } = require("../utils/errors");
-const rolesSeeder = require("../database/seeders/roles.seeder");
-const adminSeeder = require("../database/seeders/admin.seeder");
+
+const seedRoles = require("../database/seeders/script/roles.seeder");
+const seedAdmin = require("../database/seeders/script/admin.seeder");
+const seedStaffs = require("../database/seeders/script/staffs.seeder");
+const seedStudents = require("../database/seeders/script/students.seeder");
+const seedRegistrations = require("../database/seeders/script/registrations.seeder");
+const seedCourseCategories = require("../database/seeders/script/courseCategories.seeder");
+const seedCourses = require("../database/seeders/script/courses.seeder");
+const seedClasses = require("../database/seeders/script/classes.seeder");
+const seedEnrollments = require("../database/seeders/script/enrollments.seeder");
 
 async function runSeed() {
   try {
-    await rolesSeeder();
-    await adminSeeder();
+    await seedRoles();
+    await seedAdmin();
+    await seedStaffs();
+    await seedStudents();
+    await seedRegistrations();
+    await seedCourseCategories();
+    await seedCourses();
+    await seedClasses();
+    await seedEnrollments();
   } catch (error) {
+  console.error("SEEDER ERROR:", error);
+  console.error("MESSAGE:", error.message);
+  console.error("STACK:", error.stack);
     const appError =
       error instanceof AppError
         ? error
@@ -16,6 +35,7 @@ async function runSeed() {
             ERROR_CODES.SEEDER_FAILED,
             `${ERROR_MESSAGES.SEEDER_FAILED}: ${error.message}`,
           );
+
     console.error(
       JSON.stringify(
         {
@@ -26,6 +46,7 @@ async function runSeed() {
         2,
       ),
     );
+
     process.exit(1);
   }
 }

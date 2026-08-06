@@ -3,8 +3,7 @@ import { useMemo } from "react";
 
 export function useFeatureQuery(querySchema) {
 
-  const query =
-    useQueryState(querySchema.defaultQuery);
+  const query = useQueryState(querySchema.defaultQuery);
 
   const schema = useMemo(
     () => ({

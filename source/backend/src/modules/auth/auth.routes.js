@@ -1,51 +1,50 @@
 const express = require("express");
+
 const router = express.Router();
+
+const { ROUTES } = require("@/constants");
+
 const authController = require("./auth.controller");
-const authValidator = require("./auth.validator");
-const { authenticate } = require("../../middlewares/auth.middleware");
-const { createValidationMiddleware } = require("../../utils/helpers");
-const { ROUTES } = require("../../constants");
+
+const { authGuard } = require("@/middlewares/auth.middleware");
+
+// ===============================
+// Registration
+// ===============================
 
 router.post(
   ROUTES.AUTH.REGISTER,
-  createValidationMiddleware(authValidator.validateRegister),
   authController.register,
 );
 
+// ===============================
+// Authentication
+// ===============================
+
 router.post(
   ROUTES.AUTH.LOGIN,
-  createValidationMiddleware(authValidator.validateLogin),
   authController.login,
 );
 
-router.post(
-  ROUTES.AUTH.REFRESH,
-  createValidationMiddleware(
-    authValidator.validateRefresh || authValidator.validateRefreshToken,
-  ),
-  authController.refresh,
+// ===============================
+// Profile
+// ===============================
+
+router.get(
+  ROUTES.AUTH.PROFILE,
+
+  authGuard,
+
+  authController.getMe,
 );
 
-router.post(
-  ROUTES.AUTH.FORGOT_PASSWORD,
-  createValidationMiddleware(authValidator.validateForgotPassword),
-  authController.forgotPassword,
-);
-
-router.post(
-  ROUTES.AUTH.RESET_PASSWORD,
-  createValidationMiddleware(authValidator.validateResetPassword),
-  authController.resetPassword,
-);
-
-router.post(ROUTES.AUTH.LOGOUT, authenticate, authController.logout);
-
-router.get(ROUTES.AUTH.PROFILE, authenticate, authController.getMe);
+// ===============================
+// Password
+// ===============================
 
 router.patch(
   ROUTES.AUTH.CHANGE_PASSWORD,
-  authenticate,
-  createValidationMiddleware(authValidator.validateChangePassword),
+  authGuard,
   authController.changePassword,
 );
 

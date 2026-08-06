@@ -1,4 +1,4 @@
-const { ERROR_CODES } = require("../../../constants");
+const { ERROR_CODES } = require("@/constants");
 const { ValidationError } = require("../../errors/index");
 
 function ensure(condition, message) {

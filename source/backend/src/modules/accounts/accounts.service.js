@@ -1,96 +1,42 @@
-const db = require("../../config/database");
+const db = require("@/config/database");
+
 const {
   NotFoundError,
   ConflictError,
   BadRequestError,
-  ValidationError,
-} = require("../../utils/errors");
+} = require("@/utils/errors");
 
 const {
-  ROLES,
-  ACCOUNT_STATUS,
-  ERROR_MESSAGES,
   ERROR_CODES,
-} = require("../../constants");
-const { hashPassword } = require("../../utils/security/passwordUtil");
-const { throwIf, hasField } = require("../../utils/helpers");
-const { withTransaction } = require("../../utils/database/transaction");
-const rolesService = require("../roles/roles.service");
+  ERROR_MESSAGES,
+  ACCOUNT_STATUS,
+  ROLES,
+} = require("@/constants");
+
+const { throwIf, pickFields } = require("@/utils/helpers");
+
+const { hashPassword } = require("@/utils/security/passwordUtil");
+
+const { withTransaction } = require("@/utils/database");
+
 const accountsRepository = require("./accounts.repository");
 
-const getList = async (query, connection = db) => {
-  const { data: accounts, pagination } = await accountsRepository.find(
-    query,
-    connection,
-  );
+const rolesService = require("../roles/roles.service");
 
-  const cleanedAccounts = accounts.map((account) => {
-    const { passwordHash: _, ...safeAccountData } = account;
-    return safeAccountData;
-  });
+const { ACCOUNT_FIELDS } = require("./accounts.constants");
 
-  return { accounts: cleanedAccounts, pagination };
-};
+// ===============================
+// Helpers
+// ===============================
 
-const getById = async (accountId, connection = db) => {
-  const account = await accountsRepository.findById(accountId, connection);
+const removeSensitiveData = (account) => {
+  if (!account) {
+    return null;
+  }
 
-  throwIf(
-    !account,
-    NotFoundError,
-    ERROR_CODES.ACCOUNT_NOT_FOUND,
-    ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-  );
+  const { passwordHash, ...safeData } = account;
 
-  const { passwordHash: _, ...safeAccountData } = account;
-  return safeAccountData;
-};
-
-const create = async (accountData, connection = db) => {
-  return await withTransaction(async (txConnection) => {
-    const { username, email, password, roleCode } = accountData;
-    throwIf(
-      !username || !email || !password,
-      ValidationError,
-      ERROR_CODES.MISSING_REQUIRED_FIELDS,
-      `${ERROR_CODES.MISSING_REQUIRED_FIELDS}: username, email or password`,
-    );
-
-    const [accountByUsername, accountByEmail] = await Promise.all([
-      accountsRepository.findByUsername(username, txConnection),
-      accountsRepository.findByEmail(email, txConnection),
-    ]);
-
-    throwIf(accountByUsername, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
-    throwIf(accountByEmail, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
-    const passwordHash = await hashPassword(password);
-
-    const createdAccount = await accountsRepository.create(
-      { username, email, passwordHash },
-      txConnection,
-    );
-
-    throwIf(
-      !createdAccount,
-      ConflictError,
-      ERROR_CODES.NO_CHANGES,
-      ERROR_MESSAGES.NO_CHANGES,
-    );
-
-    const targetRole = roleCode ? roleCode : [ROLES.STUDENT];
-    await rolesService.assignRoleToAccount(
-      { accountId: createdAccount.accountId, roleCode: targetRole },
-      txConnection,
-    );
-
-    const {
-      passwordHash: _,
-      roleCode: __,
-      roleLabel: ___,
-      ...safeAccountData
-    } = createdAccount;
-    return { ...safeAccountData, roleCode: targetRole };
-  }, connection);
+  return safeData;
 };
 
 const getAccountOrThrow = async (accountId, connection = db) => {
@@ -102,162 +48,165 @@ const getAccountOrThrow = async (accountId, connection = db) => {
     ERROR_CODES.ACCOUNT_NOT_FOUND,
     ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
   );
+
   return account;
 };
 
-const resolveUsernameUpdate = async (
-  account,
-  accountData,
-  updateAccountData,
-  connection = db,
-) => {
-  if (!hasField(accountData, "username")) return;
+// ===============================
+// Query
+// ===============================
 
-  const existed = await accountsRepository.findByUsername(
-    accountData.username,
-    connection,
-  );
+const getList = async (query, connection = db) => {
+  const result = await accountsRepository.list(query, connection);
 
-  throwIf(
-    existed && existed.accountId !== account.accountId,
-    ConflictError,
-    ERROR_CODES.ACCOUNT_EXISTED,
-    ERROR_MESSAGES.ACCOUNT_EXISTED,
-  );
+  return {
+    accounts: result.data.map(removeSensitiveData),
 
-  updateAccountData.username = accountData.username;
+    pagination: result.pagination,
+  };
 };
 
-const resolveEmailUpdate = async (
-  account,
-  accountData,
-  updateAccountData,
-  connection = db,
-) => {
-  if (!hasField(accountData, "email")) return;
+const getById = async (accountId, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
 
-  const existed = await accountsRepository.findByEmail(
-    accountData.email,
-    connection,
-  );
-
-  throwIf(
-    existed && existed.accountId !== account.accountId,
-    ConflictError,
-    ERROR_CODES.ACCOUNT_EXISTED,
-    ERROR_MESSAGES.ACCOUNT_EXISTED,
-  );
-
-  updateAccountData.email = accountData.email;
+  return removeSensitiveData(account);
 };
 
-const resolvePasswordUpdate = async (accountData, updateAccountData) => {
-  if (!hasField(accountData, "password")) return;
-  updateAccountData.passwordHash = await hashPassword(accountData.password);
+// ===============================
+// CRUD
+// ===============================
+
+const create = async (accountData, connection = db) => {
+  return withTransaction(async (tx) => {
+    const { username, email, password, roleCode } = accountData;
+
+    const existedUsername = await accountsRepository.findByUsername(
+      username,
+      tx,
+    );
+
+    throwIf(existedUsername, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
+
+    const existedEmail = await accountsRepository.findByEmail(email, tx);
+
+    throwIf(existedEmail, ConflictError, ERROR_CODES.ACCOUNT_EXISTED);
+
+    const role = await rolesService.getByCode(roleCode || ROLES.STUDENT, tx);
+
+    const passwordHash = await hashPassword(password);
+
+    const account = await accountsRepository.create(
+      {
+        username,
+
+        email,
+
+        passwordHash,
+
+        roleId: role.roleId,
+
+        accountStatus: ACCOUNT_STATUS.ACTIVE,
+      },
+      tx,
+    );
+
+    throwIf(
+      !account,
+      ConflictError,
+      ERROR_CODES.NO_CHANGES,
+      ERROR_MESSAGES.NO_CHANGES,
+    );
+
+    return removeSensitiveData(account);
+  }, connection);
 };
 
-const resolveStatusUpdate = (account, accountData, updateAccountData) => {
-  if (!hasField(accountData, "accountStatus")) return;
+const update = async (accountId, accountData, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
+
+  const payload = pickFields(accountData, ACCOUNT_FIELDS.BODY.UPDATE);
 
   throwIf(
-    accountData.accountStatus === ACCOUNT_STATUS.DELETED,
-    BadRequestError,
-    ERROR_CODES.MANUAL_STATUS_CHANGE_FORBIDDEN,
-    ERROR_MESSAGES.MANUAL_STATUS_CHANGE_FORBIDDEN,
-  );
-
-  updateAccountData.accountStatus = accountData.accountStatus;
-};
-
-const buildUpdateAccountData = async (
-  account,
-  accountData,
-  connection = db,
-) => {
-  const updateAccountData = {};
-
-  await resolveUsernameUpdate(
-    account,
-    accountData,
-    updateAccountData,
-    connection,
-  );
-  await resolveEmailUpdate(account, accountData, updateAccountData, connection);
-  await resolvePasswordUpdate(accountData, updateAccountData);
-  resolveStatusUpdate(account, accountData, updateAccountData);
-
-  throwIf(
-    Object.keys(updateAccountData).length === 0,
+    Object.keys(payload).length === 0,
     BadRequestError,
     ERROR_CODES.NO_VALID_FIELDS,
     ERROR_MESSAGES.NO_VALID_FIELDS,
   );
 
-  return updateAccountData;
-};
+  if (payload.username) {
+    const existed = await accountsRepository.findByUsername(
+      payload.username,
+      connection,
+    );
 
-const update = async (accountId, accountData, connection = db) => {
-  const account = await getAccountOrThrow(accountId, connection);
-  const updateAccountData = await buildUpdateAccountData(
-    account,
-    accountData,
-    connection,
-  );
+    throwIf(
+      existed && existed.accountId !== account.accountId,
+      ConflictError,
+      ERROR_CODES.ACCOUNT_EXISTED,
+    );
+  }
 
-  const updatedAccount = await accountsRepository.update(
+  if (payload.email) {
+    const existed = await accountsRepository.findByEmail(
+      payload.email,
+      connection,
+    );
+
+    throwIf(
+      existed && existed.accountId !== account.accountId,
+      ConflictError,
+      ERROR_CODES.ACCOUNT_EXISTED,
+    );
+  }
+
+  const updated = await accountsRepository.update(
     accountId,
-    updateAccountData,
+    payload,
     connection,
   );
 
-  throwIf(
-    !updatedAccount,
-    ConflictError,
-    ERROR_CODES.NO_CHANGES,
-    ERROR_MESSAGES.NO_CHANGES,
-  );
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
 
-  const { passwordHash: _, ...safeAccountData } = updatedAccount;
-  return safeAccountData;
+  return removeSensitiveData(updated);
 };
 
-const updateStatus = async (accountId, newStatus, connection = db) => {
-  const account = await accountsRepository.findById(accountId, connection);
-
-  throwIf(
-    !account,
-    NotFoundError,
-    ERROR_CODES.ACCOUNT_NOT_FOUND,
-    ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-  );
+const remove = async (accountId, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
 
   throwIf(
     account.accountStatus === ACCOUNT_STATUS.DELETED,
-    BadRequestError,
+    ConflictError,
     ERROR_CODES.ACCOUNT_DELETED,
-    "Cannot change status of a deleted account",
   );
 
-  if (account.accountStatus === newStatus) {
-    const { passwordHash: _, ...safeAccountData } = account;
-    return safeAccountData;
-  }
+  return accountsRepository.remove(accountId, connection);
+};
 
-  const updatedAccount = await accountsRepository.update(
+// ===============================
+// Business Actions
+// ===============================
+
+const changePassword = async (accountId, newPassword, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
+
+  const passwordHash = await hashPassword(newPassword);
+
+  const updated = await accountsRepository.update(
     accountId,
-    { accountStatus: newStatus },
+    {
+      passwordHash,
+    },
     connection,
   );
 
   throwIf(
-    !updatedAccount,
+    !updated,
     ConflictError,
     ERROR_CODES.NO_CHANGES,
     ERROR_MESSAGES.NO_CHANGES,
   );
 
-  const { passwordHash: _, ...safeAccountData } = updatedAccount;
-  return safeAccountData;
+  return removeSensitiveData(updated);
 };
 
 const changeRole = async (
@@ -266,84 +215,130 @@ const changeRole = async (
   adminId,
   connection = db,
 ) => {
-  await getAccountOrThrow(accountId, connection);
+  const account = await getAccountOrThrow(accountId, connection);
 
   throwIf(
     accountId === adminId && targetRoleCode === ROLES.ADMIN,
     BadRequestError,
     ERROR_CODES.VALIDATION_FAILED,
-    "You cannot revoke your own Admin privilege.",
+    "Cannot remove or change your own admin privilege",
   );
 
   await rolesService.changeAccountRole(
-    { accountId, targetRoleCode, assignedBy: adminId },
+    {
+      accountId,
+      targetRoleCode,
+      assignedBy: adminId,
+    },
     connection,
   );
 
-  return { message: "Account role updated successfully" };
+  return {
+    message: "Account role updated successfully",
+  };
 };
 
-const remove = async (accountId, connection = db) => {
-  const account = await accountsRepository.findById(accountId, connection);
-  throwIf(
-    !account,
-    NotFoundError,
-    ERROR_CODES.ACCOUNT_NOT_FOUND,
-    ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-  );
+const lock = async (accountId, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
 
   throwIf(
     account.accountStatus === ACCOUNT_STATUS.DELETED,
-    ConflictError,
+    BadRequestError,
     ERROR_CODES.ACCOUNT_DELETED,
-    ERROR_MESSAGES.ACCOUNT_DELETED,
   );
 
-  const deletedAccount = await accountsRepository.remove(accountId, connection);
-  return deletedAccount || true;
+  throwIf(
+    account.accountStatus === ACCOUNT_STATUS.LOCK,
+    BadRequestError,
+    ERROR_CODES.NO_CHANGES,
+  );
+
+  const updated = await accountsRepository.updateStatus(
+    accountId,
+    ACCOUNT_STATUS.LOCK,
+    connection,
+  );
+
+  return removeSensitiveData(updated);
+};
+
+const activate = async (accountId, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
+
+  throwIf(
+    account.accountStatus === ACCOUNT_STATUS.DELETED,
+    BadRequestError,
+    ERROR_CODES.ACCOUNT_DELETED,
+  );
+
+  const updated = await accountsRepository.updateStatus(
+    accountId,
+    ACCOUNT_STATUS.ACTIVE,
+    connection,
+  );
+
+  return removeSensitiveData(updated);
+};
+
+const disable = async (accountId, connection = db) => {
+  const account = await getAccountOrThrow(accountId, connection);
+
+  throwIf(
+    account.accountStatus === ACCOUNT_STATUS.DELETED,
+    BadRequestError,
+    ERROR_CODES.ACCOUNT_DELETED,
+  );
+
+  const updated = await accountsRepository.updateStatus(
+    accountId,
+    ACCOUNT_STATUS.DISABLE,
+    connection,
+  );
+
+  return removeSensitiveData(updated);
 };
 
 const restore = async (accountId, connection = db) => {
-  const account = await accountsRepository.findDeletedById(accountId);
-
-  throwIf(
-    !account,
-    NotFoundError,
-    ERROR_CODES.ACCOUNT_NOT_FOUND,
-    ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-  );
-
-  throwIf(
-    account.deletedAt === null &&
-      account.accountStatus !== ACCOUNT_STATUS.DELETED,
-    BadRequestError,
-    ERROR_CODES.VALIDATION_FAILED,
-    "Account is already active and does not need to be restored",
-  );
-
-  const restoredAccount = await accountsRepository.restore(
+  const account = await accountsRepository.findDeletedById(
     accountId,
     connection,
   );
 
   throwIf(
-    !restoredAccount,
-    ConflictError,
-    ERROR_CODES.NO_CHANGES,
-    "Failed to restore the account",
+    !account,
+    NotFoundError,
+    ERROR_CODES.ACCOUNT_NOT_FOUND,
+    ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
   );
 
-  const { passwordHash: _, ...safeAccountData } = restoredAccount;
-  return safeAccountData;
+  const restored = await accountsRepository.restore(accountId, connection);
+
+  throwIf(
+    !restored,
+    ConflictError,
+    ERROR_CODES.NO_CHANGES,
+    ERROR_MESSAGES.NO_CHANGES,
+  );
+
+  return removeSensitiveData(restored);
 };
 
 module.exports = {
+  // Query
   getList,
   getById,
+
+  // CRUD
   create,
   update,
   remove,
-  updateStatus,
+
+  // Business Actions
+  changePassword,
   changeRole,
+
+  lock,
+  activate,
+  disable,
   restore,
 };

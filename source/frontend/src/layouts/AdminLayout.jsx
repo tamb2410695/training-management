@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Header from "../components/layouts/Header";
 import Sidebar from "../components/layouts/Sidebar";
-import FeedbackRenderer from "@/components/feedback/FeedbackRenderer";
 
 function AdminLayout() {
   return (
@@ -16,7 +15,6 @@ function AdminLayout() {
         </aside>
 
         <main className="flex-grow-1 bg-light p-4 overflow-auto">
-          <FeedbackRenderer />
           <Outlet />
         </main>
       </div>

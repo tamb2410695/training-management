@@ -2,28 +2,132 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROUTES } = require("../../constants");
+const { ROUTES } = require("@/constants");
 
-const classesController = require("./classes.controller")
+const classesMiddleware = require("./classes.middleware");
 
-router.get(ROUTES.CLASS.ROOT, classesController.getList);
+const classesController = require("./classes.controller");
 
-router.post(ROUTES.CLASS.ROOT, classesController.create);
+const {
+  createValidator,
+  createMultiValidator,
+} = require("@/utils/helpers");
 
-router.get(ROUTES.CLASS.DETAIL, classesController.getById);
 
-router.patch(ROUTES.CLASS.DETAIL, classesController.update);
+// Query
+router.get(
+  ROUTES.CLASS.ROOT,
+  createValidator(
+    classesMiddleware.getList,
+    "query",
+  ),
+  classesController.getList,
+);
 
-router.delete(ROUTES.CLASS.DETAIL, classesController.remove);
 
-router.get(ROUTES.CLASS.SCHEDULES, classesController.getSchedules);
+// CRUD
+router.post(
+  ROUTES.CLASS.ROOT,
 
-router.patch(ROUTES.CLASS.OPEN_REGISTRATION, classesController.openRegistration);
+  createValidator(classesMiddleware.create),
 
-router.patch(ROUTES.CLASS.CLOSE_REGISTRATION, classesController.closeRegistration);
+  classesController.create,
+);
 
-router.patch(ROUTES.CLASS.START, classesController.start);
+router.get(
+  ROUTES.CLASS.DETAIL,
 
-router.patch(ROUTES.CLASS.COMPLETE, classesController.complete);
+  createValidator(
+    classesMiddleware.getById,
+
+    "params",
+  ),
+
+  classesController.getById,
+);
+
+router.patch(
+  ROUTES.CLASS.DETAIL,
+
+  createMultiValidator(classesMiddleware.partialUpdate),
+
+  classesController.update,
+);
+
+router.delete(
+  ROUTES.CLASS.DETAIL,
+
+  createValidator(
+    classesMiddleware.getById,
+
+    "params",
+  ),
+
+  classesController.remove,
+);
+
+
+// Business Actions
+router.patch(
+  ROUTES.CLASS.ASSIGN_INSTRUCTOR,
+
+  createMultiValidator(classesMiddleware.assignInstructor),
+
+  classesController.assignInstructor,
+);
+
+router.patch(
+  ROUTES.CLASS.OPEN,
+
+  createValidator(
+    classesMiddleware.open,
+
+    "params",
+  ),
+
+  classesController.open,
+);
+
+router.patch(
+  ROUTES.CLASS.START,
+
+  createValidator(
+    classesMiddleware.start,
+
+    "params",
+  ),
+
+  classesController.start,
+);
+
+router.patch(
+  ROUTES.CLASS.COMPLETE,
+  createValidator(
+    classesMiddleware.complete,
+    "params",
+  ),
+  classesController.complete,
+);
+
+router.patch(
+  ROUTES.CLASS.CANCEL,
+  createValidator(
+    classesMiddleware.cancel,
+
+    "params",
+  ),
+  classesController.cancel,
+);
+
+
+// Support
+router.get(
+  ROUTES.CLASS.CAPACITY,
+  createValidator(
+    classesMiddleware.getCapacity,
+    "params",
+  ),
+  classesController.getCapacity,
+);
 
 module.exports = router;

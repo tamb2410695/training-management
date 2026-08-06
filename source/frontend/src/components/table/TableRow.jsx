@@ -4,7 +4,6 @@ const TableRow = ({
   row,
   columns = [],
   rowKey = "id",
-  actions = [],
   showIndex = false,
 }) => {
   return (
@@ -17,10 +16,10 @@ const TableRow = ({
         <TableCell key={column.key} column={column} row={row} />
       ))}
 
-      {actions.length > 0 && (
+      {row.actions.length > 0 && (
         <td className="text-center">
           <div className="btn-group btn-group-sm">
-            {actions.map((action) => (
+            {row.actions.map((action) => (
               <button
                 key={action.key}
                 type="button"

@@ -7,24 +7,16 @@ const DataTable = ({
   columns = [],
   rows = [],
   rowKey = "id",
-
   loading = false,
-
-  actions = [],
   showIndex = true,
-
   emptyMessage,
-
   scrollX = true,
-
   striped = true,
   hover = true,
-
   className = "",
 }) => {
-  const hasActions = actions.length > 0;
 
-  const columnLength = columns.length + Number(showIndex) + Number(hasActions);
+  const columnLength = columns.length + Number(showIndex);
 
   const tableClass = [
     "table",
@@ -41,7 +33,6 @@ const DataTable = ({
         <TableHeader
           columns={columns}
           showIndex={showIndex}
-          hasActions={hasActions}
         />
 
         {loading ? (
@@ -54,7 +45,6 @@ const DataTable = ({
             columns={columns}
             data={rows}
             showIndex={showIndex}
-            actions={actions}
           />
         )}
       </table>

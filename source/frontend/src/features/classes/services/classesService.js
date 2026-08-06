@@ -1,23 +1,23 @@
-// import { API_ROUTES } from "../../../constants/endpoint";
-// import api from "../../../services/api";
-// import { createCrudService } from "../../../services/crudService";
+import api from "@/services/api";
+import { createCrudService } from "@/services/crudService";
+import { API_ROUTES } from "@/constants";
 
-// const courseService = {
-//   ...createCrudService("courses"),
+const API = API_ROUTES.CLASS;
 
-//   updateStatus(id, status) {
-//     return api.patch(
-//       `${API_ROUTES.COURSES}/${id}/status`,
-//       { status }
-//     );
-//   },
+export default function classesService() {
+  return {
+    ...createCrudService(API),
 
-//   search(params) {
-//     return api.get(
-//       `${API_ROUTES.COURSES}/search`,
-//       { params }
-//     );
-//   },
-// };
+    assignInstructor: (id, data) => api.patch(API.ASSIGN_INSTRUCTOR(id), data),
 
-// export default courseService;
+    open: (id) => api.patch(API.OPEN(id)),
+
+    start: (id) => api.patch(API.START(id)),
+
+    complete: (id) => api.patch(API.COMPLETE(id)),
+
+    cancel: (id) => api.patch(API.CANCEL(id)),
+
+    getCapacity: (id) => api.get(API.CAPACITY(id)),
+  };
+}

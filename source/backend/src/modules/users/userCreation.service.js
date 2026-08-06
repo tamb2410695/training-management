@@ -1,23 +1,25 @@
-const db = require("../../config/database");
+const db = require("@/config/database");
 
-const { withTransaction } = require("../../utils/database/transaction");
-const { ERROR_CODES, ERROR_MESSAGES, ROLES } = require("../../constants");
-const { throwIf, hasField } = require("../../utils/helpers");
-const {
-  NotFoundError,
-  ForbiddenError,
-  ConflictError,
-  BadRequestError,
-} = require("../../utils/errors");
+const { withTransaction } = require("@/utils/database/transaction");
+const { ERROR_CODES, ROLES } = require("@/constants");
+const { throwIf } = require("@/utils/helpers");
+const { ConflictError, BadRequestError } = require("@/utils/errors");
 
 const accountsService = require("../accounts/accounts.service");
-const accountsRepository = require("../accounts/accounts.repository");
 const studentsService = require("../students/students.service");
-const staffProfilesService = require("../staffs/profiles/profiles.service");
+const staffProfilesService = require("../staffs/staffs.service");
+const { formatAccountData, validateAccountFormats } = require("../accounts");
+const { formatStudentData } = require("../students/students.formatter");
+const { formatStaffData } = require("../staffs/staffs.formatter");
+const { validateStudentFormats } = require("../students");
+const { validateStaffFormats } = require("../staffs/staffs.validator");
 
 const createUser = async (userData, connection = db) => {
   return await withTransaction(async (txConnection) => {
-    const { accountData, profileData } = userData;
+    const { accountData: rawAccountData, profileData: rawProfileData } =
+      userData;
+    const accountData = formatAccountData(rawAccountData);
+    const profileData = formatStaffData(formatStudentData(rawProfileData));
     let createdAccount = {};
     let createdProfile = {};
 
@@ -99,14 +101,18 @@ const createUser = async (userData, connection = db) => {
 
 const createStudent = async (accountData, profileData, connection = db) => {
   return await withTransaction(async (txConnection) => {
-    if (!profileData.personalEmail)
-      profileData.personalEmail = accountData.accountEmail;
+    const formattedAccountData = formatAccountData(accountData);
+    const formattedProfileData = formatStudentData(profileData);
+    validateAccountFormats(formattedAccountData)
+    validateStudentFormats(formattedProfileData)
+    if (!formattedProfileData.personalEmail)
+      formattedProfileData.personalEmail = formattedAccountData.accountEmail;
 
     const createdAccount = await accountsService.create(
       {
-        password: accountData.password,
-        username: accountData.username,
-        email: accountData.accountEmail,
+        password: formattedAccountData.password,
+        username: formattedAccountData.username,
+        email: formattedAccountData.accountEmail,
         roleCode: ROLES.STUDENT,
       },
       txConnection,
@@ -114,7 +120,7 @@ const createStudent = async (accountData, profileData, connection = db) => {
     const createdProfile = await studentsService.createProfile(
       {
         accountId: createdAccount.accountId,
-        ...profileData,
+        ...formattedProfileData,
       },
       txConnection,
     );
@@ -131,22 +137,26 @@ const createStudent = async (accountData, profileData, connection = db) => {
 
 const createStaff = async (accountData, profileData, connection = db) => {
   return await withTransaction(async (txConnection) => {
+    const formattedAccountData = formatAccountData(accountData);
+    const formattedProfileData = formatStudentData(profileData);
+    validateAccountFormats(formattedAccountData)
+    validateStaffFormats(formattedProfileData)
     throwIf(
-      ![ROLES.ADMIN, ROLES.INSTRUCTOR].includes(accountData.roleCode),
+      ![ROLES.ADMIN, ROLES.INSTRUCTOR].includes(formattedAccountData.roleCode),
       ConflictError,
       ERROR_CODES.PROFILE_INVALID_TYPE,
     );
-    if (!profileData.personalEmail)
-      profileData.personalEmail = accountData.email;
+    if (!formattedProfileData.personalEmail)
+      formattedProfileData.personalEmail = formattedAccountData.email;
 
     const createdAccount = await accountsService.create(
-      { ...accountData, email: accountData.accountEmail },
+      { ...formattedAccountData, email: formattedAccountData.accountEmail },
       txConnection,
     );
     const createdProfile = await staffProfilesService.createProfile(
       {
         accountId: createdAccount.accountId,
-        ...profileData,
+        ...formattedProfileData,
       },
       txConnection,
     );

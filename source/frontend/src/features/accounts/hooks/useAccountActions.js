@@ -55,8 +55,8 @@ export function useAccountActions({
   });
 
   return {
-    modal: modalActions,
-    crud: crudActions,
-    submit: submitActions.submit,
+    ...modalActions,
+    ...crudActions,
+    ...submitActions,
   };
 }

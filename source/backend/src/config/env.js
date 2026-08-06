@@ -30,13 +30,12 @@ const env = {
   },
 
   upload: {
-    rootDirectory: path.resolve(process.cwd(), process.env.UPLOAD_DIR),
+    provider: process.env.STORAGE_PROVIDER || "local",
+    rootDirectory: path.resolve(__dirname, "..", process.env.UPLOAD_DIR),
     maxFileSize: Number(process.env.MAX_FILE_SIZE),
 
     folders: {
-      avatar: "avatars",
       document: "documents",
-      certificate: "certificates",
       temp: "temp",
     },
   },

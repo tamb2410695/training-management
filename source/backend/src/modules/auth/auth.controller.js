@@ -1,66 +1,97 @@
-const { SUCCESS_MESSAGES } = require("../../constants");
-const { asyncHandler, successResponse } = require("../../utils/helpers");
+const { SUCCESS_CODES } = require("@/constants");
+
+const { asyncHandler, successResponse } = require("@/utils/helpers");
+
 const authService = require("./auth.service");
 
+const registrationsService = require("../registrations/registrations.service");
 
-const register = asyncHandler(async (req, res, next) => {
-  const result = await authService.register(req.body);
-  return successResponse(res, result, SUCCESS_MESSAGES.REGISTER_SUCCESS, 201);
+// ===============================
+// Registration
+// ===============================
+
+const register = asyncHandler(async (req, res) => {
+  const result = await registrationsService.create(req.body);
+
+  return successResponse(
+    res,
+
+    result,
+
+    SUCCESS_CODES.STUDENT_REGISTRATION_SUBMITTED,
+
+    201,
+  );
 });
 
-const login = asyncHandler(async (req, res, next) => {
+// ===============================
+// Authentication
+// ===============================
+
+const login = asyncHandler(async (req, res) => {
   const { usernameOrEmail, password } = req.body;
+
   const result = await authService.login(usernameOrEmail, password);
-  
-  return successResponse(res, result, SUCCESS_MESSAGES.LOGIN_SUCCESS);
+
+  return successResponse(
+    res,
+
+    result,
+
+    SUCCESS_CODES.LOGIN_SUCCESS,
+  );
 });
 
-const refresh = asyncHandler(async (req, res, next) => {
-  const token = req.body.refreshToken || req.cookies?.refreshToken;
-  
-  const result = await authService.refresh(token);
-  return successResponse(res, result, SUCCESS_MESSAGES.TOKEN_REFRESHED);
+// ===============================
+// Profile
+// ===============================
+
+const getMe = asyncHandler(async (req, res) => {
+  const { accountId } = req.user;
+
+  const result = await authService.getMe(accountId);
+
+  return successResponse(
+    res,
+
+    result,
+
+    SUCCESS_CODES.SYSTEM_FETCH_SUCCESS,
+  );
 });
 
-const logout = asyncHandler(async (req, res, next) => {
-  const accountId = req.user.accountId;
-  
-  const result = await authService.logout(accountId);
-  return successResponse(res, null, result.message || SUCCESS_MESSAGES.LOGOUT_SUCCESS);
-});
+// ===============================
+// Password
+// ===============================
 
-const getMe = asyncHandler(async (req, res, next) => {
-  const result = await authService.getMe(req.user.accountId);
-  return successResponse(res, result, "Get current user profile successful");
-});
-
-const forgotPassword = asyncHandler(async (req, res, next) => {
-  const { email } = req.body;
-  return successResponse(res, { email }, SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT);
-});
-
-const changePassword = asyncHandler(async (req, res, next) => {
-  const accountId = req.user.accountId;
+const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  
-  await authService.changePassword(accountId, currentPassword, newPassword);
-  return successResponse(res, null, SUCCESS_MESSAGES.PASSWORD_CHANGED);
-});
 
-const resetPassword = asyncHandler(async (req, res, next) => {
-  const { email, newPassword } = req.body;
-  
-  await authService.resetPassword(email, newPassword);
-  return successResponse(res, null, SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS);
+  const { accountId } = req.user;
+
+  await authService.changePassword(
+    accountId,
+
+    currentPassword,
+
+    newPassword,
+  );
+
+  return successResponse(
+    res,
+
+    null,
+
+    SUCCESS_CODES.PASSWORD_CHANGED,
+  );
 });
 
 module.exports = {
   register,
+
   login,
-  refresh,
-  logout,
+
   getMe,
-  forgotPassword,
+
   changePassword,
-  resetPassword,
 };

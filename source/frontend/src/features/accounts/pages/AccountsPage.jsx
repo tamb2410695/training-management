@@ -36,7 +36,7 @@ function AccountsPage() {
       <CrudModal
         open={account.modal.opened}
         title={account.modal.title}
-        onClose={account.actions.modal.cancel}
+        onClose={account.actions.cancel}
         loading={account.crud.loading}
         actions={
           account.formView.isWizard || account.modal.isView

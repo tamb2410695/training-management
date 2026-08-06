@@ -1,8 +1,15 @@
+import api from "@/services/api";
 import { createCrudService } from "@/services/crudService";
-import { COURSE_FEATURE } from "../constants/courseFeature";
+import { API_ROUTES } from "@/constants";
 
-const BASE_COURSE_PATH = COURSE_FEATURE.config.api;
+const API = API_ROUTES.COURSE;
 
 export default function coursesService() {
-  return createCrudService(BASE_COURSE_PATH)
+  return {
+    ...createCrudService(API),
+
+    publish: (id) => api.patch(API.PUBLISH(id)),
+
+    archive: (id) => api.patch(API.ARCHIVE(id)),
+  };
 }

@@ -6,24 +6,28 @@ export function buildRequestParams(query = {}) {
     limit = 10,
     sortBy,
     sortOrder,
+    ...rest
   } = query;
 
   const params = {
-    ...query,
     page,
     limit,
   };
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      params[key] = value.join(",");
+  Object.entries(rest).forEach(([key, value]) => {
+    if (
+      value === "" ||
+      value === undefined ||
+      value === null ||
+      (Array.isArray(value) && value.length === 0)
+    ) {
+      return;
     }
+
+    params[key] = Array.isArray(value) ? value.join(",") : value;
   });
 
-  if (!search) {
-    delete params.search;
-    delete params.searchField;
-  } else {
+  if (search) {
     params.search = search;
     params.searchField = searchField;
   }
@@ -31,9 +35,6 @@ export function buildRequestParams(query = {}) {
   if (sortBy) {
     params.sortBy = sortBy;
     params.sortOrder = sortOrder;
-  } else {
-    delete params.sortBy;
-    delete params.sortOrder;
   }
 
   return params;

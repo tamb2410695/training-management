@@ -1,18 +1,23 @@
-const AppError = require("../utils/errors");
-const { throwIf } = require("../utils/helpers");
-
-const { HTTP_STATUS, ERROR_MESSAGES } = require("../constants");
+const AppError = require("@/utils/errors");
+const { throwIf } = require("@/utils/helpers");
+const { ERROR_MESSAGES } = require("@/constants");
 
 const authorize =
-  (...allowedRoles) =>
+  (...allowedRoleCodes) =>
   (req, res, next) => {
     try {
-      throwIf(!req.user, AppError.UnauthorizedError, ERROR_MESSAGES.UNAUTHORIZED);
+      throwIf(
+        !req.user,
+        AppError.UnauthorizedError,
+        ERROR_MESSAGES.UNAUTHORIZED,
+      );
 
-      const { roleName } = req.user;
+      const { roleCode } = req.user;
+
+      throwIf(!roleCode, AppError.ForbiddenError, ERROR_MESSAGES.FORBIDDEN);
 
       throwIf(
-        !allowedRoles.includes(roleName),
+        !allowedRoleCodes.includes(roleCode),
         AppError.ForbiddenError,
         ERROR_MESSAGES.FORBIDDEN,
       );

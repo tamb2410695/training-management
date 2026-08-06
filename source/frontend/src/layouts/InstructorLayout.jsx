@@ -4,11 +4,22 @@ import Sidebar from "../components/layouts/Sidebar";
 
 function InstructorLayout() {
   return (
-    <>
-      <Header />
-      <Sidebar />
-      <Outlet />
-    </>
+    
+    <div className="d-flex flex-column vh-100">
+      <header>
+        <Header />
+      </header>
+
+      <div className="d-flex flex-grow-1 overflow-hidden">
+        <aside>
+          <Sidebar />
+        </aside>
+
+        <main className="flex-grow-1 bg-light p-4 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }
 

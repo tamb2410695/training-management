@@ -22,13 +22,12 @@ const BASE_FIELD = {
     },
   },
 
-  view:{
-    visible:true,
-    component:null,
-    formatter:null,
-    emptyText:"-",
+  view: {
+    visible: true,
+    component: null,
+    formatter: null,
+    emptyText: "-",
   },
-
 
   table: {
     visible: true,
@@ -104,7 +103,6 @@ const createField = (config) => ({
     ...(config.validation ?? {}),
   },
 
-
   api: {
     ...structuredClone(BASE_FIELD.api),
     ...(config.api ?? {}),
@@ -159,7 +157,7 @@ export const FIELD_DEFAULTS = {
       component: "PasswordField",
     },
     view: {
-      visible: false
+      visible: false,
     },
     table: {
       visible: false,
@@ -208,6 +206,31 @@ export const FIELD_DEFAULTS = {
     },
     table: {
       visible: false,
+    },
+  }),
+
+  number: createField({
+    defaultValue: null,
+
+    form: {
+      component: "NumberField",
+    },
+
+    table: {
+      width: 120,
+      align: "right",
+    },
+
+    query: {
+      sortable: true,
+      filter: {
+        type: "number",
+        defaultValue: null,
+      },
+    },
+
+    validation: {
+      trigger: "change",
     },
   }),
 

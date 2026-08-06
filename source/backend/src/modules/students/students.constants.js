@@ -1,52 +1,36 @@
-const { QUERY_COMMON_FIELDS } = require("../../constants");
+const { QUERY_COMMON_FIELDS } = require("@/constants");
+const { ACCOUNT_FIELDS } = require("../accounts");
 
-const ACCOUNT_FIELDS = {
+const STUDENT_PROFILE_FIELDS = {
   PARAMS: {
     ID: ["id"],
   },
 
   QUERY: {
-    SEARCHABLE: ["username", "accountEmail"],
-    SORTABLE: ["accountId", "username", "createdAt"],
-    FILTERS: ["accountStatus"],
+    SEARCHABLE: [
+      "studentCode",
+      "fullName",
+      "phone",
+      "personalEmail",
 
-    get ALLOWED_KEYS() {
-      return [
-        ...new Set([
-          ...QUERY_COMMON_FIELDS.ALL_KEYS,
-          ...this.SEARCHABLE,
-          ...this.SORTABLE,
-          ...this.FILTERS,
-        ]),
-      ];
-    },
-  },
-
-  BODY: {
-    CREATE: [
       "username",
-      "accountEmail",
-      "password",
-      "avatarUrl",
+      "email",
+      "roleLabel",
+      "roleCode",
     ],
-    UPDATE: ["avatarUrl", "accountStatus"],
-    CHANGE_PASSWORD: ["oldPassword", "newPassword"],
-  },
 
-  REQUIRED: {
-    CREATE: ["username", "accountEmail", "password"],
-  },
-};
+    SORTABLE: [
+      "studentId",
+      "studentCode",
+      "fullName",
 
-const STUDENT_FIELDS = {
-  PARAMS: {
-    ID: ["id"],
-  },
+      "username",
 
-  QUERY: {
-    SEARCHABLE: ["studentCode", "fullName", "phone", "personalEmail"],
-    SORTABLE: ["studentId", "studentCode", "fullName", "createdAt"],
-    FILTERS: ["gender", "studentStatus"],
+      "createdAt",
+      "updatedAt",
+    ],
+
+    FILTERS: ["gender", "studentStatus", "accountStatus", "roleCode"],
 
     get ALLOWED_KEYS() {
       return [
@@ -77,43 +61,66 @@ const STUDENT_FIELDS = {
       "phone",
       "personalEmail",
       "address",
-      "studentStatus",
     ],
   },
 
   REQUIRED: {
-    CREATE: ["fullName", "phone"],
+    CREATE: ["fullName", "dateOfBirth"],
   },
 };
 
-const STUDENT_MAPS = {
+const STUDENT_PROFILE_MAPS = {
   SEARCH: {
     username: "acc.username",
-    accountEmail: "acc.email",
+
+    email: "acc.email",
+
+    roleLabel: "rl.role_label",
+
+    roleCode: "rl.role_code",
+
     studentCode: "stu.student_code",
+
     fullName: "stu.full_name",
+
     phone: "stu.phone",
+
     personalEmail: "stu.personal_email",
   },
 
   SORT: {
     accountId: "acc.account_id",
+
     username: "acc.username",
-    createdAt: "acc.created_at",
+
+    email: "acc.email",
+
     studentId: "stu.student_id",
+
     studentCode: "stu.student_code",
+
     fullName: "stu.full_name",
+
+    createdAt: "stu.created_at",
+
+    updatedAt: "stu.updated_at",
   },
 
   FILTER: {
-    gender: "stu.gender",
-    studentStatus: "stu.student_status",
     accountStatus: "acc.account_status",
+
+    roleCode: "rl.role_code",
+
+    gender: "stu.gender",
+
+    studentStatus: "stu.student_status",
   },
 };
 
 module.exports = {
   ACCOUNT_FIELDS,
-  STUDENT_FIELDS,
-  STUDENT_MAPS,
+
+  STUDENT_PROFILE_FIELDS,
+
+  STUDENT_PROFILE_MAPS,
 };

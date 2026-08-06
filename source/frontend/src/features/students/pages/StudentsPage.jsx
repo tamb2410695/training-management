@@ -36,7 +36,7 @@ function StudentsPage() {
       <CrudModal
         open={student.modal.opened}
         title={student.modal.title}
-        onClose={student.actions.modal.cancel}
+        onClose={student.actions.cancel}
         loading={student.crud.loading}
         actions={
           student.formView.isWizard || student.modal.isView

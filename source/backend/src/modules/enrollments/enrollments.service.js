@@ -1,21 +1,51 @@
-const db = require("../../config/database");
-const AppError = require("../../utils/errors");
-const { withTransaction } = require("../../utils/database");
-const { throwIf, hasField, generateCode } = require("../../utils/helpers");
-const {
-  ERROR_MESSAGES,
-  ENROLLMENT_STATUS,
-  PAYMENT_STATUS,
-} = require("../../constants");
+const db = require("@/config/database");
+
+const { NotFoundError, ConflictError } = require("@/utils/errors");
+
+const { ERROR_CODES, ENROLLMENT_STATUS, CLASS_STATUS } = require("@/constants");
+
+const { throwIf, pickFields } = require("@/utils/helpers");
+
+const { withTransaction } = require("@/utils/database");
 
 const enrollmentsRepository = require("./enrollments.repository");
-const { ENROLLMENT_CODE } = require("./enrollments.constants");
 
-const studentsRepository = require("../students/students.repository");
 const classesRepository = require("../classes/classes.repository");
 
+const studentsRepository = require("../students/students.repository");
+
+const { ENROLLMENT_FIELDS } = require("./enrollments.constants");
+
+// ===============================
+// Internal Helpers
+// ===============================
+
+const ensureEnrollmentExists = (enrollment) => {
+  throwIf(!enrollment, NotFoundError, ERROR_CODES.ENROLLMENT_NOT_FOUND);
+};
+
+const ensurePending = (enrollment) => {
+  throwIf(
+    enrollment.enrollmentStatus !== ENROLLMENT_STATUS.PENDING,
+
+    ConflictError,
+
+    ERROR_CODES.ENROLLMENT_ALREADY_PROCESSED,
+  );
+};
+
+// ===============================
+// Query
+// ===============================
+
 const getList = async (query, connection = db) => {
-  return await enrollmentsRepository.find(query, connection);
+  const result = await enrollmentsRepository.list(query, connection);
+
+  return {
+    enrollments: result.data,
+
+    pagination: result.pagination,
+  };
 };
 
 const getById = async (enrollmentId, connection = db) => {
@@ -23,139 +53,308 @@ const getById = async (enrollmentId, connection = db) => {
     enrollmentId,
     connection,
   );
-  throwIf(
-    !enrollment,
-    AppError.NotFoundError,
-    ERROR_MESSAGES.RESOURCE_NOT_FOUND,
-  );
+
+  ensureEnrollmentExists(enrollment);
+
   return enrollment;
 };
 
-const create = async ({ studentId, classId }, connection = db) => {
-  return withTransaction(async (txConnection) => {
-    const student = await studentsRepository.findById(studentId, txConnection);
-    throwIf(!student, AppError.NotFoundError, "Student not found");
+// ===============================
+// CRUD
+// ===============================
 
-    const targetClass = await classesRepository.findById(classId, txConnection);
-    throwIf(!targetClass, AppError.NotFoundError, "Class not found");
+const create = async (enrollmentData, connection = db) => {
+  return withTransaction(async (tx) => {
+    // ===============================
+    // Validate Student
+    // ===============================
+
+    const student = await studentsRepository.findById(
+      enrollmentData.studentId,
+      tx,
+    );
+
     throwIf(
-      targetClass.classStatus !== "OPEN_REGISTRATION",
-      AppError.BadRequestError,
-      "Class is not open for registration",
+      !student,
+
+      NotFoundError,
+
+      ERROR_CODES.STUDENT_NOT_FOUND,
     );
+
+    // ===============================
+    // Validate Class
+    // ===============================
+
+    const classData = await classesRepository.findById(
+      enrollmentData.classId,
+      tx,
+    );
+
     throwIf(
-      targetClass.currentStudents >= targetClass.maxStudents,
-      AppError.BadRequestError,
-      "Class is full",
+      !classData,
+
+      NotFoundError,
+
+      ERROR_CODES.CLASS_NOT_FOUND,
     );
 
-    const existingEnrollment =
-      await enrollmentsRepository.findByStudentAndClass(
-        studentId,
-        classId,
-        txConnection,
-      );
+    // ===============================
+    // Class must be OPEN
+    // ===============================
+
     throwIf(
-      existingEnrollment,
-      AppError.ConflictError,
-      "Student is already enrolled in this class",
-    );
-    
-    const createdEnrollment = await enrollmentsRepository.create(
-      {
-        studentId,
-        classId,
-        enrollmentStatus: ENROLLMENT_STATUS.WAITING_FOR_PAYMENT,
-        enrollmentCode: "TEMP_ERM",
-      },
-      txConnection,
+      classData.classStatus !== CLASS_STATUS.OPEN,
+
+      ConflictError,
+
+      ERROR_CODES.CLASS_NOT_OPEN,
     );
 
-    const enrollmentCode = generateCode(
-      ENROLLMENT_CODE.PREFIX,
-      createdEnrollment.enrollmentId,
-      ENROLLMENT_CODE.LENGTH,
+    // ===============================
+    // Duplicate enrollment
+    // ===============================
+
+    const exists = await enrollmentsRepository.existsByStudentClass(
+      enrollmentData.studentId,
+
+      enrollmentData.classId,
+
+      tx,
     );
 
-    const finalEnrollment = await enrollmentsRepository.update(
-      createdEnrollment.enrollmentId,
-      { enrollmentCode },
-      txConnection,
+    throwIf(
+      exists,
+
+      ConflictError,
+
+      ERROR_CODES.ENROLLMENT_ALREADY_EXISTS,
     );
 
-    return finalEnrollment;
+    // ===============================
+    // Create pending enrollment
+    // ===============================
+
+    const payload = {
+      ...enrollmentData,
+
+      enrollmentStatus: ENROLLMENT_STATUS.PENDING,
+    };
+
+    const enrollment = await enrollmentsRepository.create(payload, tx);
+
+    throwIf(
+      !enrollment,
+
+      ConflictError,
+
+      ERROR_CODES.NO_CHANGES,
+    );
+
+    return enrollment;
   }, connection);
 };
 
-const updateStatus = async (
+const update = async (
   enrollmentId,
-  enrollmentStatus,
+
+  enrollmentData,
+
   connection = db,
 ) => {
-  return withTransaction(async (txConnection) => {
-    const enrollment = await enrollmentsRepository.findById(
-      enrollmentId,
-      txConnection,
-    );
-    throwIf(
-      !enrollment,
-      AppError.NotFoundError,
-      ERROR_MESSAGES.RESOURCE_NOT_FOUND,
-    );
+  const enrollment = await enrollmentsRepository.findById(
+    enrollmentId,
 
-    if (enrollment.enrollmentStatus === enrollmentStatus) {
-      return enrollment;
-    }
+    connection,
+  );
 
-    if (
-      enrollmentStatus === ENROLLMENT_STATUS.CANCELLED ||
-      enrollmentStatus === ENROLLMENT_STATUS.REFUNDED
-    ) {
-      await txConnection.query(
-        `UPDATE CLASS SET current_students = GREATEST(0, current_students - 1) WHERE class_id = ?`,
-        [enrollment.classId],
-      );
-    }
+  ensureEnrollmentExists(enrollment);
 
-    const updated = await enrollmentsRepository.update(
-      enrollmentId,
-      { enrollmentStatus },
-      txConnection,
-    );
-    return updated;
-  });
+  /*
+    Enrollment không cho phép thay đổi:
+
+    studentId
+
+    classId
+
+    enrollmentStatus
+
+
+    Vì đây là quan hệ nghiệp vụ.
+
+    Nếu muốn chuyển lớp:
+
+    remove enrollment cũ
+
+    create enrollment mới
+
+  */
+
+  const payload = pickFields(
+    enrollmentData,
+
+    ENROLLMENT_FIELDS.BODY.UPDATE,
+  );
+
+  const updated = await enrollmentsRepository.update(
+    enrollmentId,
+
+    payload,
+
+    connection,
+  );
+
+  return updated;
 };
 
-const remove = async (enrollmentId, connection = db) => {
-  return withTransaction(async (txConnection) => {
+const remove = async (
+  enrollmentId,
+
+  connection = db,
+) => {
+  const enrollment = await enrollmentsRepository.findById(
+    enrollmentId,
+
+    connection,
+  );
+
+  ensureEnrollmentExists(enrollment);
+
+  /*
+    Không xóa enrollment đã APPROVED
+
+    Vì đây là lịch sử học viên tham gia lớp.
+
+  */
+
+  throwIf(
+    enrollment.enrollmentStatus === ENROLLMENT_STATUS.APPROVED,
+
+    ConflictError,
+
+    ERROR_CODES.ENROLLMENT_ALREADY_APPROVED,
+  );
+
+  return enrollmentsRepository.remove(
+    enrollmentId,
+
+    connection,
+  );
+};
+
+// ===============================
+// Business Actions
+// ===============================
+
+const approve = async (
+  enrollmentId,
+
+  connection = db,
+) => {
+  return withTransaction(async (tx) => {
     const enrollment = await enrollmentsRepository.findById(
       enrollmentId,
-      txConnection,
+
+      tx,
     );
+
+    ensureEnrollmentExists(enrollment);
+
+    ensurePending(enrollment);
+
+    // ===============================
+    // Validate class
+    // ===============================
+
+    const classData = await classesRepository.findById(
+      enrollment.classId,
+
+      tx,
+    );
+
     throwIf(
-      !enrollment,
-      AppError.NotFoundError,
-      ERROR_MESSAGES.RESOURCE_NOT_FOUND,
+      !classData,
+
+      NotFoundError,
+
+      ERROR_CODES.CLASS_NOT_FOUND,
     );
 
-    if (
-      enrollment.enrollmentStatus !== ENROLLMENT_STATUS.CANCELLED &&
-      enrollment.enrollmentStatus !== ENROLLMENT_STATUS.REFUNDED
-    ) {
-      await txConnection.query(
-        `UPDATE CLASS SET current_students = GREATEST(0, current_students - 1) WHERE class_id = ?`,
-        [enrollment.classId],
-      );
-    }
+    throwIf(
+      classData.classStatus !== CLASS_STATUS.OPEN,
 
-    return await enrollmentsRepository.remove(enrollmentId, txConnection);
-  });
+      ConflictError,
+
+      ERROR_CODES.CLASS_NOT_OPEN,
+    );
+
+    // ===============================
+    // Check capacity
+    // ===============================
+
+    const approvedCount = await enrollmentsRepository.countApprovedByClass(
+      enrollment.classId,
+
+      tx,
+    );
+
+    throwIf(
+      approvedCount >= classData.maxStudents,
+
+      ConflictError,
+
+      ERROR_CODES.CLASS_FULL,
+    );
+
+    // ===============================
+    // Update status
+    // ===============================
+
+    return enrollmentsRepository.updateStatus(
+      enrollmentId,
+
+      ENROLLMENT_STATUS.APPROVED,
+
+      tx,
+    );
+  }, connection);
+};
+
+const reject = async (
+  enrollmentId,
+
+  connection = db,
+) => {
+  const enrollment = await enrollmentsRepository.findById(
+    enrollmentId,
+
+    connection,
+  );
+
+  ensureEnrollmentExists(enrollment);
+
+  ensurePending(enrollment);
+
+  return enrollmentsRepository.updateStatus(
+    enrollmentId,
+
+    ENROLLMENT_STATUS.REJECTED,
+
+    connection,
+  );
 };
 
 module.exports = {
+  // Query
   getList,
   getById,
+
+  // CRUD
   create,
-  updateStatus,
+  update,
   remove,
+
+  // Business
+  approve,
+  reject,
 };

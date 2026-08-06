@@ -1,4 +1,4 @@
-function createValidationMiddleware(validator, target = "body") {
+function createValidator(validator, target = "body") {
   return (req, res, next) => {
     try {
       req[target] = validator(req[target]);
@@ -28,6 +28,6 @@ function createMultiValidator(validator) {
 }
 
 module.exports = {
-  createValidationMiddleware,
+  createValidator,
   createMultiValidator,
 };

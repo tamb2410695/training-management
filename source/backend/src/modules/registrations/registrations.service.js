@@ -1,134 +1,81 @@
-const db = require("../../config/database");
-const {
-  NotFoundError,
-  ConflictError,
-  BadRequestError,
-} = require("../../utils/errors");
+const db = require("@/config/database");
+
+const { NotFoundError, ConflictError } = require("@/utils/errors");
+
+const { ERROR_CODES, REGISTRATION_STATUS } = require("@/constants");
 
 const {
-  ERROR_CODES,
-  REGISTRATION_STATUS,
-  ROLES,
-  CODE_PREFIX,
-} = require("../../constants");
-const { throwIf, hasField, generateCode, generateUsernameFromEmail } = require("../../utils/helpers");
+  throwIf,
+  generateUsernameFromEmail,
+  pickFields,
+} = require("@/utils/helpers");
+
+const { withTransaction } = require("@/utils/database");
+
 const registrationsRepository = require("./registrations.repository");
+
 const { REGISTRATION_FIELDS } = require("./registrations.constants");
 
-const studentsService = require("../students/students.service");
-const { withTransaction } = require("../../utils/database");
-const { PROFILE_TYPE } = require("../../constants/lookups/userCreation");
 const userCreationService = require("../users/userCreation.service");
 
+// ===============================
+// Query
+// ===============================
+
 const getList = async (query, connection = db) => {
-  return await registrationsRepository.find(query, connection);
+  const result = await registrationsRepository.list(query, connection);
+
+  return {
+    registrations: result.data,
+    pagination: result.pagination,
+  };
 };
 
 const getById = async (registrationId, connection = db) => {
-  const registrationData = await registrationsRepository.findById(
+  const registration = await registrationsRepository.findById(
     registrationId,
     connection,
   );
 
-  const username = await generateUsernameFromEmail(registrationData.personalEmail);
+  throwIf(!registration, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
 
-  throwIf(
-    !registrationData,
-    NotFoundError,
-    ERROR_CODES.RESOURCE_NOT_FOUND
-  );
-
-  return {...registrationData, username};
+  return registration;
 };
 
-const getByCode = async (registrationCode, connection = db) => {
-  const registrationData = await registrationsRepository.findByCode(
-    registrationCode,
-    connection,
-  );
-  const username = await generateUsernameFromEmail(registrationData.personalEmail);
-
-  throwIf(
-    !registration,
-    NotFoundError,
-    ERROR_CODES.RESOURCE_NOT_FOUND
-  );
-  
-  return registrationData;
-};
+// ===============================
+// CRUD
+// ===============================
 
 const create = async (registrationData, connection = db) => {
-  return await withTransaction(async (txConnection) => {
+  return withTransaction(async (tx) => {
     const { personalEmail, phone } = registrationData;
 
-    const existingForm = await registrationsRepository.findByContact(
+    const existingRegistration = await registrationsRepository.findByContact(
       personalEmail,
       phone,
-      txConnection,
+      tx,
     );
 
     throwIf(
-      existingForm &&
-        ["PENDING", "REVIEWING"].includes(existingForm.registrationStatus),
+      existingRegistration &&
+        existingRegistration.registrationStatus === REGISTRATION_STATUS.PENDING,
+
       ConflictError,
+
       ERROR_CODES.REGISTRATION_ALREADY_PROCESSED,
     );
 
-    const finalPayload = {
+    const payload = {
       ...registrationData,
-      registrationStatus: "PENDING",
+      registrationStatus: REGISTRATION_STATUS.PENDING,
     };
 
-    const createdRegistration = await registrationsRepository.create(
-      finalPayload,
-      txConnection,
-    );
+    const registration = await registrationsRepository.create(payload, tx);
 
-    const registrationCode = await generateCode(
-      CODE_PREFIX.REGISTRATION,
-      createdRegistration.registrationId,
-    );
+    throwIf(!registration, ConflictError, ERROR_CODES.NO_CHANGES);
 
-    const updatedRegistration = await update(
-      createdRegistration.registrationId,
-      { registrationCode },
-      txConnection,
-    );
-
-    throwIf(!updatedRegistration, ConflictError, ERROR_CODES.NO_CHANGES);
-
-    return updatedRegistration;
+    return registration;
   }, connection);
-};
-
-const buildUpdateData = (registration, updateBody) => {
-  const updatePayload = {};
-  const allowedFields = [...REGISTRATION_FIELDS.BODY.UPDATE, "registrationCode"];
-
-  console.log(updateBody);
-  allowedFields.forEach((field) => {
-    if (hasField(updateBody, field)) {
-      updatePayload[field] = updateBody[field];
-    }
-  });
-
-  if (
-    hasField(updateBody, "registrationStatus") &&
-    ["APPROVED", "REJECTED"].includes(registration.registrationStatus)
-  ) {
-    throw new BadRequestError(
-      "INVALID_STATUS_TRANSITION",
-      "Cannot modify the status of a registration form that has already been finalized (APPROVED/REJECTED).",
-    );
-  }
-
-  throwIf(
-    Object.keys(updatePayload).length === 0,
-    BadRequestError,
-    ERROR_CODES.NO_VALID_FIELDS,
-  );
-
-  return updatePayload;
 };
 
 const update = async (registrationId, registrationData, connection = db) => {
@@ -136,81 +83,152 @@ const update = async (registrationId, registrationData, connection = db) => {
     registrationId,
     connection,
   );
+
   throwIf(!registration, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
 
-  const finalUpdatePayload = buildUpdateData(registration, registrationData);
+  const payload = pickFields(registrationData, REGISTRATION_FIELDS.BODY.UPDATE);
 
-  const updatedRegistration = await registrationsRepository.update(
+  // Không cho CRUD update lifecycle
+  delete payload.registrationStatus;
+  delete payload.studentId;
+
+  const updated = await registrationsRepository.update(
     registrationId,
-    finalUpdatePayload,
+    payload,
     connection,
   );
 
-  throwIf(!updatedRegistration, ConflictError, ERROR_CODES.NO_CHANGES);
+  throwIf(!updated, ConflictError, ERROR_CODES.NO_CHANGES);
 
-  return updatedRegistration;
+  return updated;
 };
 
 const remove = async (registrationId, connection = db) => {
+  const exists = await registrationsRepository.findById(
+    registrationId,
+    connection,
+  );
+
+  throwIf(!exists, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
+
+  return registrationsRepository.remove(registrationId, connection);
+};
+
+// ===============================
+// Business Actions
+// ===============================
+
+const approve = async (
+  registrationId,
+  accountData,
+  profileData,
+  connection = db,
+) => {
+  return withTransaction(
+    async (tx) => {
+      const registration = await registrationsRepository.findById(
+        registrationId,
+        tx,
+      );
+
+      if (registration.courseId) {
+        await enrollmentService.create(
+          {
+            studentId: student.studentData.studentId,
+
+            courseId: registration.courseId,
+          },
+          tx,
+        );
+      }
+
+      throwIf(!registration, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
+
+      throwIf(
+        registration.registrationStatus !== REGISTRATION_STATUS.PENDING,
+
+        ConflictError,
+
+        ERROR_CODES.REGISTRATION_ALREADY_PROCESSED,
+      );
+
+      const username = await generateUsernameFromEmail(
+        registration.personalEmail,
+      );
+
+      const student = await userCreationService.createStudent(
+        {
+          username,
+          email: registration.personalEmail,
+          ...accountData,
+        },
+
+        {
+          fullName: registration.fullName,
+
+          phone: registration.phone,
+
+          personalEmail: registration.personalEmail,
+
+          ...profileData,
+        },
+
+        tx,
+      );
+
+      await registrationsRepository.assignStudent(
+        registrationId,
+        student.studentData.studentId,
+        tx,
+      );
+
+      const updated = await registrationsRepository.updateStatus(
+        registrationId,
+        REGISTRATION_STATUS.APPROVED,
+        tx,
+      );
+
+      return {
+        student,
+        registration: updated,
+      };
+    },
+
+    connection,
+  );
+};
+
+const reject = async (registrationId, connection = db) => {
   const registration = await registrationsRepository.findById(
     registrationId,
     connection,
   );
+
   throwIf(!registration, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
 
-  const deletedResult = await registrationsRepository.remove(
+  throwIf(
+    registration.registrationStatus !== REGISTRATION_STATUS.PENDING,
+
+    ConflictError,
+
+    ERROR_CODES.REGISTRATION_ALREADY_PROCESSED,
+  );
+
+  return registrationsRepository.updateStatus(
     registrationId,
+    REGISTRATION_STATUS.REJECTED,
     connection,
   );
-  return deletedResult;
-};
-
-const activate = async (registrationId, registrationData, connection = db) => {
-  return await withTransaction(async (txConnection) => {
-    const { accountData, profileData } = registrationData;
-    const registration = await registrationsRepository.findById(
-      registrationId,
-      txConnection,
-    );
-
-    throwIf(!registration, NotFoundError, ERROR_CODES.REGISTRATION_NOT_FOUND);
-    const { fullName, phone, personalEmail } = registration;
-
-    throwIf(
-      registration.studentId ||
-        registration.registrationStatus === REGISTRATION_STATUS.COMPLETED,
-      ConflictError,
-      ERROR_CODES.REGISTRATION_ALREADY_PROCESSED,
-    );
-
-    const username = await generateUsernameFromEmail(personalEmail);
-    const accountPayload = { username, email: personalEmail, ...accountData };
-    const studentPayload = { fullName, phone, personalEmail, ...profileData };
-    const createdUserData = await userCreationService.createStudent(
-      accountPayload,
-      studentPayload,
-      txConnection,
-    );
-
-    const updatedRegistration = await update(
-      registrationId,
-      {
-        studentId: createdUserData.studentData.studentId,
-        registrationStatus: REGISTRATION_STATUS.COMPLETED,
-      },
-      txConnection,
-    );
-
-    return {createdUserData, updatedRegistration};
-  }, connection);
 };
 
 module.exports = {
   getList,
   getById,
-  getByCode,
+
   create,
   update,
   remove,
-  activate,
+
+  approve,
+  reject,
 };

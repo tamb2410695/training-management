@@ -1,4 +1,3 @@
-export * from "./useCoursesActions";
-export * from "./useCoursesCrud";
-export * from "./useCoursesFeature";
-
+export * from "./useCourseActions";
+export * from "./useCourseCrud";
+export * from "./useCourseFeature";

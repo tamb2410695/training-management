@@ -1,49 +1,88 @@
-const { SUCCESS_CODES } = require("../../constants");
-const { asyncHandler, successResponse } = require("../../utils/helpers");
+const { SUCCESS_CODES } = require("@/constants");
+
+const { asyncHandler, successResponse } = require("@/utils/helpers");
+
 const registrationsService = require("./registrations.service");
 
-const getList = asyncHandler(async (req, res, next) => {
-  const queryOptions = req.query;
-  const result = await registrationsService.getList(queryOptions);
+// ===============================
+// Query
+// ===============================
+
+const getList = asyncHandler(async (req, res) => {
+  const result = await registrationsService.getList(req.query);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const getById = asyncHandler(async (req, res, next) => {
-  const id = req.params;
-  const result = await registrationsService.getById(id);
+const getById = asyncHandler(async (req, res) => {
+  const result = await registrationsService.getById(req.params.id);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const create = asyncHandler(async (req, res, next) => {
-  const registrationData = req.body;
-  const result = await registrationsService.create(registrationData);
-  return successResponse(res, result, SUCCESS_CODES.STUDENT_REGISTRATION_SUBMITTED, 211);
+// ===============================
+// CRUD
+// ===============================
+
+const create = asyncHandler(async (req, res) => {
+  const result = await registrationsService.create(req.body);
+
+  return successResponse(
+    res,
+    result,
+    SUCCESS_CODES.STUDENT_REGISTRATION_SUBMITTED,
+    211,
+  );
 });
 
-const update = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const registrationData = req.body;
-  const result = await registrationsService.update(id, registrationData);
+const update = asyncHandler(async (req, res) => {
+  const result = await registrationsService.update(req.params.id, req.body);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_UPDATE_SUCCESS);
 });
 
-const remove = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await registrationsService.remove(id);
+const remove = asyncHandler(async (req, res) => {
+  const result = await registrationsService.remove(req.params.id);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_DELETE_SUCCESS);
 });
 
-const activate = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await registrationsService.activate(id, req.body);
-  return successResponse(res, result, SUCCESS_CODES.STUDENT_REGISTRATION_APPROVED);
+// ===============================
+// Business Actions
+// ===============================
+
+const approve = asyncHandler(async (req, res) => {
+  const result = await registrationsService.approve(
+    req.params.id,
+    req.body.accountData,
+    req.body.profileData,
+  );
+
+  return successResponse(
+    res,
+    result,
+    SUCCESS_CODES.STUDENT_REGISTRATION_APPROVED,
+  );
+});
+
+const reject = asyncHandler(async (req, res) => {
+  const result = await registrationsService.reject(req.params.id);
+
+  return successResponse(
+    res,
+    result,
+    SUCCESS_CODES.STUDENT_REGISTRATION_REJECTED,
+  );
 });
 
 module.exports = {
   getList,
-  create,
   getById,
+
+  create,
   update,
   remove,
-  activate,
+
+  approve,
+  reject,
 };

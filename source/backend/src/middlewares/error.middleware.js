@@ -1,9 +1,9 @@
-const { AppError } = require("../utils/errors");
+const { AppError } = require("@/utils/errors");
 const {
   ERROR_CODES,
   ERROR_MESSAGES,
   HTTP_STATUS,
-} = require("../constants");
+} = require("@/constants");
 
 const errorHandler = (err, req, res, next) => {
   console.error(err);

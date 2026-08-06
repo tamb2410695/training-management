@@ -1,86 +1,132 @@
-// constants/accountFields.js
+import { buildFields, Rules, defineFields } from "@/utils";
+import { REGISTRATION_STATUS } from "./registrationEnums";
 
-export const ACCOUNT_FIELDS = {
-  accountId: {
-    key: "accountId",
-    label: "Mã tài khoản",
-    sortable: true,
-  },
+const Field = buildFields();
 
-  username: {
-    key: "username",
-    label: "Tên đăng nhập",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+export const REGISTRATION_FIELDS = defineFields({
+  fullName: Field.text(
+    "fullName",
+    "Họ và tên",
+  )
+    .placeholder("Nguyễn Văn A")
+    .requiredOnCreate()
+    .searchable()
+    .sortable()
+    .tableWidth(220)
+    .col(6)
+    .validation(
+      Rules.maxLength(100),
+    ),
 
-  email: {
-    key: "email",
-    label: "Email",
-    required: { create: true, update: true },
-    searchable: true,
-    sortable: true,
-    default: "",
-  },
+  gender: Field.select(
+    "gender",
+    "Giới tính",
+    [],
+  )
+    .requiredOnCreate()
+    .filter("text")
+    .tableWidth(120)
+    .col(6),
 
-  password: {
-    key: "password",
-    label: "Mật khẩu",
-    required: { create: true, update: false },
-    default: "",
-  },
+  dateOfBirth: Field.date(
+    "dateOfBirth",
+    "Ngày sinh",
+  )
+    .requiredOnCreate()
+    .sortable()
+    .tableWidth(140)
+    .col(6),
 
-  roleCodes: {
-    key: "roleCodes",
-    label: "Vai trò",
-    default: [],
-    sortable: false,
-    searchable: false,
-  },
+  phone: Field.phone(
+    "phone",
+    "Số điện thoại",
+  )
+    .requiredOnCreate()
+    .searchable()
+    .sortable()
+    .tableWidth(150)
+    .col(6)
+    .validation(
+      Rules.maxLength(20),
+    ),
 
-  roleNames: {
-    key: "roleNames",
-    label: "Vai trò",
-    searchable: true,
-    default: [],
-  },
+  personalEmail: Field.email(
+    "personalEmail",
+    "Email cá nhân",
+  )
+    .requiredOnCreate()
+    .searchable()
+    .sortable()
+    .tableWidth(240)
+    .col(6)
+    .validation(
+      Rules.email(),
+      Rules.maxLength(255),
+    ),
 
-  accountStatus: {
-    key: "accountStatus",
-    label: "Trạng thái",
-    required: { create: false, update: true },
-    filterable: true,
-    default: "ACTIVE",
-  },
+  address: Field.textarea(
+    "address",
+    "Địa chỉ",
+  )
+    .col(12)
+    .validation(
+      Rules.maxLength(255),
+    ),
 
-  avatarUrl: {
-    key: "avatarUrl",
-    label: "Ảnh đại diện",
-    default: "",
-  },
+  studentId: Field.select(
+    "studentId",
+    "Học viên",
+    [],
+  )
+    .filter("text")
+    .sortable()
+    .tableWidth(150)
+    .col(6),
 
-  createdAt: {
-    key: "createdAt",
-    label: "Ngày tạo",
-    sortable: true,
-  },
+  courseId: Field.select(
+    "courseId",
+    "Khóa học",
+    [],
+  )
+    .filter("text")
+    .sortable()
+    .tableWidth(150)
+    .col(6),
 
-  updatedAt: {
-    key: "updatedAt",
-    label: "Ngày cập nhật",
-    sortable: true,
-  },
-};
+  registrationStatus: Field.badge(
+    "registrationStatus",
+    "Trạng thái đăng ký",
+    REGISTRATION_STATUS,
+  )
+    .filter("text")
+    .defaultValue(REGISTRATION_STATUS.values[0])
+    .sortable()
+    .tableWidth(150)
+    .requiredOnUpdate()
+    .disabled({
+      create: true,
+      update: false,
+    })
+    .col(6),
 
-export const ACCOUNT_COLUMNS = [
-  ACCOUNT_FIELDS.accountId,
-  ACCOUNT_FIELDS.username,
-  ACCOUNT_FIELDS.email,
-  {
-    ...ACCOUNT_FIELDS.roleNames,
-    render: (roleNames) => roleNames?.join(", ") || "N/A",
-  },
-  ACCOUNT_FIELDS.accountStatus,
-];
+  createdAt: Field.date(
+    "createdAt",
+    "Ngày tạo",
+  )
+    .sortable()
+    .hideOnForm()
+    .tableWidth(160)
+    .disableApi()
+    .col(6),
+
+  updatedAt: Field.date(
+    "updatedAt",
+    "Cập nhật cuối",
+  )
+    .sortable()
+    .hideOnTable()
+    .hideOnForm()
+    .tableWidth(160)
+    .disableApi()
+    .col(6),
+});

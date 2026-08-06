@@ -1,155 +1,111 @@
-const AppError = require("../../utils/errors");
-const { ERROR_MESSAGES, CLASS_STATUS } = require("../../constants");
+const { CLASS_STATUS } = require("@/constants");
+
 const { CLASS_FIELDS } = require("./classes.constants");
-const {
-  formatClassData,
-  formatClassQuery,
-  formatId,
-  formatNumericId,
-  formatLimit,
-  normalizeEnum,
-  formatKeyword,
-} = require("../../utils/formatters");
 
 const {
-  pickFields,
-  sanitizeFields,
-  hasField,
-  throwIf,
-} = require("../../utils/helpers");
-
-const {
-  validateEnum,
   validateId,
-  validatePagination,
-  validateAllowedFields,
-  validateRequiredFields,
-} = require("../../utils/validators");
 
-const validateClassFormats = (classData) => {
-  if (hasField(classData, "courseId")) validateId(classData.courseId);
-  if (hasField(classData, "instructorId")) validateId(classData.instructorId);
-  if (hasField(classData, "classStatus")) {
-    validateEnum(
-      classData.classStatus,
-      Object.values(CLASS_STATUS),
-      "classStatus"
+  validateEnum,
+
+  validateNumber,
+
+  queryValidator,
+
+  hasField,
+  validateDate,
+} = require("@/utils");
+
+// ===============================
+// Format Validation
+// ===============================
+
+const validateClassFormats = (data) => {
+  if (!data) return;
+
+  queryValidator(
+    data,
+
+    CLASS_FIELDS.QUERY.SEARCHABLE,
+
+    CLASS_FIELDS.QUERY.SORTABLE,
+  );
+
+  if (hasField(data, "classId")) {
+    validateId(
+      data.classId,
+
+      "classId",
     );
   }
-};
 
-const validateGetList = (query) => {
-  validateAllowedFields(query, CLASS_FIELDS.QUERY.ALLOWED_KEYS);
-  const rawQueryData = sanitizeFields(
-    pickFields(query, CLASS_FIELDS.QUERY.ALLOWED_KEYS)
-  );
-  const queryData = formatClassQuery(rawQueryData);
+  if (hasField(data, "courseId")) {
+    validateId(
+      data.courseId,
 
-  if (hasField(queryData, "page") || hasField(queryData, "limit")) {
-    validatePagination(queryData.page, queryData.limit);
-  }
-
-  if (hasField(queryData, "classStatus")) {
-    validateEnum(
-      queryData.classStatus,
-      Object.values(CLASS_STATUS),
-      "classStatus"
+      "courseId",
     );
   }
 
-  if (hasField(queryData, "courseId")) validateId(formatNumericId(queryData.courseId));
-  if (hasField(queryData, "instructorId")) validateId(formatNumericId(queryData.instructorId));
+  if (hasField(data, "teacherId")) {
+    validateId(
+      data.teacherId,
 
-  return queryData;
-};
+      "teacherId",
+    );
+  }
 
-const validateGetById = (params) => {
-  const classId = formatNumericId(params.id);
-  validateId(classId);
-  return classId;
-};
+  if (hasField(data, "className")) {
+    validateString(data.className, "className", {
+      minLength: 3,
+      maxLength: 100,
+    });
+  }
 
-const validateCreate = (body) => {
-  validateAllowedFields(body, CLASS_FIELDS.BODY.CREATE);
+  if (hasField(data, "classCode")) {
+    validateString(data.classCode, "classCode", {
+      maxLength: 30,
+    });
+  }
 
-  const rawClassData = sanitizeFields(
-    pickFields(body, CLASS_FIELDS.BODY.CREATE)
-  );
-  validateRequiredFields(rawClassData, CLASS_FIELDS.REQUIRED.CREATE);
+  if (hasField(data, "maxStudents")) {
+    validateNumber(data.maxStudents, "maxStudents");
 
-  const classData = formatClassData(rawClassData);
+    if (Number(data.maxStudents) < 0) {
+      throw new ValidationError(
+        ERROR_CODES.VALIDATION_FAILED,
+        "maxStudents must be at least 0",
+      );
+    }
+  }
 
-  validateClassFormats(classData);
+  if (hasField(data, "classStatus")) {
+    validateEnum(
+      data.classStatus,
 
-  return {
-    classData,
-  };
-};
+      Object.values(CLASS_STATUS),
 
-const validateUpdate = (params, body) => {
-  const classId = formatNumericId(params.id);
-  validateId(classId);
+      "classStatus",
+    );
+  }
 
-  validateAllowedFields(body, CLASS_FIELDS.BODY.UPDATE);
+  if (hasField(data, "startDate")) {
+    validateDate(data.startDate, "startDate");
+  }
 
-  const rawClassData = sanitizeFields(
-    pickFields(body, CLASS_FIELDS.BODY.UPDATE)
-  );
-  validateRequiredFields(rawClassData, CLASS_FIELDS.REQUIRED.UPDATE);
+  if (hasField(data, "endDate")) {
+    validateDate(data.endDate, "endDate");
+  }
 
-  const classData = formatClassData(rawClassData);
-
-  throwIf(
-    !classData || Object.keys(classData).length === 0,
-    AppError.BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS
-  );
-
-  validateClassFormats(classData);
-
-  return {
-    classId,
-    classData,
-  };
-};
-
-const validatePartialUpdate = (params, body) => {
-  const classId = formatNumericId(params.id);
-  validateId(classId);
-
-  validateAllowedFields(body, CLASS_FIELDS.BODY.UPDATE);
-
-  const rawClassData = sanitizeFields(
-    pickFields(body, CLASS_FIELDS.BODY.UPDATE)
-  );
-
-  const classData = formatClassData(rawClassData);
-
-  throwIf(
-    !classData || Object.keys(classData).length === 0,
-    AppError.BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS
-  );
-
-  validateClassFormats(classData);
-
-  return {
-    classId,
-    classData,
-  };
-};
-
-const validateRemove = (params) => {
-  const classId = formatNumericId(params.id);
-  validateId(classId);
-  return classId;
+  if (hasField(data, "startDate") && hasField(data, "endDate")) {
+    if (new Date(data.endDate) < new Date(data.startDate)) {
+      throw new ValidationError(
+        ERROR_CODES.VALIDATION_FAILED,
+        "endDate must be greater than or equal to startDate",
+      );
+    }
+  }
 };
 
 module.exports = {
-  validateGetList,
-  validateGetById,
-  validateCreate,
-  validateUpdate,
-  validatePartialUpdate,
-  validateRemove,
+  validateClassFormats,
 };

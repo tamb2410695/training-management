@@ -1,52 +1,81 @@
-const { asyncHandler, successResponse } = require("../../utils/helpers");
+const { SUCCESS_CODES } = require("@/constants");
+
+const { asyncHandler, successResponse } = require("@/utils/helpers");
+
 const documentsService = require("./documents.service");
 
-const getList = asyncHandler(async (req, res, next) => {
+// ===============================
+// Query
+// ===============================
+
+const getList = asyncHandler(async (req, res) => {
   const result = await documentsService.getList(req.query);
-  return successResponse(res, result, "Lấy danh sách tài liệu thành công");
+
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const getById = asyncHandler(async (req, res, next) => {
-  const result = await documentsService.getById(req.params.id);
-  return successResponse(res, result, "Lấy thông tin tài liệu thành công");
+const getById = asyncHandler(async (req, res) => {
+  const result = await documentsService.getById(req.params);
+
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const create = asyncHandler(async (req, res, next) => {
-  const staffId = req.user.accountId; 
-  const result = await documentsService.create(req.body, req.file, staffId);
-  return successResponse(res, result, "Tải lên tài liệu thành công");
+// ===============================
+// CRUD
+// ===============================
+
+const upload = asyncHandler(async (req, res) => {
+  const result = await documentsService.upload(
+    req.body,
+    req.file,
+    req.user.staffId,
+  );
+
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_CREATE_SUCCESS, 201);
 });
 
-const update = asyncHandler(async (req, res, next) => {
-  const documentId = req.params.id;
-  const documentData = req.body;
+const update = asyncHandler(async (req, res) => {
+  const result = await documentsService.update(
+    req.params,
+    req.body,
+    req.user.staffId,
+  );
 
-  const result = await documentsService.update(documentId, documentData);
-  return successResponse(res, result, "Cập nhật thông tin tài liệu thành công");
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_UPDATE_SUCCESS);
 });
 
-const remove = asyncHandler(async (req, res, next) => {
-  const result = await documentsService.remove(req.params.id);
-  return successResponse(res, result, "Xóa tài liệu thành công");
+const remove = asyncHandler(async (req, res) => {
+  const result = await documentsService.remove(req.params, req.user);
+
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_DELETE_SUCCESS);
 });
 
-const restore = asyncHandler(async (req, res, next) => {
-  const result = await documentsService.restore(req.params.id);
-  return successResponse(res, result, "Khôi phục tài liệu thành công");
+// ===============================
+// Business Actions
+// ===============================
+
+const restore = asyncHandler(async (req, res) => {
+  const result = await documentsService.restore(req.params);
+
+  return successResponse(res, result, SUCCESS_CODES.SYSTEM_UPDATE_SUCCESS);
 });
 
-const download = asyncHandler(async (req, res, next) => {
-  const fileInfo = await documentsService.download(req.params.id);
-  
-  return res.download(fileInfo.filePath, fileInfo.originalName);
+const download = asyncHandler(async (req, res) => {
+  const file = await documentsService.download(req.params, req.user);
+
+  res.setHeader("Content-Type", file.mimeType);
+
+  return res.download(file.path, file.fileName);
 });
 
 module.exports = {
   getList,
   getById,
-  create,
+
+  upload,
   update,
   remove,
+
   restore,
   download,
 };

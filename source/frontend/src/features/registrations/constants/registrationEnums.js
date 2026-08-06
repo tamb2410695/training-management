@@ -1,42 +1,51 @@
-export const ACCOUNT_STATUS = {
-  PENDING: { CODE: "PENDING", LABEL: "Chờ duyệt", COLOR: "warning" },
-  ACTIVE: { CODE: "ACTIVE", LABEL: "Hoạt động", COLOR: "success" },
-  LOCKED: { CODE: "LOCKED", LABEL: "Đang khóa", COLOR: "danger" },
-  DISABLED: { CODE: "DISABLED", LABEL: "Vô hiệu hóa", COLOR: "secondary" },
-  DELETED: { CODE: "DELETED", LABEL: "Đã xóa", COLOR: "dark" },
-};
+import { buildEnum } from "@/utils";
 
-export const ACCOUNT_ROLES = {
-  ADMIN: { CODE: "ADMIN", LABEL: "Quản trị viên" },
-  STUDENT: { CODE: "STUDENT", LABEL: "Học viên" },
-  INSTRUCTOR: { CODE: "INSTRUCTOR", LABEL: "Giảng viên" },
-};
+export const REGISTRATION_STATUS = buildEnum({
+  PENDING: {
+    label: "Chờ duyệt",
+    color: "warning",
+    order: 1,
+    filterable: true,
+  },
 
-export const ACCOUNT_STATUS_OPTIONS = Object.values(ACCOUNT_STATUS).map((status) => ({
-  value: status.CODE,
-  label: status.LABEL,
-}));
+  APPROVED: {
+    label: "Đã duyệt",
+    color: "success",
+    order: 2,
+    filterable: true,
+  },
 
-export const ACCOUNT_ROLE_OPTIONS = Object.values(ACCOUNT_ROLES).map((role) => ({
-  value: role.CODE,
-  label: role.LABEL,
-}));
+  REJECTED: {
+    label: "Từ chối",
+    color: "danger",
+    order: 3,
+    filterable: true,
+  },
+});
 
-export const ACCOUNT_FILTERS = {
-  accountStatus: ACCOUNT_STATUS_OPTIONS,
-  roleCodes: ACCOUNT_ROLE_OPTIONS, 
-};
 
-export const ACCOUNT_MESSAGES = {
-  CREATE_SUCCESS: "Tạo tài khoản thành công.",
-  UPDATE_SUCCESS: "Cập nhật tài khoản thành công.",
-  DELETE_SUCCESS: "Xóa tài khoản thành công.",
-  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa tài khoản này không?",
-  
-  ACTIVATE_SUCCESS: "Kích hoạt tài khoản thành công.",
-  LOCK_SUCCESS: "Khóa tài khoản thành công.",
-  DISABLE_SUCCESS: "Vô hiệu hóa tài khoản thành công.",
-  
-  LOCK_CONFIRM: "Bạn có chắc chắn muốn khóa tài khoản này không?",
-  DISABLE_CONFIRM: "Bạn có chắc chắn muốn vô hiệu hóa tài khoản này không?",
+export const REGISTRATION_MESSAGES = {
+  CREATE_SUCCESS:
+    "Tạo đăng ký khóa học thành công.",
+
+  UPDATE_SUCCESS:
+    "Cập nhật đăng ký khóa học thành công.",
+
+  DELETE_SUCCESS:
+    "Xóa đăng ký khóa học thành công.",
+
+  DELETE_CONFIRM:
+    "Bạn có chắc chắn muốn xóa đăng ký khóa học này không?",
+
+  APPROVE_SUCCESS:
+    "Duyệt đăng ký khóa học thành công.",
+
+  APPROVE_CONFIRM:
+    "Bạn có chắc chắn muốn duyệt đăng ký khóa học này không?",
+
+  REJECT_SUCCESS:
+    "Từ chối đăng ký khóa học thành công.",
+
+  REJECT_CONFIRM:
+    "Bạn có chắc chắn muốn từ chối đăng ký khóa học này không?",
 };

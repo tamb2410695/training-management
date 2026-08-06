@@ -1,19 +1,15 @@
-import { API_ROUTES } from "../../../constants";
-import api from "../../../services/api";
-import { createCrudService } from "../../../services/crudService";
+import api from "@/services/api";
+import { createCrudService } from "@/services/crudService";
+import { API_ROUTES } from "@/constants";
 
-const BASE_REGISTRATION_PATH = API_ROUTES.REGISTRATION.LIST; 
+const API = API_ROUTES.REGISTRATION;
 
-const registrationsService = {
-  ...createCrudService(BASE_REGISTRATION_PATH),
-  
-  getById: (id) => api.get(API_ROUTES.REGISTRATION.DETAIL(id)),
+export default function registrationsService() {
+  return {
+    ...createCrudService(API),
 
-  activate: (id, activationData = {}) =>
-    api.post(API_ROUTES.REGISTRATION.ACTIVATE(id), activationData),
+    approve: (id, data) => api.patch(API.APPROVE(id), data),
 
-  reject: (id, reasonData = {}) =>
-    api.post(API_ROUTES.REGISTRATION.REJECT(id), reasonData),
-};
-
-export default registrationsService;
+    reject: (id) => api.patch(API.REJECT(id)),
+  };
+}

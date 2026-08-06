@@ -3,3 +3,7 @@ const validateCode = (code, prefix) => {
 
   return regex.test(code);
 };
+
+module.exports = {
+  validateCode
+}

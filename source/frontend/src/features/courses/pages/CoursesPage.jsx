@@ -3,11 +3,12 @@ import DataTable from "@/components/table/DataTable";
 import Pagination from "@/components/query/pagination/Pagination";
 import CrudModal from "@/components/modal/CrudModal";
 import { COURSE_FEATURE } from "../constants";
-import { useCoursesFeature } from "../hooks/useCoursesFeature";
+import { useCourseFeature } from "../hooks/useCourseFeature";
 import { CourseForm } from "../components";
+import CourseCard from "../components/CourseCard";
 
 function CoursesPage() {
-  const course = useCoursesFeature();
+  const course = useCourseFeature();
 
   return (
     <div className="container mt-4">
@@ -32,11 +33,11 @@ function CoursesPage() {
           </div>
         )}
       </div>
-
+      
       <CrudModal
         open={course.modal.opened}
         title={course.modal.title}
-        onClose={course.actions.modal.cancel}
+        onClose={course.actions.cancel}
         loading={course.crud.loading}
         actions={
           course.formView.isWizard || course.modal.isView

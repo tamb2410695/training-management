@@ -1,660 +1,771 @@
-# Context dự án Frontend Architecture
+Context Refactor Frontend - Training Management System
+1. Bối cảnh hiện tại
 
-## 1. Kiến trúc tổng quan
+Dự án là hệ thống quản lý trung tâm đào tạo CNTT.
 
-Dự án đang xây dựng theo hướng feature-based architecture.
+Backend
 
-Cấu trúc định hướng:
+Backend đã được xây dựng theo hướng phân tầng rõ ràng.
 
-```
-src
-├── app
-├── components
-├── contexts
-├── hooks
-├── utils
-├── services
-└── features
-    ├── student
-    │   ├── components
-    │   ├── hooks
-    │   ├── services
-    │   ├── constants
-    │   └── validation
-    └── ...
-```
+Route
+    ↓
+Middleware
+    ↓
+Validator
+    ↓
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
 
-Nguyên tắc:
+Mỗi module đều có đầy đủ:
 
-* Component dùng để render UI.
-* Hook xử lý logic.
-* Context chứa state dùng chung toàn app.
-* Feature hook xử lý nghiệp vụ riêng của từng domain.
-* Không đưa logic feature vào global context.
+accounts
+students
+staffs
+courses
+classes
+documents
+registrations
+enrollments
+...
 
----
-
-# 2. Query management
-
-Đang sử dụng `useQueryState`.
-
-Mục tiêu:
-
-* Quản lý query state của từng feature.
-* Reset query về trạng thái mặc định.
-* Refresh dữ liệu mà không reset query.
+Mỗi module đã có CRUD cơ bản và bắt đầu bổ sung các API nghiệp vụ.
 
 Ví dụ:
 
-```js
-const query = useFeatureQuery(STUDENT_FEATURE.query);
-```
+POST /registrations/:id/approve
 
-Flow:
+POST /registrations/:id/reject
 
-```
-updateQuery()
-      |
-      v
-query state thay đổi
-      |
-      v
-useEffect bắt query thay đổi
-      |
-      v
-API gọi lại
-```
+POST /classes/:id/open
 
-Reset:
+POST /classes/:id/close
 
-```js
-query.resetQuery();
-```
+POST /accounts/:id/reset-password
 
-Ý nghĩa:
+Backend chịu trách nhiệm:
 
-* Đưa query về defaultQuery.
-* useEffect nhận query mới và gọi API.
+Business Logic.
+Validation.
+Authorization.
+Transaction.
+Error Handling.
+API Contract.
 
-Refresh:
+Frontend không được chứa Business Logic.
 
-```js
-query.refresh();
-```
+Frontend hiện tại
 
-Ý nghĩa:
+Frontend đã có hệ thống Component dùng chung khá đầy đủ.
 
-* Không thay đổi filter/page/sort hiện tại.
-* Chỉ tạo refreshKey mới để trigger reload API.
+components/
 
----
+card/
 
-# 3. useDebounce
+table/
 
-Đang dùng cho query search.
+form/
 
-Ví dụ:
+feedback/
 
-```js
-const debouncedQuery = useDebounce(query.query, 500);
+toolbar/
 
-useEffect(() => {
-  crud.getList(debouncedQuery);
-}, [
-  crud.getList,
-  debouncedQuery,
-]);
-```
+query/
 
-Mục đích:
+modal/
 
-* Tránh gọi API liên tục khi user nhập search.
-* Chỉ gọi sau khi người dùng dừng thao tác.
+layouts/
 
----
+view/
 
-# 4. CRUD Action architecture
+Ngoài ra còn có
 
-Không để page xử lý trực tiếp.
+Generic CRUD
+Generic Form
+Generic Table
+Generic Query
+Generic Modal
 
-Tách thành:
+Các CRUD cơ bản đã hoạt động.
 
-```
-useFeatureCrudActions
-        |
-        +-- create
-        +-- update
-        +-- remove
-        +-- refresh
-```
+API giữa Backend và Frontend đã cơ bản đồng bộ.
 
-Ví dụ:
+Hiện tại frontend bắt đầu chuyển sang xây dựng nghiệp vụ.
 
-```js
-export function useFeatureCrudActions({
-  crud,
-  feedback,
-}) {
+2. Những vấn đề hiện tại
 
-}
-```
+CRUD đã giải quyết được
 
-Feature action chịu trách nhiệm:
+Create
 
-* Gọi API.
-* Xử lý flow nghiệp vụ.
-* Gọi feedback.
+Update
 
-Không render UI.
+Delete
 
----
+List
 
-# 5. Validation architecture
+Detail
 
-Có:
+Nhưng chưa giải quyết được
 
-```
-runValidator()
-validateForm()
-```
+Approve
 
-Flow:
+Reject
 
-```
-form.submit
-      |
-      v
-validateForm()
-      |
-      v
-runValidator()
-      |
-      v
-validatorMap
-```
+Cancel
 
-Validator trả về:
+Assign Class
 
-* object error:
+Upload Document
 
-```js
-{
- type: "required",
- message: "Tên bắt buộc"
-}
-```
+Reset Password
 
-hoặc:
+Activate
 
-```js
-null
-```
+Deactivate
 
-Không throw error.
+Đây không còn là CRUD.
 
-Các lỗi validation client:
+Đây là Business Action.
 
-* set vào form errors.
-* không gửi API.
+Frontend bắt đầu xuất hiện nhiều câu lệnh
 
-Các lỗi server:
+if(status==="PENDING")
 
-* đi qua error handler.
+if(role==="ADMIN")
 
----
+if(owner)
 
-# 6. Error handling
+...
 
-Có:
+Nếu tiếp tục sẽ dẫn đến
 
-```
+Component biết nghiệp vụ.
+Page biết quá nhiều.
+Hook quá lớn.
+UI và UX bị gắn chặt.
+3. Mục tiêu refactor
+
+Mục tiêu không phải tạo kiến trúc phức tạp.
+
+Mục tiêu là:
+
+UI độc lập
+
+Ví dụ
+
+Hôm nay
+
+Table
+
+Mai đổi thành
+
+Card
+
+hoặc
+
+Kanban
+
+thì
+
+Business vẫn hoạt động.
+
+Ví dụ
+
+Hôm nay
+
+CrudToolbar
+
+Mai đổi thành
+
+Floating Action Button
+
+thì
+
+API
+
+↓
+
+Hook
+
+↓
+
+Workflow
+
+không thay đổi.
+
+Nói cách khác
+
+Frontend hướng tới
+
+Business độc lập với giao diện.
+
+Không phải
+
+Button
+
+↓
+
+API
+
+mà là
+
+Button
+
+↓
+
+Action
+
+↓
+
+Handler
+
+↓
+
+API
+
+Button chỉ là cách thể hiện.
+
+4. Triết lý kiến trúc
+
+Frontend chỉ nên có ba loại trách nhiệm.
+
+Presentation
+
+Hiển thị.
+
+Ví dụ
+
+Table
+
+Card
+
+Modal
+
+Form
+
+Button
+
+Không biết Business.
+
+Application
+
+Điều phối.
+
+Ví dụ
+
+Load Data
+
+Call API
+
+Reload
+
+Navigate
+
+Toast
+
+Dialog
+
+Không chứa Business Rule.
+
+Infrastructure
+
+Ví dụ
+
+Axios
+
+Storage
+
+Context
+
+Router
+
+Utils
+
+Business Rule
+
+↓
+
+Backend.
+
+5. Kiến trúc mong muốn
+Page
+
+↓
+
+Feature Runtime / Feature Hook
+
+↓
+
+Feature Service
+
+↓
+
+Backend API
+
+Component không gọi API.
+
+Component không biết Business.
+
+6. Vai trò từng tầng
+Component
+
+Chỉ render.
+
+Ví dụ
+
+<DataTable/>
+
+<Card/>
+
+<Button/>
+
+Không chứa
+
+if(role==="ADMIN")
+
+Không gọi API.
+
+Page
+
+Chỉ ghép Component.
+
+Ví dụ
+
+StudentDetailPage
+
+gồm
+
+Header
+
+Toolbar
+
+Overview
+
+Enrollment
+
+Documents
+
+Không chứa Business.
+
+Feature Hook
+
+Đây là tầng Application.
+
+Ví dụ
+
+useStudentsPage()
+
+useRegistrationDetail()
+
+Chịu trách nhiệm
+
+State.
+Query.
+Loading.
+Call Service.
+Workflow.
+Feedback.
+
+Được phép gọi nhiều Service nếu cùng phục vụ một màn hình.
+
+Ví dụ
+
+registrationService
+
+studentService
+
+documentService
+Feature Service
+
+Chỉ gọi API.
+
+Không
+
+Toast
+
+Navigate
+
+Dialog
+
+Không xử lý UI.
+
+7. Khi nào cần Runtime?
+
+Không phải mọi Feature đều cần Runtime.
+
+CRUD
+
+↓
+
+Feature Hook là đủ.
+
+Ví dụ
+
+Students
+
+Khi bắt đầu xuất hiện
+
+Approve
+
+Reject
+
+Assign
+
+Export
+
+History
+
+và
+
+một màn hình cần nhiều Service
+
+↓
+
+Runtime xuất hiện.
+
+Runtime không thay Business.
+
+Runtime chỉ điều phối.
+
+Ví dụ
+
+Registration Runtime
+
+↓
+
+Registration
+
+Student
+
+Documents
+
+History
+
+Policy
+
+Handlers
+8. Policy
+
+Policy không phải Authorization.
+
+Authorization
+
+↓
+
+Backend.
+
+Policy chỉ trả lời
+
+UI nên làm gì.
+
+Ví dụ
+
+Role
+
++
+
+Status
+
++
+
+Owner
+
+↓
+
+Available Actions
+
+Visible Tabs
+
+Readonly
+
+Visibility
+
+Policy không gọi API.
+
+Policy không sửa Database.
+
+9. Workflow
+
+Workflow nằm trong Hook hoặc Runtime.
+
+Ví dụ
+
+Approve
+
+↓
+
+API
+
+↓
+
+Toast
+
+↓
+
+Reload
+
+↓
+
+Navigate
+
+Không nằm trong Component.
+
+10. Error Flow
+
+Backend
+
 AppError
-ValidationError
-errorHandler()
-```
 
-errorHandler chuẩn hóa:
+↓
 
-```js
-{
- errorCode,
- statusCode,
- fieldErrors,
- serverError
-}
-```
+Error Middleware
 
-Quy ước:
+↓
 
-## ValidationError
+HTTP Response
 
-Ví dụ:
+Frontend
 
-```js
-{
- fieldErrors:{
-   email:"Email đã tồn tại"
- }
-}
-```
+Axios
 
-Xử lý:
+↓
 
-```
-form.setErrors(fieldErrors)
-```
+Api Error Resolver
 
-## AppError
+↓
 
-Ví dụ:
+Feature Hook
 
-```
-Không có quyền
-Server lỗi
-```
+↓
 
-Xử lý:
+Feedback Context
 
-```
-feedback.setError()
-```
+↓
 
----
+UI
 
-# 7. Feedback architecture
+Frontend không cần AppError.
 
-Đã thống nhất tách 2 tầng.
+Frontend chỉ chuẩn hóa lỗi.
 
-## Global
+Error Code
 
-`FeedbackContext`
+Backend
 
-Nhiệm vụ:
+EMAIL_EXISTS
 
-Quản lý trạng thái hiển thị toàn app.
+CLASS_FULL
 
-Không biết:
+ACCOUNT_LOCKED
 
-* student
-* form
-* field
-* API
+Frontend dùng chung Code.
 
-Chứa:
+Không dùng Message Backend.
 
-```js
-{
- feedback,
- setSuccess,
- setError,
- confirm,
- clearFeedback
-}
-```
+Frontend tự ánh xạ
 
----
+EMAIL_EXISTS
 
-## useFeedback
+↓
 
-Wrapper của context:
+Email đã tồn tại.
 
-```js
-const feedback = useFeedback();
-```
+Success cũng tương tự.
 
-Dùng ở mọi nơi.
+ACCOUNT_CREATED
 
-Ví dụ:
+↓
 
-```js
-feedback.setSuccess({
- title:"Thành công",
- message:"Lưu dữ liệu thành công"
-});
-```
+Tạo tài khoản thành công.
 
----
+Code là Contract.
 
-# 8. FeedbackProvider
+Message là Presentation.
 
-Chịu trách nhiệm:
+11. Business Action
 
-* lưu feedback state.
-* chuẩn hóa payload.
-* cung cấp action.
+Mỗi nút nghiệp vụ nên có API riêng.
 
-State:
+Ví dụ
 
-```js
-{
- type,
- display,
- title,
- message,
- duration
-}
-```
+Không
 
-Ví dụ:
+PATCH registration
 
-Success:
+mà
 
-```js
-{
- type:"success",
- display:"toast",
- message:"Tạo thành công"
-}
-```
+POST approve
 
-Error:
+POST reject
 
-```js
-{
- type:"error",
- display:"toast",
- message:"Server lỗi"
-}
-```
+POST assign-class
 
-Confirm:
+Frontend Action
 
-```js
-{
- type:"confirm",
- display:"modal",
- title:"Xác nhận xóa",
- message:"Bạn có chắc?"
-}
-```
+↓
 
----
+Backend API
 
-# 9. FeedbackRenderer
+↓
 
-Nằm ở root app.
+Business.
 
-Ví dụ:
+12. Nguyên tắc phát triển
 
-```
-App
- |
- FeedbackProvider
- |
- FeedbackRenderer
- |
- Routes
-```
+Không thiết kế Runtime trước.
 
-Nhiệm vụ:
+Không thiết kế Policy trước.
 
-Mapping state -> UI.
+Không chia nhỏ Hook từ đầu.
 
-Ví dụ:
+Chỉ tách khi
 
-```
-success
-   |
-   v
-Toast / SuccessAlert
+Hook quá lớn.
+Một màn hình cần nhiều nguồn dữ liệu.
+Có nhiều Workflow.
+Có nhiều trạng thái.
 
+Đây là Progressive Architecture.
 
-error
-   |
-   v
-Toast / ErrorAlert
+13. Khả năng tái sử dụng
 
+Điều cần tái sử dụng không phải Component.
 
-confirm
-   |
-   v
-ConfirmModal
-```
+Điều cần tái sử dụng là
 
-Feature không render feedback.
+Business Workflow
 
----
+API
 
-# 10. UI Feedback Components
+Query
 
-Có:
+Feedback
 
-```
-Toast
-SuccessAlert
-ErrorAlert
-ConfirmModal
-```
+Form
 
-Nguyên tắc:
+Table
 
-Component chỉ render.
+View
 
-Không:
+Component chỉ là lớp ngoài.
 
-* gọi API.
-* biết feature.
-* xử lý business.
+Ví dụ
 
----
+Table
 
-# 11. ConfirmModal
+↓
 
-Flow:
+Card
 
-```
-User click delete
+↓
 
-useFeatureAction
+Timeline
 
-feedback.confirm()
+↓
 
-FeedbackRenderer
+Tree
 
-ConfirmModal
+thì
 
-Confirm callback
+Business
 
-API delete
-```
+không đổi.
 
-ConfirmModal nhận:
+14. Nguyên tắc tránh Over Engineering
 
-```js
-{
- title,
- message,
- confirmText,
- cancelText,
- onConfirm,
- onCancel
-}
-```
+Không tạo Runtime cho mọi Feature.
 
-Không gọi API trực tiếp.
+Không tạo Policy cho mọi Feature.
 
----
+Không tạo Action Engine.
 
-# 12. useFeatureFeedback
+Không tạo Event Bus.
 
-Đây là lớp nằm giữa feature và global feedback.
+Không tạo State Machine.
 
-Ví dụ:
+Không tạo Plugin System.
 
-```
-useStudentFeedback
-        |
-        +-- useFeedback
-        |
-        +-- form
-        |
-        +-- errorHandler
-```
+Không tạo hàng chục Hook nhỏ chỉ để "đẹp kiến trúc".
 
-Nhiệm vụ:
+Không thêm abstraction khi chỉ có một nơi sử dụng.
 
-* Map lỗi server.
-* Set field errors.
-* Chuẩn hóa message theo feature.
+15. Tiêu chí đánh giá sau Refactor
 
-Ví dụ:
+Sau khi refactor hoàn thành, frontend nên đạt được các tiêu chí sau:
 
-```js
-handleError(error){
+Tách biệt trách nhiệm
+Component chỉ hiển thị.
+Page chỉ tổ chức bố cục.
+Hook/Runtime điều phối nghiệp vụ giao diện.
+Service chỉ giao tiếp API.
+Backend chịu trách nhiệm Business Logic.
+UI độc lập với Business
 
- if(error.fieldErrors){
-    form.setErrors(error.fieldErrors);
-    return;
- }
+Có thể thay đổi
 
- feedback.setError({
-   message:error.serverError
- });
-}
-```
+DataTable
 
----
+thành
 
-# 13. Không nên tạo useError/useSuccess global riêng
+Card List
 
-Không nên:
+hoặc
 
-```
-hooks
-├── useFeedback
-├── useError
-└── useSuccess
-```
+Kanban
 
-vì dễ trùng trách nhiệm.
+mà không phải sửa Hook hay Service.
 
-Nên:
+Có thể thay đổi
 
-```
-global
-└── useFeedback
+CrudToolbar
 
+thành
 
-feature
-└── useStudentFeedback
-```
+Dropdown Menu
 
----
+hoặc
 
-# 14. Context nên chứa gì?
+Context Menu
 
-Context phù hợp cho:
+mà workflow vẫn giữ nguyên.
 
-* Auth
-* Theme
-* Language
-* Global feedback
-* Global modal
+UX độc lập với Component
 
-Không phù hợp cho:
+Một Action như
 
-* Form state.
-* Table query.
-* Search input.
-* Feature pagination.
+Approve Registration
 
----
+có thể được kích hoạt từ:
 
-# 15. Luồng hoàn chỉnh
+Button trên Toolbar.
+Menu chuột phải.
+Card Action.
+Phím tắt.
+Wizard.
 
-Ví dụ tạo học viên:
+Tất cả đều gọi cùng một Handler trong Hook/Runtime.
 
-```
-Submit form
+Điều này có nghĩa UX (cách người dùng tương tác) được tách khỏi UI (cách hiển thị).
 
-    |
-    v
+Khả năng mở rộng
 
-useStudentActions
+Có thể bổ sung thêm Business Action mới mà không phải sửa Component dùng chung.
 
-    |
-    v
+Có thể bổ sung thêm giao diện mới mà không phải sửa Service.
 
-form.validate()
+Có thể bổ sung thêm Workflow mới mà không phải sửa DataTable hay DynamicForm.
 
-    |
-    +---- invalid
-    |
-    v
+Kết luận
 
-form.setErrors()
+Mục tiêu cuối cùng của quá trình refactor không phải là tạo ra nhiều tầng hơn, mà là đạt được sự phân tách rõ ràng giữa dữ liệu, điều phối và hiển thị.
 
+Kiến trúc nên hướng đến nguyên tắc:
 
-valid
+Backend định nghĩa nghiệp vụ (Business). Frontend điều phối trải nghiệm (Application/UX). Component chỉ chịu trách nhiệm hiển thị (UI).
 
-    |
-    v
-
-crud.createItem()
-
-
-success
-
-    |
-    v
-
-useStudentFeedback.success()
-
-
-    |
-    v
-
-useFeedback.setSuccess()
-
-
-    |
-    v
-
-FeedbackRenderer
-
-
-    |
-    v
-
-Toast
-```
-
-Lỗi:
-
-```
-API throw error
-
-    |
-    v
-
-catch(error)
-
-    |
-    v
-
-useStudentFeedback.handleError()
-
-
-    |
-    +---- fieldErrors
-    |          |
-    |          v
-    |      form.setErrors()
-    |
-    +---- serverError
-               |
-               v
-          feedback.setError()
-```
-
----
-
-Mục tiêu cuối cùng:
-
-* Feature độc lập.
-* Global state tối giản.
-* Feedback thống nhất.
-* Error handling rõ ràng.
-* Component chỉ render.
-* Hook xử lý logic.
-* Context chỉ chứa dữ liệu dùng chung.
+Nhờ đó, nghiệp vụ không phụ thuộc vào giao diện, và giao diện có thể thay đổi hoặc tái sử dụng mà không làm thay đổi luồng xử lý của hệ thống. Đây là mục tiêu quan trọng nhất của quá trình refactor và cũng là tiêu chí để tránh over-engineering: chỉ bổ sung thêm tầng khi nó thực sự giúp giảm sự phụ thuộc hoặc giảm độ phức tạp của mã nguồn, không phải chỉ để "đẹp kiến trúc".

@@ -1,19 +1,18 @@
 import api from "./api";
 
-export const createCrudService = (resourcePath) => {
-  const service = {
-    getList: (params = {}) => 
-      api.get(`${resourcePath.LIST}`, { params }),
+export const createCrudService = (resourcePath) => ({
+  getList: (params = {}) =>
+    api.get(resourcePath.LIST, { params }),
 
-    create: (data) => 
-      api.post(`${resourcePath.LIST}`, data),
+  getById: (id) =>
+    api.get(resourcePath.DETAIL(id)),
 
-    update: (id, data) => 
-      api.patch(`${resourcePath.DETAIL(id)}`, data),
+  create: (data) =>
+    api.post(resourcePath.LIST, data),
 
-    remove: (id) => 
-      api.delete(`${resourcePath.DETAIL(id)}`),
-  };
+  update: (id, data) =>
+    api.patch(resourcePath.DETAIL(id), data),
 
-  return service;
-};
+  remove: (id) =>
+    api.delete(resourcePath.DETAIL(id)),
+});

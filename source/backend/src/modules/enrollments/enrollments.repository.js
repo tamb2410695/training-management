@@ -1,88 +1,154 @@
-const db = require("../../config/database");
-const { ENROLLMENT_FIELDS } = require("./enrollments.constants");
-const { ENROLLMENT_STATUS } = require("../../constants"); // Cần đảm bảo có ENROLLMENT_STATUS trong constants
+const db = require("@/config/database");
+
 const {
   arrayToCamelCase,
   objectToSnakeCase,
   objectToCamelCase,
-} = require("../../utils/helpers");
-const queryBuilder = require("../../utils/query/queryBuilders");
+} = require("@/utils/helpers");
 
-const find = async (query, connection = db) => {
+const queryBuilder = require("@/utils/query/queryBuilders");
+
+const {
+  ENROLLMENT_FIELDS,
+  ENROLLMENT_MAPS,
+} = require("./enrollments.constants");
+
+const { ENROLLMENT_STATUS } = require("@/constants");
+
+// ===============================
+// Base Query
+// ===============================
+
+const ENROLLMENT_SELECT = `
+SELECT
+    enr.enrollment_id,
+    enr.student_id,
+    enr.class_id,
+    enr.enrollment_date,
+    enr.enrollment_status,
+    enr.created_at,
+    enr.updated_at,
+
+    stu.student_code,
+    stu.full_name AS student_name,
+
+    cls.class_code,
+    cls.class_name
+`;
+
+const ENROLLMENT_FROM = `
+FROM ENROLLMENT enr
+
+INNER JOIN STUDENT_PROFILE stu
+    ON stu.student_id = enr.student_id
+
+INNER JOIN CLASS cls
+    ON cls.class_id = enr.class_id
+`;
+
+// ===============================
+// Query
+// ===============================
+
+const list = async (query, connection = db) => {
   const {
     page,
     limit,
+
     search,
+    searchField,
+
     sortBy,
     sortOrder,
+
     enrollmentStatus,
     studentId,
     classId,
   } = query;
-  const searchableFields = ENROLLMENT_FIELDS.QUERY.SEARCHABLE;
-  const sortableFields = ENROLLMENT_FIELDS.QUERY.SORTABLE;
 
   const filters = {};
-  if (enrollmentStatus) filters.enrollmentStatus = enrollmentStatus;
-  if (studentId) filters.studentId = studentId;
-  if (classId) filters.classId = classId;
+
+  if (enrollmentStatus) {
+    filters.enrollmentStatus = enrollmentStatus;
+  }
+
+  if (studentId) {
+    filters.studentId = studentId;
+  }
+
+  if (classId) {
+    filters.classId = classId;
+  }
 
   const queryOptions = queryBuilder.buildQueryOptions({
     page,
     limit,
+
     search,
-    filters,
+    searchField,
+
+    searchableFields: ENROLLMENT_FIELDS.QUERY.SEARCHABLE,
+
+    searchMap: ENROLLMENT_MAPS.SEARCH,
+
     sortBy,
     sortOrder,
-    searchableFields,
-    sortableFields,
+
+    sortMap: ENROLLMENT_MAPS.SORT,
+
+    filters,
+
+    filterMap: ENROLLMENT_MAPS.FILTER,
   });
 
   const { pagination, searchResult, filterResult, sortClause } = queryOptions;
 
-  const selectClause = `
-    SELECT 
-      e.enrollment_id,
-      e.enrollment_code,
-      e.enrollment_date,
-      e.enrollment_status,
-      e.created_at,
-      s.student_id,
-      s.student_code,
-      s.full_name AS student_name,
-      c.class_id,
-      c.class_code,
-      co.course_name,
-      co.tuition_fee
-  `;
+  const whereParts = [];
 
-  const fromJoinClause = `
-    FROM ENROLLMENT e
-    JOIN STUDENT s ON e.student_id = s.student_id
-    JOIN CLASS c ON e.class_id = c.class_id
-    JOIN COURSE co ON c.course_id = co.course_id
-  `;
-
-  let whereClause = ` WHERE e.deleted_at IS NULL`;
   const params = [];
 
-  if (filterResult.clause) {
-    whereClause += ` AND ${filterResult.clause}`;
-    params.push(...filterResult.values);
-  }
-
   if (searchResult.clause) {
-    whereClause += ` AND ${searchResult.clause}`;
+    whereParts.push(searchResult.clause);
+
     params.push(...searchResult.values);
   }
 
-  const countSql = `SELECT COUNT(*) as total ${fromJoinClause} ${whereClause}`;
-  const [countRows] = await connection.query(countSql, params);
-  const totalRecords = countRows[0]?.total || 0;
+  if (filterResult.clause) {
+    whereParts.push(filterResult.clause);
 
-  let dataSql = `${selectClause} ${fromJoinClause} ${whereClause}`;
-  if (sortClause) dataSql += ` ${sortClause}`;
-  dataSql += ` LIMIT ? OFFSET ?`;
+    params.push(...filterResult.values);
+  }
+
+  const whereClause = whereParts.length
+    ? `WHERE ${whereParts.join(" AND ")}`
+    : "";
+
+  const countSql = `
+    SELECT COUNT(*) AS total
+
+    ${ENROLLMENT_FROM}
+
+    ${whereClause}
+  `;
+
+  const [countRows] = await connection.query(countSql, params);
+
+  const totalRecords = Number(countRows[0]?.total || 0);
+
+  let dataSql = queryBuilder.buildSelectQuery({
+    selectClause: ENROLLMENT_SELECT,
+
+    fromJoinClause: ENROLLMENT_FROM,
+
+    whereClause,
+
+    sortClause,
+  });
+
+  dataSql += `
+    LIMIT ?
+    OFFSET ?
+  `;
 
   const [rows] = await connection.query(dataSql, [
     ...params,
@@ -92,91 +158,230 @@ const find = async (query, connection = db) => {
 
   return {
     data: arrayToCamelCase(rows),
+
     pagination: {
       totalRecords,
+
       limit: pagination.limit,
+
+      page: pagination.page,
+
       offset: pagination.offset,
+
       totalPages: Math.ceil(totalRecords / pagination.limit),
     },
   };
 };
 
+// ===============================
+// Find
+// ===============================
+
 const findById = async (enrollmentId, connection = db) => {
   const [rows] = await connection.query(
     `
-      SELECT e.*, c.course_id 
-     FROM ENROLLMENT e 
-     JOIN CLASS c ON e.class_id = c.class_id
-     WHERE e.enrollment_id = ? 
-      AND e.deleted_at IS NULL
-    `,
+      ${ENROLLMENT_SELECT}
+
+      ${ENROLLMENT_FROM}
+
+      WHERE enr.enrollment_id = ?
+      `,
     [enrollmentId],
   );
-  return rows[0] ? objectToCamelCase(rows[0]) : null;
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return objectToCamelCase(rows[0]);
 };
 
-const findByStudentAndClass = async (studentId, classId, connection = db) => {
+const findByStudentClass = async (studentId, classId, connection = db) => {
   const [rows] = await connection.query(
     `
-    SELECT * FROM ENROLLMENT 
-    WHERE student_id = ? 
-      AND class_id = ?
-      AND deleted_at IS NULL
-    `,
+      ${ENROLLMENT_SELECT}
+
+      ${ENROLLMENT_FROM}
+
+      WHERE
+          enr.student_id = ?
+      AND
+          enr.class_id = ?
+      `,
     [studentId, classId],
   );
-  return rows[0] ? objectToCamelCase(rows[0]) : null;
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return objectToCamelCase(rows[0]);
 };
+
+// ===============================
+// Exists
+// ===============================
+
+const existsById = async (enrollmentId, connection = db) => {
+  const [rows] = await connection.query(
+    `
+      SELECT 1
+
+      FROM ENROLLMENT
+
+      WHERE enrollment_id = ?
+
+      LIMIT 1
+      `,
+    [enrollmentId],
+  );
+
+  return rows.length > 0;
+};
+
+const existsByStudentClass = async (studentId, classId, connection = db) => {
+  const [rows] = await connection.query(
+    `
+      SELECT 1
+
+      FROM ENROLLMENT
+
+      WHERE
+          student_id = ?
+      AND
+          class_id = ?
+
+      LIMIT 1
+      `,
+    [studentId, classId],
+  );
+
+  return rows.length > 0;
+};
+
+// ===============================
+// Mutation
+// ===============================
 
 const create = async (enrollmentData, connection = db) => {
   const data = objectToSnakeCase(enrollmentData);
+
   const fields = Object.keys(data);
+
   const values = Object.values(data);
 
-  const placeholders = fields.map(() => "?").join(", ");
   const sql = `
-    INSERT INTO
-    ENROLLMENT (${fields.join(", ")})
-    VALUES (${placeholders});
+    INSERT INTO ENROLLMENT
+    (${fields.join(",")})
+
+    VALUES
+    (${fields.map(() => "?").join(",")})
   `;
 
   const [result] = await connection.query(sql, values);
+
   return findById(result.insertId, connection);
 };
 
 const update = async (enrollmentId, enrollmentData, connection = db) => {
   const data = objectToSnakeCase(enrollmentData);
+
   const fields = Object.keys(data);
+
+  if (!fields.length) {
+    return findById(enrollmentId, connection);
+  }
+
   const values = Object.values(data);
 
-  if (fields.length === 0) return findById(enrollmentId, connection);
-
-  const setClause = fields.map((field) => `${field} = ?`).join(", ");
-  const sql = `
+  await connection.query(
+    `
     UPDATE ENROLLMENT
-    SET ${setClause} 
-    WHERE enrollment_id = ?
-  `;
 
-  await connection.query(sql, [...values, enrollmentId]);
+    SET
+    ${fields.map((field) => `${field} = ?`).join(",")}
+
+    WHERE enrollment_id = ?
+    `,
+    [...values, enrollmentId],
+  );
+
+  return findById(enrollmentId, connection);
+};
+
+const updateStatus = async (enrollmentId, status, connection = db) => {
+  await connection.query(
+    `
+    UPDATE ENROLLMENT
+
+    SET enrollment_status = ?
+
+    WHERE enrollment_id = ?
+    `,
+    [status, enrollmentId],
+  );
+
   return findById(enrollmentId, connection);
 };
 
 const remove = async (enrollmentId, connection = db) => {
-  const sql = `
-    UPDATE ENROLLMENT 
-    SET deleted_at = CURRENT_TIMESTAMP()
+  await connection.query(
+    `
+    DELETE FROM ENROLLMENT
+
     WHERE enrollment_id = ?
-  `;
-  await connection.query(sql, [enrollmentId]);
-  return { enrollmentId };
+    `,
+    [enrollmentId],
+  );
+
+  return {
+    enrollmentId,
+
+    deleted: true,
+  };
+};
+
+// ===============================
+// Business Support
+// ===============================
+
+const countByClass = async (classId, connection = db) => {
+  const [rows] = await connection.query(
+    `
+      SELECT COUNT(*) AS total
+
+      FROM ENROLLMENT
+
+      WHERE
+          class_id = ?
+
+      AND
+          enrollment_status = ?
+      `,
+    [classId, ENROLLMENT_STATUS.APPROVED],
+  );
+
+  return Number(rows[0]?.total || 0);
 };
 
 module.exports = {
-  find,
+  list,
+
   findById,
-  findByStudentAndClass,
+
+  findByStudentClass,
+
+  existsById,
+
+  existsByStudentClass,
+
   create,
+
   update,
+
+  updateStatus,
+
   remove,
+
+  countByClass,
 };

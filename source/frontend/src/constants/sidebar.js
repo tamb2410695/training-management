@@ -11,24 +11,24 @@ export const SIDEBAR_MENU = {
       path: ROUTES.ADMIN.ACCOUNTS,
     },
     {
-      label: "Quản lý phòng ban",
-      path: ROUTES.ADMIN.DEPARTMENTS,
-    },
-    {
       label: "Quản lý nhân sự",
       path: ROUTES.ADMIN.STAFFS,
+    },
+    {
+      label: "Quản lý danh mục\nkhóa học",
+      path: ROUTES.ADMIN.COURSE_CATEGORY,
     },
     {
       label: "Quản lý khóa học",
       path: ROUTES.ADMIN.COURSES,
     },
     {
-      label: "Tài liệu môn học",
-      path: ROUTES.ADMIN.DOCUMENTS,
+      label: "Quản lý lớp học",
+      path: ROUTES.ADMIN.CLASSES,
     },
     {
-      label: "Quản lý phòng học",
-      path: ROUTES.ADMIN.ROOMS,
+      label: "Quản lý tài liệu",
+      path: ROUTES.ADMIN.DOCUMENTS,
     },
     {
       label: "Đơn đăng ký học viên",
@@ -39,8 +39,8 @@ export const SIDEBAR_MENU = {
       path: ROUTES.ADMIN.STUDENTS,
     },
     {
-      label: "Báo cáo doanh thu",
-      path: ROUTES.ADMIN.REVENUE,
+      label: "Quản lý ghi danh\nkhóa học",
+      path: ROUTES.ADMIN.ENROLLMENTS,
     },
   ],
 
@@ -66,11 +66,11 @@ export const SIDEBAR_MENU = {
     },
     {
       label: "Quản lý khóa học",
-      path: ROUTES.ADMIN.COURSES,
+      path: ROUTES.INSTRUCTOR.COURSES,
     },
     {
       label: "Tài liệu môn học",
-      path: ROUTES.ADMIN.DOCUMENTS,
+      path: ROUTES.INSTRUCTOR.DOCUMENTS,
     },
     {
       label: "Thông tin cá nhân",

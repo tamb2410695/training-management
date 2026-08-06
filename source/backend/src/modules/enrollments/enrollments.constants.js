@@ -1,16 +1,42 @@
 const { QUERY_COMMON_FIELDS } = require("../../constants");
 
+const ENROLLMENT_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+};
+
+const ENROLLMENT_ACTIONS = {
+  APPROVE: "approve",
+  REJECT: "reject",
+};
+
 const ENROLLMENT_FIELDS = {
   PARAMS: {
     ID: ["id"],
   },
 
   QUERY: {
-    SEARCHABLE: ["enrollmentCode", "studentCode", "fullName", "classCode"],
+    SEARCHABLE: [
+      "studentCode",
+      "studentName",
+      "classCode",
+      "className",
+    ],
 
-    SORTABLE: ["enrollmentId", "enrollmentCode", "enrollmentDate", "createdAt"],
+    SORTABLE: [
+      "enrollmentId",
+      "enrollmentDate",
+      "createdAt",
+      "studentName",
+      "className",
+    ],
 
-    FILTERS: ["studentId", "classId", "enrollmentStatus"],
+    FILTERS: [
+      "studentId",
+      "classId",
+      "enrollmentStatus",
+    ],
 
     get ALLOWED_KEYS() {
       return [
@@ -25,39 +51,48 @@ const ENROLLMENT_FIELDS = {
   },
 
   BODY: {
-    CREATE: ["studentId", "classId"],
+    CREATE: [
+      "studentId",
+      "classId",
+    ],
 
-    UPDATE: ["enrollmentStatus"],
+    UPDATE: [],
   },
 
   REQUIRED: {
-    CREATE: ["studentId", "classId"],
+    CREATE: [
+      "studentId",
+      "classId",
+    ],
   },
 };
 
 const ENROLLMENT_MAPS = {
   SEARCH: {
-    enrollmentCode: "e.enrollment_code",
-    studentCode: "s.student_code",
-    fullName: "s.full_name",
-    classCode: "c.class_code",
+    studentCode: "stu.student_code",
+    studentName: "stu.full_name",
+    classCode: "cls.class_code",
+    className: "cls.class_name",
   },
 
   SORT: {
-    enrollmentId: "e.enrollment_id",
-    enrollmentDate: "e.enrollment_date",
+    enrollmentId: "enr.enrollment_id",
+    enrollmentDate: "enr.enrollment_date",
+    createdAt: "enr.created_at",
+    studentName: "stu.full_name",
+    className: "cls.class_name",
   },
 
   FILTER: {
-    studentId: "e.student_id",
-    classId: "e.class_id",
-    enrollmentStatus: "e.enrollment_status",
-    updatedAt: "e.updated_at",
-    createdAt: "e.created_at",
+    studentId: "enr.student_id",
+    classId: "enr.class_id",
+    enrollmentStatus: "enr.enrollment_status",
   },
 };
 
 module.exports = {
+  ENROLLMENT_STATUS,
+  ENROLLMENT_ACTIONS,
   ENROLLMENT_FIELDS,
   ENROLLMENT_MAPS,
 };

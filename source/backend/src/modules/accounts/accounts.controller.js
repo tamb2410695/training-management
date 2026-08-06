@@ -1,78 +1,116 @@
-const { ACCOUNT_STATUS, SUCCESS_CODES } = require("../../constants");
-const { asyncHandler, successResponse } = require("../../utils/helpers");
+const { SUCCESS_CODES } = require("@/constants");
+
+const { asyncHandler, successResponse } = require("@/utils/helpers");
 
 const accountsService = require("./accounts.service");
 
-const getList = asyncHandler(async (req, res, next) => {
-  const queryOptions = req.query;
-  const result = await accountsService.getList(queryOptions);
+// ===============================
+// Query
+// ===============================
+
+const getList = asyncHandler(async (req, res) => {
+  const result = await accountsService.getList(req.query);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const getById = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.getById(id);
+const getById = asyncHandler(async (req, res) => {
+  const result = await accountsService.getById(req.params.id);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_FETCH_SUCCESS);
 });
 
-const create = asyncHandler(async (req, res, next) => {
-  const accountData = req.body;
-  const result = await accountsService.create(accountData);
-  return successResponse(res, result, SUCCESS_CODES.SYSTEM_CREATE_SUCCESS, undefined, 201);
+// ===============================
+// CRUD
+// ===============================
+
+const create = asyncHandler(async (req, res) => {
+  const result = await accountsService.create(req.body);
+
+  return successResponse(
+    res,
+    result,
+    SUCCESS_CODES.SYSTEM_CREATE_SUCCESS,
+    undefined,
+    201,
+  );
 });
 
-const update = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const accountData = req.body;
-  const result = await accountsService.update(id, accountData);
+const update = asyncHandler(async (req, res) => {
+  const result = await accountsService.update(req.params.id, req.body);
+
   return successResponse(res, result, SUCCESS_CODES.ACCOUNT_PROFILE_UPDATED);
 });
 
-const remove = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.remove(id);
+const remove = asyncHandler(async (req, res) => {
+  const result = await accountsService.remove(req.params.id);
+
   return successResponse(res, result, SUCCESS_CODES.SYSTEM_DELETE_SUCCESS);
 });
 
-const restore = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.restore(id);
-  return successResponse(res, result, SUCCESS_CODES.SYSTEM_OPERATION_SUCCESS);
+// ===============================
+// Business Actions
+// ===============================
+
+const activate = asyncHandler(async (req, res) => {
+  const result = await accountsService.activate(req.params.id);
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_ACTIVATE_SUCCESS);
 });
 
-const activate = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.updateStatus(id, ACCOUNT_STATUS.ACTIVE);
-  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_STATUS_UPDATED);
+const lock = asyncHandler(async (req, res) => {
+  const result = await accountsService.lock(req.params.id);
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_LOCK_SUCCESS);
 });
 
-const lock = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.updateStatus(id, ACCOUNT_STATUS.LOCKED);
-  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_STATUS_UPDATED);
+const disable = asyncHandler(async (req, res) => {
+  const result = await accountsService.disable(req.params.id);
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_DISABLE_SUCCESS);
 });
 
-const disable = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.updateStatus(id, ACCOUNT_STATUS.DISABLED);
-  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_STATUS_UPDATED);
+const restore = asyncHandler(async (req, res) => {
+  const result = await accountsService.restore(req.params.id);
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_RESTORE_SUCCESS);
 });
 
-const pending = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await accountsService.updateStatus(id, ACCOUNT_STATUS.PENDING);
-  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_STATUS_UPDATED);
+const changePassword = asyncHandler(async (req, res) => {
+  const result = await accountsService.changePassword(
+    req.params.id,
+    req.body.newPassword,
+  );
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_PASSWORD_CHANGED);
+});
+
+const changeRole = asyncHandler(async (req, res) => {
+  const result = await accountsService.changeRole(
+    req.params.id,
+    req.body.roleCode,
+    req.user.accountId,
+  );
+
+  return successResponse(res, result, SUCCESS_CODES.ACCOUNT_ROLE_CHANGED);
 });
 
 module.exports = {
+  // Query
   getList,
   getById,
+
+  // CRUD
   create,
   update,
   remove,
+
+  // Business Actions
   activate,
   lock,
   disable,
-  pending,
-  restore
+  restore,
+
+  changePassword,
+  changeRole,
 };

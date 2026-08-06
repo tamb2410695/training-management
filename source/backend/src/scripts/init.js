@@ -11,7 +11,7 @@ async function initSchema() {
     const dropPath = path.join(__dirname, "../database/schema/drop_table.sql");
     const schemaPath = path.join(
       __dirname,
-      "../database/schema/create_tables.v5.sql",
+      "../database/schema/create_tables.v6.sql",
     );
 
     throwIf(

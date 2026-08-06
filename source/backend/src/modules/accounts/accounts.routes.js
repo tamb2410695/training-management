@@ -2,79 +2,112 @@ const express = require("express");
 
 const router = express.Router();
 
-const { ROLES, ROUTES } = require("../../constants");
+const { ROUTES } = require("@/constants");
 
-const { authenticate, authorize } = require("../../middlewares");
 const accountsController = require("./accounts.controller");
-const {
-  createValidationMiddleware,
-  createMultiValidator,
-} = require("../../utils/helpers");
-const {
-  validateCreate,
-  validateGetList,
-  validateGetById,
-  validateUpdate,
-  validateRemove,
-  validatePartialUpdate,
-  validateStatusTransition,
-} = require("./accounts.validator");
+
+const accountsMiddleware = require("./accounts.middleware");
+
+const { createValidator, createMultiValidator } = require("@/utils/helpers");
+
+// ===============================
+// Query
+// ===============================
 
 router.get(
   ROUTES.ACCOUNT.ROOT,
-  createValidationMiddleware(validateGetList, "query"),
+
+  createValidator(accountsMiddleware.getList, "query"),
+
   accountsController.getList,
 );
 
+// ===============================
+// CRUD
+// ===============================
+
 router.post(
   ROUTES.ACCOUNT.ROOT,
-  createValidationMiddleware(validateCreate),
+
+  createValidator(accountsMiddleware.create),
+
   accountsController.create,
 );
 
 router.get(
   ROUTES.ACCOUNT.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
+
+  createValidator(accountsMiddleware.getById, "params"),
+
   accountsController.getById,
 );
 
 router.patch(
   ROUTES.ACCOUNT.DETAIL,
-  createMultiValidator(validatePartialUpdate),
-  accountsController.update,
-);
 
-router.patch(  
-  ROUTES.ACCOUNT.RESTORE,
-  accountsController.restore,
+  createMultiValidator(accountsMiddleware.partialUpdate),
+
+  accountsController.update,
 );
 
 router.delete(
   ROUTES.ACCOUNT.DETAIL,
-  createValidationMiddleware(validateRemove, "params"),
+
+  createValidator(accountsMiddleware.remove, "params"),
+
   accountsController.remove,
+);
+
+// ===============================
+// Business Actions
+// ===============================
+
+router.patch(
+  ROUTES.ACCOUNT.LOCK,
+
+  createValidator(accountsMiddleware.lock, "params"),
+
+  accountsController.lock,
 );
 
 router.patch(
   ROUTES.ACCOUNT.ACTIVATE,
-  createValidationMiddleware(validateStatusTransition, "params"),
+
+  createValidator(accountsMiddleware.activate, "params"),
+
   accountsController.activate,
 );
 
 router.patch(
-  ROUTES.ACCOUNT.LOCK,
-  createValidationMiddleware(validateStatusTransition, "params"),
-  accountsController.lock,
-);
-router.patch(
   ROUTES.ACCOUNT.DISABLE,
-  createValidationMiddleware(validateStatusTransition, "params"),
+
+  createValidator(accountsMiddleware.disable, "params"),
+
   accountsController.disable,
 );
+
 router.patch(
-  ROUTES.ACCOUNT.PENDING,
-  createValidationMiddleware(validateStatusTransition, "params"),
-  accountsController.pending,
+  ROUTES.ACCOUNT.RESTORE,
+
+  createValidator(accountsMiddleware.restore, "params"),
+
+  accountsController.restore,
+);
+
+router.patch(
+  ROUTES.ACCOUNT.CHANGE_PASSWORD,
+
+  createMultiValidator(accountsMiddleware.changePassword),
+
+  accountsController.changePassword,
+);
+
+router.patch(
+  ROUTES.ACCOUNT.CHANGE_ROLE,
+
+  createMultiValidator(accountsMiddleware.changeRole),
+
+  accountsController.changeRole,
 );
 
 module.exports = router;

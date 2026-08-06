@@ -1,5 +1,5 @@
 export * from "./HomePage";
-export * from "./UnauthorizedPage";
+export * from "./feedback/StatusPage";
 export * from './admin';
 export * from './auth';
 export * from './instructor';

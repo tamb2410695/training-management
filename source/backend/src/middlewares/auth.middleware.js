@@ -1,30 +1,51 @@
-const { HTTP_STATUS, ERROR_MESSAGES } = require("../constants");
-const { validateLogin, validateRegister } = require("../modules/auth/auth.validator");
-const AppError = require("../utils/errors");
-const { throwIf } = require("../utils/helpers");
+const { UnauthorizedError } = require("@/utils/errors");
 
-const { verifyAccessToken } = require("../utils/security/jwtUtil");
+const { verifyAccessToken } = require("@/utils/security/jwtUtil");
 
-
-const jwt = require("jsonwebtoken");
-const { JWT_CONFIG } = require("../constants");
+const { ERROR_MESSAGES } = require("@/constants");
 
 const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return next(new AppError.UnauthorizedError("Access denied. No token provided."));
-  }
-
-  const token = authHeader.split(" ")[1];
   try {
-    const decoded = jwt.verify(token, JWT_CONFIG.ACCESS_SECRET);
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new UnauthorizedError(
+        ERROR_MESSAGES.UNAUTHORIZED || "Unauthorized",
+      );
+    }
+
+    const token = authHeader.slice(7).trim();
+
+    if (!token) {
+      throw new UnauthorizedError(
+        ERROR_MESSAGES.UNAUTHORIZED || "Unauthorized",
+      );
+    }
+
+    const decoded = verifyAccessToken(token);
+
+    if (!decoded || !decoded.accountId) {
+      throw new UnauthorizedError(
+        ERROR_MESSAGES.UNAUTHORIZED || "Unauthorized",
+      );
+    }
+
     req.user = decoded;
+
     next();
-  } catch (err) {
-    return next(new AppError.UnauthorizedError("Invalid or expired access token"));
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return next(error);
+    }
+
+    return next(
+      new UnauthorizedError(ERROR_MESSAGES.UNAUTHORIZED || "Unauthorized"),
+    );
   }
 };
 
 module.exports = {
   authenticate,
+
+  authGuard: authenticate,
 };

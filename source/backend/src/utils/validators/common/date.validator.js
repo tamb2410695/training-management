@@ -8,3 +8,7 @@ const validateDate = (
     date.getTime(),
   );
 };
+
+module.exports = {
+  validateDate
+}

@@ -160,7 +160,7 @@ export class FieldBuilder {
 
     return this;
   }
-  
+
   filter(type, defaultValue = null) {
     this.schema.query.filter = {
       type,
@@ -190,7 +190,7 @@ export class FieldBuilder {
 
     return this;
   }
-
+  
   requiredOnCreate() {
     this.schema.validation.required.create = true;
     return this;

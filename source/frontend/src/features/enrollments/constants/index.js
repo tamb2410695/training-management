@@ -1,3 +1,4 @@
-export * from "./enrollmentsDefaults";
-export * from "./enrollmentsEnums";
-export * from "./enrollmentsFields";
+export * from "./enrollmentConfig";
+export * from "./enrollmentEnums";
+export * from "./enrollmentFeature";
+export * from "./enrollmentFields";

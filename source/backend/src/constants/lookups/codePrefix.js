@@ -4,9 +4,10 @@ const CODE_PREFIX = {
   INSTRUCTOR: "INS",
   STAFF: "STF",
   COURSE: "CRS",
+  DOCUMENT: "DOC",
   CLASS: "CLS",
   PAYMENT: "PAY",
-  CERTIFICATE: "CERT",
+  CATEGORY: "CTG",
 };
 const CODE_LENGHT = {
   NORMAL: 6,

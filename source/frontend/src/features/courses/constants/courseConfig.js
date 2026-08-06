@@ -6,9 +6,9 @@ export const COURSE_CONFIG = {
 
   api: API_ROUTES.COURSE,
 
-  idField: "departmentId",
-  codeField: "departmentCode",
-  nameField: "fullName",
+  idField: "courseId",
+  codeField: null,
+  nameField: "username",
 
   pagination: {
     limit: 10,
@@ -31,7 +31,7 @@ export const COURSE_CONFIG = {
     },
 
     toolbar: ["create", "refresh", "reset"],
-    rowActions: ["view", "update", "delete"],
+    rowActions: ["view", "update", "remove", "create"],
     showIndex: true,
   },
 
@@ -49,27 +49,4 @@ export const COURSE_CONFIG = {
     },
     footerActions: ["cancel", "submit"],
   },
-};
-
-export const COURSE_WIZARD_CONFIG = {
-  mode: "create",
-  steps: [
-    {
-      key: "account",
-      title: "Tài khoản",
-      fields: ["username", "accountEmail", "password"],
-    },
-    {
-      key: "profile",
-      title: "Hồ sơ khóa học",
-      fields: [
-        "fullName",
-        "personalEmail",
-        "phone",
-        "address",
-        "dateOfBirth",
-        "gender",
-      ],
-    },
-  ],
 };

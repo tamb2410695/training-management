@@ -1,136 +1,99 @@
-const AppError = require("../../utils/errors");
-const { ROLES, ERROR_MESSAGES } = require("../../constants");
-const { AUTH_FIELDS } = require("./auth.constants");
+const { ACCOUNT_STATUS, ERROR_CODES, ERROR_MESSAGES } = require("@/constants");
 
-const {
-  formatNumericId,
-  formatAuthData
-} = require("../../utils/formatters");
+const { BadRequestError, ForbiddenError } = require("@/utils/errors");
 
-const { 
-  pickFields, 
-  sanitizeFields, 
-  hasField, 
-  throwIf 
-} = require("../../utils/helpers");
+const { throwIf } = require("@/utils/helpers");
 
-const {
-  validateEnum,
-  validateId,
-  validateEmail,
-  validatePassword,
-  validateUsername,
-  validateAllowedFields,
-  validateRequiredFields,
-} = require("../../utils/validators");
+// ===============================
+// Account
+// ===============================
 
-const validateAuthFormats = (authData) => {
-  if (!authData) return;
+const validateAccountStatus = (account) => {
+  throwIf(
+    [
+      ACCOUNT_STATUS.LOCK,
+      ACCOUNT_STATUS.DISABLE,
+      ACCOUNT_STATUS.DELETED,
+    ].includes(account.accountStatus),
 
-  if (hasField(authData, "username")) {
-    validateUsername(authData.username);
-  }
+    ForbiddenError,
 
-  if (hasField(authData, "email")) {
-    validateEmail(authData.email);
-  }
+    ERROR_CODES.ACCESS_DENIED,
 
-  if (hasField(authData, "roleCode")) {
-    validateEnum(authData.roleCode, Object.values(ROLES), "roleCode");
-  }
-
-  // if (hasField(authData, "password")) {
-  //   validatePassword(authData.password);
-  // }
-
-  if (hasField(authData, "newPassword")) {
-    validatePassword(authData.newPassword);
-  }
+    ERROR_MESSAGES.ACCESS_DENIED,
+  );
 };
 
-const validateRegister = (body) => {
-  validateAllowedFields(body, AUTH_FIELDS.BODY.REGISTER);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.REGISTER)
-  );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.REGISTER);
+// ===============================
+// Password
+// ===============================
 
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
+const validatePassword = (password, fieldName = "password") => {
+  throwIf(
+    !password || password.length < 8,
+
+    BadRequestError,
+
+    `${fieldName} must contain at least 8 characters`,
+  );
 };
 
-const validateLogin = (body) => {
-  
-  validateAllowedFields(body, AUTH_FIELDS.BODY.LOGIN);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.LOGIN)
+// ===============================
+// Login
+// ===============================
+
+const validateLogin = (data) => {
+  if (!data) return;
+
+  throwIf(
+    !data.usernameOrEmail,
+
+    BadRequestError,
+
+    "Username or email is required",
   );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.LOGIN);
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
+
+  throwIf(
+    !data.password,
+
+    BadRequestError,
+
+    "Password is required",
+  );
 };
 
-const validateRefresh = (body) => {
-  validateAllowedFields(body, AUTH_FIELDS.BODY.REFRESH);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.REFRESH)
+// ===============================
+// Change Password
+// ===============================
+
+const validateChangePassword = (data) => {
+  if (!data) return;
+
+  throwIf(
+    !data.currentPassword,
+
+    BadRequestError,
+
+    "Current password is required",
   );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.REFRESH);
 
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
-};
+  throwIf(
+    !data.newPassword,
 
-const validateChangePassword = (body) => {
-  validateAllowedFields(body, AUTH_FIELDS.BODY.CHANGE_PASSWORD);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.CHANGE_PASSWORD)
+    BadRequestError,
+
+    "New password is required",
   );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.CHANGE_PASSWORD);
 
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
-};
-
-const validateForgotPassword = (body) => {
-  validateAllowedFields(body, AUTH_FIELDS.BODY.FORGOT_PASSWORD);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.FORGOT_PASSWORD)
-  );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.FORGOT_PASSWORD);
-
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
-};
-
-const validateResetPassword = (body) => {
-  validateAllowedFields(body, AUTH_FIELDS.BODY.RESET_PASSWORD);
-  
-  const sanitizedData = sanitizeFields(
-    pickFields(body, AUTH_FIELDS.BODY.RESET_PASSWORD)
-  );
-  validateRequiredFields(sanitizedData, AUTH_FIELDS.REQUIRED.RESET_PASSWORD);
-
-  const formattedData = formatAuthData(sanitizedData);
-  validateAuthFormats(formattedData);
-  return formattedData;
+  validatePassword(data.newPassword, "New password");
 };
 
 module.exports = {
-  validateRegister,
+  validateAccountStatus,
+
   validateLogin,
-  validateRefresh,
+
   validateChangePassword,
-  validateForgotPassword,
-  validateResetPassword,
+
+  validatePassword,
 };

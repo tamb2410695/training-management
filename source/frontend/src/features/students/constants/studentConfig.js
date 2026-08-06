@@ -1,7 +1,7 @@
 import { API_ROUTES } from "@/constants";
 
 export const STUDENT_CONFIG = {
-  entity: "students",
+  entity: "profiles",
   entityLabel: "Học viên",
 
   api: API_ROUTES.STUDENT,
@@ -31,7 +31,7 @@ export const STUDENT_CONFIG = {
     },
 
     toolbar: ["create", "refresh", "reset"],
-    rowActions: ["view", "update", "delete"],
+    rowActions: ["view", "update", "remove"],
     showIndex: true,
   },
 

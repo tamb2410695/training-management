@@ -18,6 +18,7 @@ import { useActions } from "@/hooks/state/useActions";
 import { useAccountActions } from "./useAccountActions";
 import { useAccountsCrud } from "./useAccountCrud";
 import { useRuntimeFeature } from "@/hooks/feature/useRuntimeFeature";
+import { resolveAccountRowRuntime } from "../policies/resolveAccountRowRuntime";
 
 export function useAccountFeature() {
   const crud = useAccountsCrud();
@@ -47,6 +48,7 @@ export function useAccountFeature() {
   useEffect(() => {
     async function loadAccounts() {
       try {
+        
         await crud.getList({
           ...accountQuery.query,
           search: debouncedSearch,
@@ -64,7 +66,6 @@ export function useAccountFeature() {
     accountQuery.refreshKey,
   ]);
 
-
   const actions = useAccountActions({
     crud,
     query: accountQuery,
@@ -73,16 +74,16 @@ export function useAccountFeature() {
     featureFeedback: feedback,
     fields: ACCOUNT_FEATURE.fields,
   });
-
+  
   const toolbar = useFeatureToolbar({
     schema: ACCOUNT_FEATURE,
     query: accountQuery,
     config: ACCOUNT_FEATURE.config.table.toolbar,
     actions: {
-      create: actions.modal.openCreate,
-      refresh: actions.crud.refresh,
-      reset: actions.crud.reset,
-      cancel: actions.modal.cancel,
+      create: actions.openCreate,
+      refresh: actions.refresh,
+      reset: actions.reset,
+      cancel: actions.cancel,
     },
   });
 
@@ -94,14 +95,17 @@ export function useAccountFeature() {
     loading: crud.loading,
     rowKey: ACCOUNT_FEATURE.config.idField,
     actions: {
-      view: actions.modal.openView,
-      update: actions.modal.openUpdate,
-      delete: actions.crud.remove,
-      cancel: actions.modal.cancel,
+      create: actions.openCreate,
+      update: actions.openUpdate,
+      view: actions.openView,
+      remove: actions.remove,
+      cancel: actions.cancel,
     },
-
+    context,
+    resolveRowRuntime: resolveAccountRowRuntime,
     queryState: accountQuery,
   });
+
 
   const formView = useFeatureFormView({
     modal,
@@ -112,7 +116,7 @@ export function useAccountFeature() {
   const crudModal = {
     actions: useActions(ACCOUNT_FEATURE.config.form.footerActions, {
       submit: actions.submit,
-      cancel: actions.modal.cancel,
+      cancel: actions.cancel,
     }),
   };
 

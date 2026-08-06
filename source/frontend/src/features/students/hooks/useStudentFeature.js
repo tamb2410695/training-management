@@ -17,6 +17,7 @@ import { useEffect } from "react";
 import { useFeatureToolbar } from "@/hooks/feature/useFeatureToolbar";
 import { useActions } from "@/hooks/state/useActions";
 import { useRuntimeFeature } from "@/hooks/feature/useRuntimeFeature";
+import { resolveStudentRowRuntime } from "../policies/resolveStudentRowRuntime";
 
 export function useStudentFeature() {
   const crud = useStudentsCrud();
@@ -27,6 +28,7 @@ export function useStudentFeature() {
     mode: modal.mode ?? "create",
     user,
   };
+
 
   const runtimeFeature = useRuntimeFeature({
     feature: STUDENT_FEATURE,
@@ -76,10 +78,10 @@ export function useStudentFeature() {
     query: studentQuery,
     config: STUDENT_FEATURE.config.table.toolbar,
     actions: {
-      create: actions.modal.openCreate,
-      refresh: actions.crud.refresh,
-      reset: actions.crud.reset,
-      cancel: actions.modal.cancel,
+      create: actions.openCreate,
+      refresh: actions.refresh,
+      reset: actions.reset,
+      cancel: actions.cancel,
     },
   });
 
@@ -91,12 +93,15 @@ export function useStudentFeature() {
     loading: crud.loading,
     rowKey: STUDENT_FEATURE.config.idField,
     actions: {
-      view: actions.modal.openView,
-      update: actions.modal.openUpdate,
-      delete: actions.crud.remove,
-      cancel: actions.modal.cancel,
+      create: actions.openCreate,
+      update: actions.openUpdate,
+      view: actions.openView,
+      remove: actions.remove,
+      cancel: actions.cancel,
     },
 
+    context,
+    resolveRowRuntime: resolveStudentRowRuntime,
     queryState: studentQuery,
   });
 
@@ -109,7 +114,7 @@ export function useStudentFeature() {
   const crudModal = {
     actions: useActions(STUDENT_FEATURE.config.form.footerActions, {
       submit: actions.submit,
-      cancel: actions.modal.cancel,
+      cancel: actions.cancel,
     }),
   };
 

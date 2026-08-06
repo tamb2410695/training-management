@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
-import { SIDEBAR_MENU } from "../../constants";
-import { useAuth } from "../../hooks/auth/useAuth";
-import { useLogout } from "../../hooks/auth/useLogout";
+import { ROLES, SIDEBAR_MENU } from "@/constants";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 function Sidebar() {
   const { user } = useAuth();
 
   const userRoleCode = user?.roleCode;
+  const userRoleLabel = ROLES[userRoleCode].LABEL || "Không xác định"
   const menus = SIDEBAR_MENU[userRoleCode] || [];
   const handleLogout = useLogout();
 
@@ -22,7 +23,7 @@ function Sidebar() {
         <h5 className="mb-1">Quản lý</h5>
 
         <small className="text-secondary">
-          Role: {userRoleCode}
+          Vai trò: {userRoleLabel}
         </small>
       </div>
 
@@ -33,6 +34,7 @@ function Sidebar() {
             <li className="nav-item" key={menu.path}>
               <NavLink
                 to={menu.path}
+                end
                 className={({ isActive }) =>
                   [
                     "nav-link",
@@ -50,7 +52,7 @@ function Sidebar() {
                   </span>
                 )}
 
-                <span>{menu.label}</span>
+                <span style={{ whiteSpace: "pre-line" }}>{menu.label}</span>
               </NavLink>
             </li>
           ))}

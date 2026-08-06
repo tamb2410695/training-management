@@ -1,8 +1,9 @@
 module.exports = {
-  ...require("./codePrefix"),
   ...require("./codeLengths"),
+  ...require("./codePrefix"),
   ...require("./courseLevels"),
   ...require("./genders"),
   ...require("./password"),
-  ...require("./queryCommonFields")
-}
+  ...require("./queryCommonFields"),
+  ...require("./userCreation"),
+};

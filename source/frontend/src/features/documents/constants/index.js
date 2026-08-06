@@ -1,3 +1,4 @@
-export * from "./documentsDefaults";
-export * from "./documentsEnums";
-export * from "./documentsFields";
+export * from "./documentConfig";
+export * from "./documentEnums";
+export * from "./documentFeature";
+export * from "./documentFields";

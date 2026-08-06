@@ -55,8 +55,8 @@ export const ACTIONS = {
     scope: "row",
   },
 
-  DELETE: {
-    key: "delete",
+  REMOVE: {
+    key: "remove",
     label: "Xóa",
     icon: "trash",
     variant: "danger",

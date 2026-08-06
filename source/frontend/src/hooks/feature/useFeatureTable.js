@@ -1,10 +1,20 @@
-import { formatTableData } from "@/utils";
 import { useMemo } from "react";
 import { usePagination, useSelection } from "../data";
 import { useActions } from "../state/useActions";
+import { buildTableRows } from "@/utils/builders/table/buildTableRows";
 
-function useFeatureRows({ items, pagination }) {
-  return useMemo(() => formatTableData(items, pagination), [items, pagination]);
+function useFeatureRows({
+  items,
+  pagination,
+  resolveRowRuntime,
+  rowRuntimeContext,
+}) {
+  
+  return useMemo(
+    () =>
+      buildTableRows(items, pagination, resolveRowRuntime, rowRuntimeContext),
+    [items, pagination, resolveRowRuntime, rowRuntimeContext],
+  );
 }
 
 export function useFeaturePagination({ tablePagination, queryState }) {
@@ -28,6 +38,8 @@ export function useFeatureTable({
   items,
   pagination,
 
+  context,
+  resolveRowRuntime,
   queryState,
 }) {
   const tableActions = useActions(config, actions);
@@ -35,6 +47,11 @@ export function useFeatureTable({
   const rows = useFeatureRows({
     items,
     pagination,
+    resolveRowRuntime,
+    rowRuntimeContext: {
+      ...context,
+      actions: tableActions,
+    },
   });
 
   const selection = useSelection();

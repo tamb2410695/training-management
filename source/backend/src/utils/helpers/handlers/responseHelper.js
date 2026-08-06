@@ -1,4 +1,4 @@
-const { HTTP_STATUS, SUCCESS_MESSAGES } = require("../../../constants/index");
+const { HTTP_STATUS, SUCCESS_MESSAGES } = require("@/constants/index");
 
 const successResponse = (
   res,

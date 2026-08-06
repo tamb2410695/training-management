@@ -6,7 +6,6 @@ export function useFeatureToolbar({
   actions = {},
 }) {
   const toolbarActions = useActions(config, actions);
-
   return {
     schema: query.schema,
     query: query.query,

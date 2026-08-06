@@ -1,0 +1,15 @@
+module.exports = {
+  ...require("./accounts"),
+  ...require("./auth"),
+  ...require("./classes"),
+  ...require("./courseCategories"),
+  ...require("./courses"),
+  ...require("./dashboard"),
+  ...require("./documents"),
+  ...require("./enrollments"),
+  ...require("./registrations"),
+  ...require("./roles"),
+  ...require("./staffs"),
+  ...require("./students"),
+  ...require("./users"),
+};

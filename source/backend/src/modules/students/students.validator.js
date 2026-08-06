@@ -1,164 +1,60 @@
-const { BadRequestError } = require("../../utils/errors");
 const {
-  ERROR_MESSAGES,
   GENDER,
-  STUDENT_STATUS,
   ACCOUNT_STATUS,
-} = require("../../constants");
-const { STUDENT_FIELDS, ACCOUNT_FIELDS } = require("./students.constants");
-const { formatNumericId } = require("../../utils/formatters");
-const {
-  pickFields,
-  sanitizeFields,
-  hasField,
-  throwIf,
-} = require("../../utils/helpers");
-const {
-  validateId,
-  validatePagination,
-  validateEnum,
-  validateEmail,
-  validateAllowedFields,
-  validateRequiredFields,
-  sanitizePatchBody,
-} = require("../../utils/validators");
-const {
-  formatStudentQuery,
-  formatStudentData,
-} = require("../../utils/formatters/input/studentFormatter");
-const {
-  formatAccountData,
-} = require("../../utils/formatters/input/accountFormatter");
-const {
-  validateAccountFormats,
-} = require("../../modules/accounts/accounts.validator");
+  STUDENT_STATUS,
+} = require("@/constants");
+const { BadRequestError } = require("@/utils/errors");
+const { hasField, throwIf } = require("@/utils/helpers");
+const { STUDENT_PROFILE_FIELDS } = require("./students.constants");
+const { queryValidator, validateEnum, validateEmail, validateId } = require("@/utils/validators");
 
-const validateStudentFormats = (studentData) => {
-  if (!studentData) return;
+const validateStudentFormats = (data) => {
+  if (!data) return;
 
-  if (hasField(studentData, "page") || hasField(studentData, "limit")) {
-    validatePagination(studentData.page, studentData.limit);
+  queryValidator(
+    data,
+    STUDENT_PROFILE_FIELDS.QUERY.SEARCHABLE,
+    STUDENT_PROFILE_FIELDS.QUERY.SORTABLE,
+  );
+
+  if (hasField(data, "accountId")) validateId(data.accountId, "accountId");
+
+  if (hasField(data, "personalEmail")) validateEmail(data.personalEmail);
+
+  if (hasField(data, "gender")) {
+    validateEnum(data.gender, Object.values(GENDER), "gender");
   }
 
-  if (hasField(studentData, "accountId"))
-    validateId(studentData.accountId, "accountId");
-
-  if (hasField(studentData, "personalEmail"))
-    validateEmail(studentData.personalEmail);
-
-  if (hasField(studentData, "gender")) {
-    validateEnum(studentData.gender, Object.values(GENDER), "gender");
-  }
-
-  if (hasField(studentData, "studentStatus")) {
+  if (hasField(data, "studentStatus")) {
     validateEnum(
-      studentData.studentStatus,
+      data.studentStatus,
       Object.values(STUDENT_STATUS),
       "studentStatus",
     );
   }
 
-  if (hasField(studentData, "accountStatus")) {
+  if (hasField(data, "studentId")) {
+    validateId(data.studentId);
+  }
+
+  if (hasField(data, "accountStatus")) {
     validateEnum(
-      studentData.accountStatus,
+      data.accountStatus,
       Object.values(ACCOUNT_STATUS),
       "accountStatus",
     );
   }
 
-  if (hasField(studentData, "phone")) {
+  if (hasField(data, "phone")) {
     const phoneRegex = /^[0-9]{9,11}$/;
     throwIf(
-      !phoneRegex.test(studentData.phone),
+      !phoneRegex.test(data.phone),
       BadRequestError,
       "Invalid phone number format",
     );
   }
 };
 
-const validateGetList = (query) => {
-  validateAllowedFields(query, [
-    ...STUDENT_FIELDS.QUERY.ALLOWED_KEYS,
-    ...ACCOUNT_FIELDS.QUERY.ALLOWED_KEYS,
-  ]);
-  const rawQueryData = sanitizeFields(
-    pickFields(query, [
-      ...STUDENT_FIELDS.QUERY.ALLOWED_KEYS,
-      ...ACCOUNT_FIELDS.QUERY.ALLOWED_KEYS,
-    ]),
-  );
-  const formatedQueryData = formatStudentQuery(rawQueryData);
-  validateStudentFormats(formatedQueryData);
-  return formatedQueryData;
-};
-
-const validateGetById = (params) => {
-  const studentId = formatNumericId(params.id);
-  validateId(studentId);
-  return studentId;
-};
-
-const validateCreate = (body) => {
-  validateAllowedFields(body, [
-    ...STUDENT_FIELDS.BODY.CREATE,
-    ...ACCOUNT_FIELDS.BODY.CREATE,
-  ]);
-  const rawAccountData = sanitizeFields(
-    pickFields(body, ACCOUNT_FIELDS.BODY.CREATE),
-  );
-  const rawProfileData = sanitizeFields(
-    pickFields(body, STUDENT_FIELDS.BODY.CREATE),
-  );
-  validateRequiredFields(rawAccountData, ACCOUNT_FIELDS.REQUIRED.CREATE);
-  validateRequiredFields(rawProfileData, STUDENT_FIELDS.REQUIRED.CREATE);
-  const formatedAcountData = formatAccountData(rawAccountData);
-  const formatedProfileData = formatStudentData(rawProfileData);
-  validateAccountFormats(formatedAcountData);
-  validateStudentFormats(formatedProfileData);
-  return { accountData: formatedAcountData, profileData: formatedProfileData };
-};
-
-const validateUpdate = (params, body) => {
-  const studentId = formatNumericId(params.id);
-  validateId(studentId);
-
-  validateAllowedFields(body, STUDENT_FIELDS.BODY.UPDATE);
-  const sanitizedData = sanitizeFields(
-    pickFields(body, STUDENT_FIELDS.BODY.UPDATE),
-  );
-
-  throwIf(
-    !sanitizedData || Object.keys(sanitizedData).length === 0,
-    BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS,
-  );
-  const studentData = formatStudentData(sanitizedData);
-  validateStudentFormats(studentData);
-  return { params: studentId, body: studentData };
-};
-
-const validatePartialUpdate = (params, body) => {
-  const studentId = formatNumericId(params.id);
-  validateId(studentId);
-
-  validateAllowedFields(body, STUDENT_FIELDS.BODY.UPDATE);
-  const sanitizedData = sanitizePatchBody(body, STUDENT_FIELDS.BODY.UPDATE);
-
-  throwIf(
-    !sanitizedData || Object.keys(sanitizedData).length === 0,
-    BadRequestError,
-    ERROR_MESSAGES.NO_VALID_FIELDS,
-  );
-  const studentData = formatStudentData(sanitizedData);
-  validateStudentFormats(studentData);
-
-  return { params: studentId, body: studentData };
-};
-
 module.exports = {
-  validateGetList,
-  validateGetById,
-  validateCreate,
-  validateUpdate,
-  validatePartialUpdate,
+  validateStudentFormats,
 };

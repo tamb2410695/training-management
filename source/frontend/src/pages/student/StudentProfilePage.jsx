@@ -1,26 +1,33 @@
-import { useAuth } from "../../hooks/auth/useAuth";
+import ProfileCard from "@/features/profile/components/ProfileCard";
+import ProfileField from "@/features/profile/components/ProfileField";
+import ProfileHeader from "@/features/profile/components/ProfileHeader";
 
-function StudentProfilePage() {
+import { useProfile } from "@/features/profile/hook/useProfile";
 
-    const { account } = useAuth();
-  
+function InstructorProfilePage() {
+  const { user, loading } = useProfile();
+
+  if (loading) {
     return (
-      <div>
-        <h2>Thông tin học viên</h2>
-        {account ? (
-          <div>
-            <h3>Xin chào, {account.name || account.username}!</h3>
-            <p>
-              <strong>Email:</strong> {account.email}
-            </p>
-            <p>
-              <strong>Vai trò:</strong> {account.role || "Admin"}
-            </p>
-          </div>
-        ) : (
-          <p>Đang tải thông tin tài khoản</p>
-        )}
-      </div>
+      <div className="container py-4">Đang tải thông tin tài khoản...</div>
     );
-};
-export default StudentProfilePage;
+  }
+
+  return (
+    <ProfileCard title="Thông tin học viên">
+      <ProfileHeader user={user} />
+
+      <ProfileField label="Mã học viên" value={user.studentCode} />
+
+      <ProfileField label="Họ tên" value={user.fullName} />
+
+      <ProfileField label="Ngày sinh" value={user.dateOfBirth} />
+
+      <ProfileField label="Số điện thoại" value={user.phone} />
+
+      <ProfileField label="Email cá nhân" value={user.personalEmail} />
+    </ProfileCard>
+  );
+}
+
+export default InstructorProfilePage;

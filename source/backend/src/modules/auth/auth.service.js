@@ -1,132 +1,149 @@
-const db = require("../../config/database");
-const AppError = require("../../utils/errors");
-const { throwIf } = require("../../utils/helpers");
+const db = require("@/config/database");
+
+const AppError = require("@/utils/errors");
+
+const { throwIf } = require("@/utils/helpers");
+
 const {
-  verifyPassword,
-  hashPassword,
   comparePassword,
-} = require("../../utils/security/passwordUtil");
+  hashPassword,
+} = require("@/utils/security/passwordUtil");
 
-const accountsService = require("../accounts/accounts.service");
+const { generateAccessTokens } = require("@/utils/security/jwtUtil");
+
+const { ERROR_CODES } = require("@/constants");
+
 const accountsRepository = require("../accounts/accounts.repository");
-const { ERROR_CODES, ACCOUNT_STATUS, ERROR_MESSAGES } = require("../../constants");
-const {
-  generateAccessTokens,
-  verifyAccessToken,
-} = require("../../utils/security/jwtUtil");
-const { JWT_CONFIG, TOKEN_TYPES } = require("./auth.constants");
 
-const register = async (accountData) => {
-  const data = {
-    ...accountData,
-    roleCode: accountData.roleCode || "STUDENT",
-  };
-  return await accountsService.create(data);
+const { formatLoginResponse, formatUserResponse } = require("./auth.formatter");
+
+const { validateAccountStatus } = require("./auth.validator");
+
+// ===============================
+// Helper
+// ===============================
+
+const buildTokenPayload = (account) => ({
+  accountId: account.accountId,
+  username: account.username,
+  roleCode: account.roleCode,
+  roleLabel: account.roleLabel,
+});
+
+// ===============================
+// Login
+// ===============================
+
+// staffs.repository.js
+
+// findIdentityByAccountId(accountId)
+
+// return:
+
+// {
+//  staffId,
+//  staffCode,
+//  fullName
+// }
+const resolveAccountIdentity = async (account, connection = db) => {
+  switch (account.roleCode) {
+    case "STUDENT": {
+      const studentsService = require("../students/students.service");
+
+      return studentsService.findByAccountId(
+        account.accountId,
+        connection,
+      );
+    }
+
+    case "STAFF": {
+      const staffsService = require("../staffs/staffs.service");
+
+      return staffsService.findByAccountId(
+        account.accountId,
+        connection,
+      );
+    }
+
+    default:
+      return null;
+  }
 };
 
 const login = async (usernameOrEmail, password, connection = db) => {
-  console.log(usernameOrEmail);
-  const [existedUsername, existedEmail] = await Promise.all([
+  const [usernameAccount, emailAccount] = await Promise.all([
     accountsRepository.findByUsername(usernameOrEmail, connection),
     accountsRepository.findByEmail(usernameOrEmail, connection),
   ]);
-  const account = existedUsername || existedEmail;
-  throwIf(!account, AppError.NotFoundError, ERROR_CODES.INVALID_CREDENTIALS);
+
+  const account = usernameAccount || emailAccount;
 
   throwIf(
-    account.accountStatus === ACCOUNT_STATUS.LOCKED,
-    AppError.ForbiddenError,
-    ERROR_CODES.ACCESS_DENIED,
-    ERROR_MESSAGES.ACCESS_DENIED,
-  );
-
-  throwIf(
-    account.accountStatus === ACCOUNT_STATUS.DISABLED ||
-      account.accountStatus === ACCOUNT_STATUS.DELETED,
-    AppError.ForbiddenError,
-    ERROR_CODES.ACCESS_DENIED,
-    ERROR_MESSAGES.ACCESS_DENIED,
-  );
-
-  const isMatch = await comparePassword(password, account.passwordHash);
-  throwIf(!isMatch, AppError.UnauthorizedError, ERROR_CODES.UNAUTHORIZED);
-
-  const tokenPayload = {
-    accountId: account.accountId,
-    username: account.username,
-    roleCode: account.roleCode,
-    roleName: account.roleName,
-  };
-
-  const tokens = generateAccessTokens(tokenPayload);
-
-  await accountsRepository.update(
-    account.accountId,
-    { refreshToken: tokens.refreshToken },
-    connection,
-  );
-
-  const { passwordHash: _, refreshToken: __, ...safeAccountData } = account;
-  return {
-    user: safeAccountData,
-    ...tokens,
-  };
-};
-
-const refresh = async (token, connection = db) => {
-  throwIf(!token, AppError.BadRequestError, "Refresh token is required");
-
-  const decoded = verifyAccessToken(token, JWT_CONFIG.REFRESH_SECRET);
-
-  const account = await accountsRepository.findById(
-    decoded.accountId,
-    connection,
-  );
-  throwIf(
-    !account || account.refreshToken !== token,
+    !account,
     AppError.UnauthorizedError,
-    AUTH_MESSAGES.INVALID_REFRESH_TOKEN,
+    ERROR_CODES.INVALID_CREDENTIALS,
   );
-  if (
-    [
-      ACCOUNT_STATUS.LOCKED,
-      ACCOUNT_STATUS.DISABLED,
-      ACCOUNT_STATUS.DELETED,
-    ].includes(account.accountStatus)
-  ) {
-    throw new AppError.ForbiddenError(AUTH_MESSAGES.ACCOUNT_DISABLED);
-  }
 
-  const tokenPayload = {
-    accountId: account.accountId,
-    username: account.username,
-    roleCode: account.roleCode,
-    roleName: account.roleName,
+  validateAccountStatus(account);
+
+  const matched = await comparePassword(password, account.passwordHash);
+
+  throwIf(
+    !matched,
+    AppError.UnauthorizedError,
+    ERROR_CODES.INVALID_CREDENTIALS,
+  );
+
+  const identity = await resolveAccountIdentity(account, connection);
+
+  throwIf(
+    !matched,
+    AppError.UnauthorizedError,
+    ERROR_CODES.INVALID_CREDENTIALS,
+  );
+
+  const tokens = generateAccessTokens(buildTokenPayload(account));
+
+  return formatLoginResponse({
+    user: account,
+    identity,
+    ...tokens,
+  });
+};
+
+// ===============================
+// Logout
+// ===============================
+
+const logout = async () => {
+  return {
+    success: true,
   };
+};
 
-  const tokens = generateAccessTokens(tokenPayload);
+// ===============================
+// Current User
+// ===============================
 
-  await accountsRepository.update(
-    account.accountId,
-    { refreshToken: tokens.refreshToken },
-    connection,
+const getMe = async (accountId, connection = db) => {
+  const account = await accountsRepository.findById(accountId, connection);
+
+  throwIf(
+    !account,
+
+    AppError.NotFoundError,
+
+    ERROR_CODES.ACCOUNT_NOT_FOUND,
   );
 
-  return tokens;
+  validateAccountStatus(account);
+
+  return formatUserResponse(account);
 };
 
-const logout = async (accountId, connection = db) => {
-  await accountsRepository.update(
-    accountId,
-    { refreshToken: null },
-    connection,
-  );
-  return { message: AUTH_MESSAGES.LOGOUT_SUCCESS };
-};
-
-const getMe = async (accountId) => {
-  return await accountsService.getById(accountId);
-};
+// ===============================
+// Change Password
+// ===============================
 
 const changePassword = async (
   accountId,
@@ -135,41 +152,45 @@ const changePassword = async (
   connection = db,
 ) => {
   const account = await accountsRepository.findById(accountId, connection);
-  throwIf(!account, AppError.NotFoundError, ERROR_CODES.ACCOUNT_NOT_FOUND);
 
-  const isMatch = await comparePassword(currentPassword, account.passwordHash);
-  throwIf(!isMatch, AppError.BadRequestError, "Current password is incorrect");
-
-  const newPasswordHash = await hashPassword(newPassword);
-  await accountsRepository.update(
-    accountId,
-    { passwordHash: newPasswordHash, refreshToken: null },
-    connection,
-  );
-};
-
-const resetPassword = async (email, newPassword, connection = db) => {
-  const account = await accountsRepository.findByEmail(email, connection);
   throwIf(
     !account,
+
     AppError.NotFoundError,
-    "No account associated with this email",
+
+    ERROR_CODES.ACCOUNT_NOT_FOUND,
   );
 
-  const newPasswordHash = await hashPassword(newPassword);
+  const matched = await comparePassword(currentPassword, account.passwordHash);
+
+  throwIf(
+    !matched,
+
+    AppError.BadRequestError,
+
+    "CURRENT_PASSWORD_INVALID",
+  );
+
+  const passwordHash = await hashPassword(newPassword);
+
   await accountsRepository.update(
-    account.accountId,
-    { passwordHash: newPasswordHash, refreshToken: null },
+    accountId,
+
+    {
+      passwordHash,
+    },
+
     connection,
   );
+
+  return {
+    changed: true,
+  };
 };
 
 module.exports = {
-  register,
   login,
-  refresh,
   logout,
   getMe,
   changePassword,
-  resetPassword,
 };

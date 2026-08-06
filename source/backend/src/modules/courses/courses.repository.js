@@ -1,65 +1,88 @@
-const db = require("../../config/database");
-const { COURSE_STATUS } = require("../../constants");
-const { COURSE_FIELDS, COURSE_MAPS } = require("./courses.constants");
+const db = require("@/config/database");
+
 const {
   arrayToCamelCase,
-  objectToSnakeCase,
   objectToCamelCase,
-} = require("../../utils/helpers/index");
+  objectToSnakeCase,
+} = require("@/utils/helpers");
 
-const queryBuilder = require("../../utils/query/queryBuilders");
+const queryBuilder = require("@/utils/query/queryBuilders");
 
-const find = async (query, connection = db) => {
-  const { page, limit, search, sortBy, sortOrder, courseLevel, courseStatus, certificateAvailable } = query;
-  
-  const searchableFields = COURSE_FIELDS.QUERY.SEARCHABLE;
-  const sortableFields = COURSE_FIELDS.QUERY.SORTABLE;
-  const searchMap = COURSE_MAPS.SEARCH;
-  const sortMap = COURSE_MAPS.SORT;
-  const filterMap = COURSE_MAPS.FILTER;
-  
-  const filters = {};
-  if (courseLevel) filters.courseLevel = courseLevel;
-  if (courseStatus) filters.courseStatus = courseStatus;
-  if (certificateAvailable !== undefined) filters.certificateAvailable = certificateAvailable;
+const {
+  COURSE_FIELDS,
+  COURSE_MAPS,
+} = require("./courses.constants");
+
+const COURSE_SELECT = `
+SELECT
+  crs.course_id,
+  crs.category_id,
+  cc.category_code,
+  cc.category_name,
+  crs.course_code,
+  crs.course_name,
+  crs.description,
+  crs.duration_hours,
+  crs.course_status,
+  crs.created_at,
+  crs.updated_at
+`;
+
+const COURSE_FROM = `
+FROM COURSE crs
+LEFT JOIN COURSE_CATEGORY cc
+  ON crs.category_id = cc.category_id
+`;
+
+// ===============================
+// Query
+// ===============================
+
+const list = async (query, connection = db) => {
+  const {
+    page,
+    limit,
+    search,
+    searchField,
+    sortBy,
+    sortOrder,
+    categoryId,
+    courseStatus,
+  } = query;
+
+  const filters = {
+    categoryId,
+    courseStatus,
+  };
 
   const queryOptions = queryBuilder.buildQueryOptions({
     page,
     limit,
     search,
-    searchableFields,
-    searchMap,
+    searchField,
+
+    searchableFields: COURSE_FIELDS.QUERY.SEARCHABLE,
+    searchMap: COURSE_MAPS.SEARCH,
+
     sortBy,
     sortOrder,
-    sortMap,
+    sortMap: COURSE_MAPS.SORT,
+
     filters,
-    filterMap,
+    filterMap: COURSE_MAPS.FILTER,
   });
 
-  const { pagination, searchResult, filterResult, sortClause } = queryOptions;
-  
-  const selectClause = `
-    SELECT
-      crs.course_id,
-      crs.course_name,
-      crs.cover_image,
-      crs.course_code,
-      crs.course_description,
-      crs.duration_hours,
-      crs.total_sessions,
-      crs.tuition_fee,
-      crs.course_level,
-      crs.certificate_available,
-      crs.course_status,
-      crs.created_at,
-      crs.updated_at
-  `;
+  const {
+    pagination,
+    searchResult,
+    filterResult,
+    sortClause,
+  } = queryOptions;
 
-  const fromJoinClause = `
-    FROM COURSE crs
-  `;
+  const whereParts = [
+    "crs.deleted_at IS NULL",
+  ];
 
-  const whereParts = ["crs.deleted_at IS NULL"];
   const params = [];
 
   if (searchResult.clause) {
@@ -72,165 +95,279 @@ const find = async (query, connection = db) => {
     params.push(...filterResult.values);
   }
 
-  const whereClause = `WHERE ${whereParts.join(" AND ")}`;
+  const whereClause = `
+    WHERE ${whereParts.join(" AND ")}
+  `;
 
-  const countSql = `SELECT COUNT(*) as total ${fromJoinClause} ${whereClause}`;
-  const [countRows] = await connection.query(countSql, params);
-  const totalRecords = countRows[0]?.total || 0;
-  
+  const countSql = `
+    SELECT COUNT(*) AS total
+    ${COURSE_FROM}
+    ${whereClause}
+  `;
+
+  const [countRows] = await connection.query(
+    countSql,
+    params,
+  );
+
+  const totalRecords = Number(
+    countRows[0]?.total || 0,
+  );
+
   let dataSql = queryBuilder.buildSelectQuery({
-    selectClause,
-    fromJoinClause,
+    selectClause: COURSE_SELECT,
+    fromJoinClause: COURSE_FROM,
     whereClause,
     sortClause,
   });
 
-  dataSql += ` LIMIT ? OFFSET ?`;
-  const dataParams = [...params, pagination.limit, pagination.offset];
-  const [rows] = await connection.query(dataSql, dataParams);
+  dataSql += `
+    LIMIT ?
+    OFFSET ?
+  `;
+
+  const [rows] = await connection.query(
+    dataSql,
+    [
+      ...params,
+      pagination.limit,
+      pagination.offset,
+    ],
+  );
 
   return {
     data: arrayToCamelCase(rows),
+
     pagination: {
       totalRecords,
       limit: pagination.limit,
       offset: pagination.offset,
-      totalPages: Math.ceil(totalRecords / pagination.limit),
+      totalPages: Math.ceil(
+        totalRecords / pagination.limit,
+      ),
     },
   };
 };
 
-const findById = async (courseId, connection = db) => {
+
+// ===============================
+// Find
+// ===============================
+
+const findById = async (
+  courseId,
+  connection = db,
+) => {
   const [rows] = await connection.query(
     `
-    SELECT 
-      crs.course_id,
-      crs.course_name,
-      crs.cover_image,
-      crs.course_code,
-      crs.course_description,
-      crs.duration_hours,
-      crs.total_sessions,
-      crs.tuition_fee,
-      crs.course_level,
-      crs.certificate_available,
-      crs.course_status,
-      crs.created_at,
-      crs.updated_at
-    FROM COURSE crs
-    WHERE crs.course_id = ? AND crs.deleted_at IS NULL;
+    ${COURSE_SELECT}
+    ${COURSE_FROM}
+    WHERE
+      crs.course_id = ?
+      AND crs.deleted_at IS NULL
     `,
     [courseId],
   );
-  return rows[0] ? objectToCamelCase(rows[0]) : null;
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return objectToCamelCase(rows[0]);
 };
 
-const findByCode = async (courseCode, connection = db) => {
+
+const findByCode = async (
+  courseCode,
+  connection = db,
+) => {
   const [rows] = await connection.query(
     `
-    SELECT 
-      crs.course_id,
-      crs.course_name,
-      crs.cover_image,
-      crs.course_code,
-      crs.course_status
-    FROM COURSE crs
-    WHERE crs.course_code = ? AND crs.deleted_at IS NULL;
+    ${COURSE_SELECT}
+    ${COURSE_FROM}
+    WHERE
+      crs.course_code = ?
+      AND crs.deleted_at IS NULL
     `,
     [courseCode],
   );
-  return rows[0] ? objectToCamelCase(rows[0]) : null;
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return objectToCamelCase(rows[0]);
 };
 
-const create = async (courseData, connection = db) => {
+
+const findByName = async (
+  courseName,
+  connection = db,
+) => {
+  const [rows] = await connection.query(
+    `
+    ${COURSE_SELECT}
+    ${COURSE_FROM}
+    WHERE
+      crs.course_name = ?
+      AND crs.deleted_at IS NULL
+    `,
+    [courseName],
+  );
+
+  if (!rows.length) {
+    return null;
+  }
+
+  return objectToCamelCase(rows[0]);
+};
+
+
+const existsById = async (
+  courseId,
+  connection = db,
+) => {
+  const [rows] = await connection.query(
+    `
+    SELECT 1
+    FROM COURSE
+    WHERE
+      course_id = ?
+      AND deleted_at IS NULL
+    LIMIT 1
+    `,
+    [courseId],
+  );
+
+  return rows.length > 0;
+};
+
+
+// ===============================
+// Mutation
+// ===============================
+
+const create = async (
+  courseData,
+  connection = db,
+) => {
   const data = objectToSnakeCase(courseData);
+
   const fields = Object.keys(data);
   const values = Object.values(data);
-  
-  const fieldClause = fields.join(", ");
-  const placeholderClause = fields.map(() => "?").join(", ");
 
   const sql = `
-    INSERT INTO COURSE (${fieldClause})
-    VALUES (${placeholderClause});
+    INSERT INTO COURSE
+    (${fields.join(", ")})
+    VALUES
+    (${fields.map(() => "?").join(", ")})
   `;
-  
-  const [result] = await connection.query(sql, values);
-  return findById(result.insertId, connection);
+
+  const [result] = await connection.query(
+    sql,
+    values,
+  );
+
+  return findById(
+    result.insertId,
+    connection,
+  );
 };
 
-const update = async (courseId, courseData, connection = db) => {
+
+const update = async (
+  courseId,
+  courseData,
+  connection = db,
+) => {
   const data = objectToSnakeCase(courseData);
+
   const fields = Object.keys(data);
+
+  if (!fields.length) {
+    return findById(
+      courseId,
+      connection,
+    );
+  }
+
   const values = Object.values(data);
-  
-  const setClause = fields.map((field) => `${field} = ?`).join(", ");
-  const sql = `
-    UPDATE COURSE
-    SET ${setClause}
-    WHERE course_id = ? AND deleted_at IS NULL
-  `;
-  
-  await connection.query(sql, [...values, courseId]);
-  return findById(courseId, connection);
-};
-
-const remove = async (courseId, connection = db) => {
-  const currentCourse = await findById(courseId, connection);
-  if (!currentCourse) return null;
-
-  const status = COURSE_STATUS.DELETED; 
-  const deletedAt = new Date();
 
   await connection.query(
     `
     UPDATE COURSE
-    SET course_status = ?,
-        deleted_at = ?
+    SET ${fields.map(
+      (field) => `${field} = ?`,
+    ).join(", ")}
     WHERE course_id = ?
-      AND deleted_at IS NULL
     `,
-    [status, deletedAt, courseId],
+    [
+      ...values,
+      courseId,
+    ],
   );
 
-  return {
-    ...currentCourse,
-    courseStatus: status,
-    deletedAt: deletedAt,
-  };
+  return findById(
+    courseId,
+    connection,
+  );
 };
 
-// =========================================================================
-// 7. SUB-RESOURCE: FIND DOCUMENTS BY COURSE ID
-// =========================================================================
-const findDocumentsByCourseId = async (courseId, connection = db) => {
-  const [rows] = await connection.query(
+
+const updateStatus = async (
+  courseId,
+  status,
+  connection = db,
+) => {
+  await connection.query(
     `
-    SELECT 
-      d.document_id,
-      d.document_code,
-      d.course_id,
-      d.title,
-      d.file_path,
-      d.document_description,
-      d.is_visible,
-      d.document_status,
-      d.uploaded_at
-    FROM DOCUMENT d
-    WHERE d.course_id = ? AND d.deleted_at IS NULL
-    ORDER BY d.uploaded_at DESC;
+    UPDATE COURSE
+    SET course_status = ?
+    WHERE course_id = ?
+    `,
+    [
+      status,
+      courseId,
+    ],
+  );
+
+  return findById(
+    courseId,
+    connection,
+  );
+};
+
+
+const remove = async (
+  courseId,
+  connection = db,
+) => {
+  await connection.query(
+    `
+    UPDATE COURSE
+    SET deleted_at = CURRENT_TIMESTAMP
+    WHERE course_id = ?
     `,
     [courseId],
   );
-  return arrayToCamelCase(rows);
+
+  return {
+    courseId,
+    deleted: true,
+  };
 };
 
+
 module.exports = {
-  find,
+  list,
+
   findById,
   findByCode,
+  findByName,
+  existsById,
+
   create,
   update,
+  updateStatus,
   remove,
-  findDocumentsByCourseId,
 };

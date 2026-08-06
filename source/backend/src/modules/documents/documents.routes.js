@@ -1,70 +1,153 @@
 const express = require("express");
+
 const router = express.Router();
 
-const { ROLES, ROUTES } = require("../../constants");
-const { authenticate, authorize } = require("../../middlewares");
-const upload = require("../../config");
+const { ROUTES } = require("@/constants");
+
+const { createValidator, createMultiValidator } = require("@/utils/helpers");
+
+const { authenticate } = require("@/middlewares/auth.middleware");
+
+const { authorize } = require("@/middlewares/role.middleware");
 
 const documentsController = require("./documents.controller");
-const {
-  createValidationMiddleware,
-  createMultiValidator,
-} = require("../../utils/helpers");
 
-const {
-  validateGetList,
-  validateGetById,
-  validateUpload,
-  validateUpdate,
-} = require("./documents.validator");
+const documentsMiddleware = require("./documents.middleware");
 
-// router.use(authenticate);
+// ===============================
+// Query
+// ===============================
 
 router.get(
   ROUTES.DOCUMENT.ROOT,
-  createValidationMiddleware(validateGetList, "query"),
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  //   "STUDENT",
+  // ),
+
+  createValidator(documentsMiddleware.getList, "query"),
+
   documentsController.getList,
 );
 
-// router.post(
-//   ROUTES.DOCUMENT.ROOT,
-//   authorize(ROLES.ADMIN, ROLES.INSTRUCTOR),
-//   upload.single("file"),
-//   createValidationMiddleware(validateCreate), 
-//   documentsController.create,
-// );
+// ===============================
+// Detail
+// ===============================
 
 router.get(
   ROUTES.DOCUMENT.DETAIL,
-  createValidationMiddleware(validateGetById, "params"),
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  //   "STUDENT",
+  // ),
+
+  createValidator(documentsMiddleware.getById, "params"),
+
   documentsController.getById,
 );
 
+// ===============================
+// Upload
+// ===============================
+
+router.post(
+  ROUTES.DOCUMENT.UPLOAD,
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  // ),
+
+  documentsMiddleware.uploadSingleDocument,
+
+  createValidator(documentsMiddleware.uploadDocument, "body"),
+
+  documentsController.upload,
+);
+
+// ===============================
+// Update
+// ===============================
+
 router.patch(
   ROUTES.DOCUMENT.DETAIL,
-  authorize(ROLES.ADMIN, ROLES.INSTRUCTOR),
-  createMultiValidator(validateUpdate),
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  // ),
+
+  createMultiValidator(documentsMiddleware.partialUpdate),
+
   documentsController.update,
 );
 
-// 5. Xóa mềm tài liệu
+// ===============================
+// Delete
+// ===============================
+
 router.delete(
   ROUTES.DOCUMENT.DETAIL,
-  authorize(ROLES.ADMIN, ROLES.INSTRUCTOR),
-  createValidationMiddleware(validateGetById, "params"),
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  // ),
+
+  createValidator(documentsMiddleware.getById, "params"),
+
   documentsController.remove,
 );
 
+// ===============================
+// Restore
+// ===============================
+
 router.patch(
-  `${ROUTES.DOCUMENT.DETAIL}/restore`,
-  authorize(ROLES.ADMIN),
-  createValidationMiddleware(validateGetById, "params"),
+  ROUTES.DOCUMENT.RESTORE,
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  // ),
+
+  createValidator(documentsMiddleware.getById, "params"),
+
   documentsController.restore,
 );
 
+// ===============================
+// Download
+// ===============================
+
 router.get(
   ROUTES.DOCUMENT.DOWNLOAD,
-  createValidationMiddleware(validateGetById, "params"),
+
+  // authenticate,
+
+  // authorize(
+  //   "ADMIN",
+  //   "STAFF",
+  //   "STUDENT",
+  // ),
+
+  createValidator(documentsMiddleware.getById, "params"),
+
   documentsController.download,
 );
 

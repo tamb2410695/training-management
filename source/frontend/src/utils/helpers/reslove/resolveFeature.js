@@ -4,19 +4,26 @@ import { resolveWizard } from "./resolveWizard";
 
 export function resolveFeature({ feature, context }) {
   const policy = feature.resolvePolicy(context);
-  
-  const form = resolveForms({ feature, policy });
-  const wizard = resolveWizard({
-    feature,
-    policy,
-    context,
-  });
-  const query = resolveQuery({ feature, policy });
 
-  return {
+  const result = {
     feature,
-    form,
-    query,
-    wizard,
+    form: resolveForms({
+      feature,
+      policy,
+    }),
+    query: resolveQuery({
+      feature,
+      policy,
+    }),
   };
+
+  if (feature.wizard) {
+    result.wizard = resolveWizard({
+      feature,
+      policy,
+      context,
+    });
+  }
+
+  return result;
 }

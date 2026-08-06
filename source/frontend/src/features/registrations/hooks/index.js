@@ -1,1 +1,3 @@
-export * from "./useRegistrations";
+export * from "./useRegistrationActions";
+export * from "./useRegistrationCrud";
+export * from "./useRegistrationFeature";

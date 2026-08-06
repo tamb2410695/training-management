@@ -3,10 +3,15 @@ import { useCallback } from "react";
 export function usePagination({ tablePagination, queryState }) {
   const { query, updateQuery } = queryState;
 
-  const page = tablePagination?.page ?? (tablePagination?.offset ?? 0) + 1;
   const limit = tablePagination?.limit ?? query.limit ?? 10;
-  const totalPages = tablePagination?.totalPages ?? 1;
 
+  const page =
+    tablePagination?.page ??
+    Math.floor((tablePagination?.offset ?? 0) / limit) + 1;
+
+  const totalPages =
+    tablePagination?.totalPages ??
+    Math.ceil((tablePagination?.total ?? 0) / limit);
   const nextPage = useCallback(() => {
     if (page < totalPages) {
       updateQuery({

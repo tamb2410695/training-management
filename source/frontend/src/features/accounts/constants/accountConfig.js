@@ -31,7 +31,7 @@ export const ACCOUNT_CONFIG = {
     },
 
     toolbar: ["create", "refresh", "reset"],
-    rowActions: ["view", "update", "delete"],
+    rowActions: ["view", "update", "remove", "create"],
     showIndex: true,
   },
 

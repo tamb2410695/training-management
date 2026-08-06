@@ -1,22 +1,44 @@
-const { QUERY_COMMON_FIELDS } = require("../../constants");
+const { QUERY_COMMON_FIELDS } = require("@/constants");
+
+const CLASS_STATUS = {
+  DRAFT: "DRAFT",
+  OPEN: "OPEN",
+  ONGOING: "ONGOING",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};
+
+const CLASS_ACTIONS = {
+  OPEN: "open",
+  START: "start",
+  COMPLETE: "complete",
+  CANCEL: "cancel",
+  ASSIGN_INSTRUCTOR: "assignInstructor",
+};
+
 const CLASS_FIELDS = {
   PARAMS: {
     ID: ["id"],
   },
 
   QUERY: {
-    SEARCHABLE: ["classCode", "courseName"],
+    SEARCHABLE: ["classCode", "className", "courseName", "teacherName"],
 
     SORTABLE: [
       "classId",
       "classCode",
+      "className",
       "startDate",
       "endDate",
       "maxStudents",
+      "classStatus",
       "createdAt",
+      "updatedAt",
+      "courseName",
+      "teacherName",
     ],
 
-    FILTERS: ["courseId", "classStatus"],
+    FILTERS: ["courseId", "teacherId", "classStatus"],
 
     get ALLOWED_KEYS() {
       return [
@@ -31,37 +53,64 @@ const CLASS_FIELDS = {
   },
 
   BODY: {
-    CREATE: ["classCode", "courseId", "startDate", "endDate", "maxStudents"],
+    CREATE: [
+      "courseId",
+      "teacherId",
+      "classCode",
+      "className",
+      "startDate",
+      "endDate",
+      "maxStudents",
+    ],
 
-    UPDATE: ["startDate", "endDate", "maxStudents", "classStatus"],
+    UPDATE: [
+      "courseId",
+      "teacherId",
+      "classCode",
+      "className",
+      "startDate",
+      "endDate",
+      "maxStudents",
+    ],
   },
 
   REQUIRED: {
-    CREATE: ["courseId", "startDate", "endDate", "maxStudents"],
+    CREATE: ["courseId", "teacherId", "className", "startDate", "endDate"],
   },
 };
+
 const CLASS_MAPS = {
   SEARCH: {
-    classCode: "cl.class_code",
-    courseName: "c.course_name",
+    classCode: "cls.class_code",
+    className: "cls.class_name",
+    courseName: "crs.course_name",
+    teacherName: "sp.full_name",
   },
 
   SORT: {
-    classId: "cl.class_id",
-    classCode: "cl.class_code",
-    startDate: "cl.start_date",
-    endDate: "cl.end_date",
+    classId: "cls.class_id",
+    classCode: "cls.class_code",
+    className: "cls.class_name",
+    startDate: "cls.start_date",
+    endDate: "cls.end_date",
+    maxStudents: "cls.max_students",
+    classStatus: "cls.class_status",
+    createdAt: "cls.created_at",
+    updatedAt: "cls.updated_at",
+    courseName: "crs.course_name",
+    teacherName: "sp.full_name",
   },
 
   FILTER: {
-    courseId: "cl.course_id",
-    classStatus: "cl.class_status",
-    startDate: "cl.start_date",
-    endDate: "cl.end_date",
+    courseId: "cls.course_id",
+    teacherId: "cls.teacher_id",
+    classStatus: "cls.class_status",
   },
 };
 
 module.exports = {
+  CLASS_STATUS,
+  CLASS_ACTIONS,
   CLASS_FIELDS,
   CLASS_MAPS,
 };

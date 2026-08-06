@@ -1,82 +1,32 @@
-import { useState } from "react";
-import { ROUTES } from "../../constants";
-import register from "../../features/auth/services/authService";
-import { useNavigate } from "react-router-dom";
+import RegisterForm from "@/features/auth/components/RegisterForm";
 
 function Register() {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
-
-  const [message, setMessage] = useState("");
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      console.log(form);
-
-      const response = await register(form);
-
-      console.log(response.data);
-
-      setMessage("Đăng ký thành công");
-
-      setTimeout(() => {
-        navigate(ROUTES.LOGIN);
-      }, 2000);
-    } catch (error) {
-      console.error(error);
-
-      setMessage("Đăng ký thất bại");
-    }
-  };
-
   return (
-    <div className="container mt-4">
-      <h2>Register</h2>
+    <div
+      className="
+        min-vh-100
+        d-flex
+        align-items-center
+        justify-content-center
+        bg-light
+      "
+    >
+      <div
+        className="card shadow-sm"
+        style={{
+          width: 420,
+        }}
+      >
+        <div className="card-body p-4">
+          <div className="text-center mb-4">
+            <h3>Training Management</h3>
 
-{message && (
-    <div className="alert alert-success">
-        {message}
-    </div>
-)}
+            <p className="text-muted">Tạo tài khoản mới</p>
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          className="form-control mb-3"
-          name="username"
-          placeholder="Username"
-          onChange={handleChange}
-        />
-
-        <input
-          className="form-control mb-3"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-        />
-
-        <input
-          className="form-control mb-3"
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-        />
-
-        <button className="btn btn-primary">Register</button>
-      </form>
+          <RegisterForm />
+        </div>
+      </div>
     </div>
   );
 }

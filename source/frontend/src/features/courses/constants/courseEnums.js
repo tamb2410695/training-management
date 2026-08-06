@@ -1,88 +1,45 @@
 import { buildEnum } from "@/utils";
 
-export const GENDER = buildEnum({
-  MALE: {
-    label: "Nam",
-    color: "primary",
-    order: 1,
-  },
-
-  FEMALE: {
-    label: "Nữ",
-    color: "danger",
-    order: 2,
-  },
-
-  OTHER: {
-    label: "Khác",
-    color: "secondary",
-    order: 3,
-  },
-});
-
-export const STAFF_STATUS = buildEnum({
-  DISABLE: {
-    label: "Vô hiệu hóa",
-    color: "secondary",
-    order: 1,
-  },
-
+export const COURSE_STATUS = buildEnum({
   ACTIVE: {
-    label: "Đang làm việc",
+    label: "Đang hoạt động",
     color: "success",
-    order: 2,
-  },
-
-  SUSPENDED: {
-    label: "Tạm đình chỉ",
-    color: "warning",
-    order: 3,
-  },
-
-  ON_LEAVE: {
-    label: "Đang nghỉ phép",
-    color: "info",
-    order: 4,
-  },
-
-  TERMINATED: {
-    label: "Đã nghỉ việc",
-    color: "danger",
-    order: 5,
-  },
-});
-
-export const CONTRACT_TYPE = buildEnum({
-  PROBATION: {
-    label: "Thử việc",
-    color: "warning",
     order: 1,
+    filterable: true,
   },
 
-  FULL_TIME: {
-    label: "Toàn thời gian",
-    color: "success",
+  DISABLE: {
+    label: "Ngừng sử dụng",
+    color: "warning",
     order: 2,
+    filterable: true,
   },
 
-  PART_TIME: {
-    label: "Bán thời gian",
-    color: "info",
+  DELETED: {
+    label: "Đã xóa",
+    color: "danger",
     order: 3,
+    filterable: false,
   },
 });
 
-export const STAFF_MESSAGES = {
-  CREATE_SUCCESS: "Tạo hồ sơ học viên thành công.",
-  UPDATE_SUCCESS: "Cập nhật hồ sơ học viên thành công.",
-  DELETE_SUCCESS: "Xóa hồ sơ học viên thành công.",
-  DELETE_CONFIRM: "Bạn có chắc chắn muốn xóa học viên này khỏi hệ thống không?",
+export const COURSE_MESSAGES = {
+  CREATE_SUCCESS: "Tạo khóa học thành công.",
+  UPDATE_SUCCESS: "Cập nhật khóa học thành công.",
+  DELETE_SUCCESS: "Xóa khóa học thành công.",
 
-  SUSPEND_SUCCESS: "Bảo lưu trạng thái học viên thành công.",
-  GRADUATE_SUCCESS: "Xác nhận tốt nghiệp cho học viên thành công.",
-  WITHDRAW_SUCCESS: "Cập nhật trạng thái thôi học thành công.",
+  DELETE_CONFIRM:
+    "Bạn có chắc chắn muốn xóa khóa học này không?",
 
-  SUSPEND_CONFIRM: "Bạn có chắc chắn muốn bảo lưu học phần của học viên này?",
-  WITHDRAW_CONFIRM:
-    "Bạn có chắc chắn muốn chuyển trạng thái học viên này sang thôi học?",
+  ACTIVATE_SUCCESS:
+    "Kích hoạt khóa học thành công.",
+
+  ACTIVATE_CONFIRM:
+    "Bạn có chắc chắn muốn kích hoạt khóa học này không?",
+
+  DISABLE_SUCCESS:
+    "Ngừng sử dụng khóa học thành công.",
+
+  DISABLE_CONFIRM:
+    "Bạn có chắc chắn muốn ngừng sử dụng khóa học này không?",
 };

@@ -1,12 +1,13 @@
-import { API_ROUTES } from "../../../constants";
-import api from "../../../services/api";
+import api from "@/services/api";
+import { API_ROUTES } from "@/constants";
 
-const authService = {
-  login: (credentials) => 
-    api.post(API_ROUTES.AUTH.LOGIN, credentials),
+const API = API_ROUTES.AUTH;
 
-  register: (credentials) => 
-    api.post(API_ROUTES.AUTH.REGISTER, credentials),
-};
-
-export default authService;
+export default function authService() {
+  return {
+    register: (data) => api.post(API.REGISTER, data),
+    login: (data) => api.post(API.LOGIN, data),
+    getProfile: () => api.get(API.PROFILE),
+    changePassword: (data) => api.patch(API.CHANGE_PASSWORD, data),
+  };
+}

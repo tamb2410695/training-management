@@ -21,6 +21,7 @@ const ModalFooter = ({ actions = [], loading = false }) => {
           disabled={loading || action.disabled}
           onClick={action.onClick}
         >
+          {action.icon && <i className={`bi-${action.icon} me-1`} />}
           {action.label}
         </button>
       ))}
